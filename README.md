@@ -20,6 +20,11 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
   </thead>
   <tbody>
     <tr>
+      <td>SURVEY_SERVICE_DB_CONNECT"</td>
+      <td>PostgreSQL database connection string</td>
+      <td>postgres://postgres:password@localhost/postgres?sslmode=disable</td>
+    </tr>
+    <tr>
       <td>SURVEY_SERVICE_PORT</td>
       <td>HTTP listener port</td>
       <td>:8080</td>
