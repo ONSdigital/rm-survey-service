@@ -18,7 +18,7 @@ func main() {
 	// If there's a trailing slash, redirect to the non-trailing slash URL.
 	router := mux.NewRouter().StrictSlash(true)
 	subRouter := router.PathPrefix("/surveys").Subrouter()
-	subRouter.HandleFunc("/", surveysHandler)
+	subRouter.HandleFunc("", surveysHandler)
 	subRouter.HandleFunc("/{survey}/classifiertypes", classifierTypesHandler)
 
 	log.Printf("Survey service listening on %s", port)
