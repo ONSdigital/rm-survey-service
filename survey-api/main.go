@@ -6,13 +6,18 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	port := ":8080"
+	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 
 	if v := os.Getenv("SURVEY_SERVICE_PORT"); len(v) > 0 {
 		port = v
+	}
+	if v := os.Getenv("SURVEY_SERVICE_DB_CONNECT"); len(v) > 0 {
+		dataSource = v
 	}
 
 	// If there's a trailing slash, redirect to the non-trailing slash URL.
