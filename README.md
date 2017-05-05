@@ -22,7 +22,7 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
     <tr>
       <td>SURVEY_SERVICE_PORT</td>
       <td>HTTP listener port</td>
-      <td>8080</td>
+      <td>:8080</td>
   </tbody>
 </table>
 
