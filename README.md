@@ -4,11 +4,11 @@ This repository contains the Survey service. This microservice is a RESTful web 
 * Providing the classifier types applicable to a survey
 
 ## Prerequisites
-Install the [Go PostgreSQL driver]() using `go get github.com/lib/pq`
-Install the [Gorilla Mux URL router](http://www.gorillatoolkit.org/pkg/mux) using `go get github.com/gorilla/mux`
+* Install the [Go PostgreSQL driver]() using `go get github.com/lib/pq`
+* Install the [Gorilla Mux URL router](http://www.gorillatoolkit.org/pkg/mux) using `go get github.com/gorilla/mux`
 
 ## Running
-From $GOPATH, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. The following environment variables may be overriden:
+From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. The following environment variables may be overridden:
 
 <table>
   <thead>
@@ -40,7 +40,7 @@ Running the command `curl http://localhost:8080/surveys/bres/classifiertypes` sh
         "SIC"
       ]
     }
-    ````
+    ```
 
 ## Testing
 
