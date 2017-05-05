@@ -30,17 +30,17 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 
 Running the command `curl http://localhost:8080/surveys/bres/classifiertypes` should return an HTTP 200 status code with the JSON:
 
-    ```javascript
-    {
-      "survey": "BRES",
-      "classifierTypes": [
-        "COLLECTION_EXERCISE",
-        "LEGAL_BASIS",
-        "RU_REF",
-        "SIC"
-      ]
-    }
-    ```
+```json
+{
+  "survey": "BRES",
+  "classifierTypes": [
+    "COLLECTION_EXERCISE",
+    "LEGAL_BASIS",
+    "RU_REF",
+    "SIC"
+  ]
+}
+```
 
 ## Testing
 
