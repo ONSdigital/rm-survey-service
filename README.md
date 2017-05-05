@@ -26,9 +26,15 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
   </tbody>
 </table>
 
-## API Example
+## API Examples
 
-Running the command `curl http://localhost:8080/surveys/bres/classifiertypes` should return an HTTP 200 status code with the JSON:
+* Running the command `curl http://localhost:8080/surveys` should return an HTTP 200 status code with the JSON response:
+
+```json
+["BRES"]
+```
+
+* Running the command `curl http://localhost:8080/surveys/bres/classifiertypes` should return an HTTP 200 status code with the JSON response:
 
 ```json
 {
