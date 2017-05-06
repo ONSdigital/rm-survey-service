@@ -1,3 +1,4 @@
 - Unit tests
 - Refactor
+- Correct HTTP responses when no records etc.
 - GZip responses
