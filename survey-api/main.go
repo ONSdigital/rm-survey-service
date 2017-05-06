@@ -13,10 +13,10 @@ func main() {
 	port := ":8080"
 	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 
-	if v := os.Getenv("SURVEY_SERVICE_PORT"); len(v) > 0 {
+	if v := os.Getenv("PORT"); len(v) > 0 {
 		port = v
 	}
-	if v := os.Getenv("SURVEY_SERVICE_DB_CONNECT"); len(v) > 0 {
+	if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
 		dataSource = v
 	}
 
