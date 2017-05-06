@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -16,6 +17,11 @@ const contentType string = "application/json"
 
 var db *sql.DB
 var err error
+
+type classifierTypes struct {
+	Survey          string   `json:"survey"`
+	ClassifierTypes []string `json:"classifierTypes"`
+}
 
 func main() {
 	port := ":8080"
@@ -55,7 +61,7 @@ func surveysHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	defer rows.Close()
-	var surveys []string
+	var responseJSON []string
 
 	for rows.Next() {
 		var survey string
@@ -64,7 +70,7 @@ func surveysHandler(w http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 
-		surveys = append(surveys, survey)
+		responseJSON = append(responseJSON, survey)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -72,11 +78,55 @@ func surveysHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set(contentTypeHeader, contentType)
-	json.NewEncoder(w).Encode(surveys)
+	json.NewEncoder(w).Encode(responseJSON)
 }
 
 // GET /surveys/{survey}/classifiertypes
 func classifierTypesHandler(w http.ResponseWriter, req *http.Request) {
 	survey := mux.Vars(req)["survey"]
 	log.Printf("Getting the list of classifier types for survey '%s'", survey)
+
+	classifierTypes := getClassifierTypes(strings.ToUpper(survey))
+	b, err := json.Marshal(&classifierTypes)
+
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Set(contentTypeHeader, contentType)
+	w.Write(b)
+}
+
+func getClassifierTypes(survey string) classifierTypes {
+	rows, err := db.Query("SELECT classifiertype FROM survey.classifiertype INNER JOIN survey.survey ON classifiertype.surveyid = survey.surveyid WHERE survey= $1 ORDER BY classifiertype ASC", survey)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+	var responseJSON classifierTypes
+	var classifierTypes []string
+
+	for rows.Next() {
+		var classifierType string
+
+		if err := rows.Scan(&classifierType); err != nil {
+			log.Fatal(err)
+		}
+
+		classifierTypes = append(classifierTypes, classifierType)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	responseJSON.Survey = survey
+	responseJSON.ClassifierTypes = classifierTypes
+
+	return responseJSON
 }
