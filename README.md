@@ -57,6 +57,7 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 ```
 
 ## Testing
+To follow once I've worked out how to write unit tests in Go :-)
 
 ## Copyright
 Copyright (C) 2017 Crown Copyright (Office for National Statistics)
