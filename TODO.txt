@@ -1,5 +1,0 @@
-- Unit tests
-- Refactor
-- Correct HTTP responses when no records etc.
-- Add JSON Schema definitions and validation
-- GZip responses
