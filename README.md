@@ -59,5 +59,26 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
 
+## Building the Docker image
+To build the docker image, from the project root run
+```
+docker build -t surveysvc .
+```
+## Running the docker image and a postgres instance
+```
+docker-compose up -d
+```
+
+Initial data can be loaded into postgresql by starting the docker image and connecting, then running the statements in the sql directory
+```
+docker exec -it postgres /bin/sh
+psql postgres://postgres:password@localhost/postgres?sslmode=disable
+```
+
+then manually paste in the sql from each sql file in the following order
+groundzero.sql
+survey_foundation.sql
+seed_data.sql
+
 ## Copyright
 Copyright (C) 2017 Crown Copyright (Office for National Statistics)
