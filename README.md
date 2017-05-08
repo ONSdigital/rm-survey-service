@@ -82,5 +82,12 @@ Run the tests using:
 make test
 ```
 
+## Cleaning
+To clobber the `build` directory tree, run:
+
+```
+make clean
+```
+
 ## Copyright
 Copyright (C) 2017 Crown Copyright (Office for National Statistics)

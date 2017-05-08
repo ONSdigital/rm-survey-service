@@ -10,3 +10,6 @@ build:
 
 test:
 	go test -cover survey-api/*.go
+
+clean:
+	test -d $(BUILD) && rm -r $(BUILD)
