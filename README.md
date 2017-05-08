@@ -5,8 +5,8 @@ This repository contains the Survey service. This microservice is a RESTful web 
 * Providing the details for a survey (including classifier types)
 
 ## Prerequisites
-* Install the [Go PostgreSQL driver]() using `go get github.com/lib/pq`
-* Install the [Gorilla Mux URL router](http://www.gorillatoolkit.org/pkg/mux) using `go get github.com/gorilla/mux`
+* Install the [Go PostgreSQL driver](https://github.com/lib/pq) using `go get github.com/lib/pq`
+* Install the [Gin HTTP web framework](https://gin-gonic.github.io/gin/) using `go get gopkg.in/gin-gonic/gin.v1`
 
 ## Building
 ### Make

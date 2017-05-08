@@ -2,14 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
 const contentTypeHeader string = "Content-Type"
@@ -18,7 +17,7 @@ const contentType string = "application/json"
 var db *sql.DB
 var err error
 
-type classifierTypes struct {
+type survey struct {
 	Survey          string   `json:"survey"`
 	ClassifierTypes []string `json:"classifierTypes"`
 }
@@ -41,73 +40,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// If there's a trailing slash, redirect to the non-trailing slash URL.
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/surveys", surveysHandler)
-	router.HandleFunc("/surveys/{survey}", surveyDetailsHandler)
-
-	log.Printf("Survey service listening on %s", port)
-	log.Fatal(http.ListenAndServe(port, router))
+	router := gin.Default()
+	router.GET("/surveys", listSurveysEndpoint)
+	router.GET("/surveys/:survey", getSurveyEndpoint)
+	router.Run(port)
 }
 
 // GET /surveys
-func surveysHandler(w http.ResponseWriter, req *http.Request) {
-	log.Print("Getting the list of surveys")
-	rows, err := db.Query("SELECT survey FROM survey.survey ORDER BY survey ASC")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer rows.Close()
-	var responseJSON []string
-
-	for rows.Next() {
-		var survey string
-
-		if err := rows.Scan(&survey); err != nil {
-			log.Fatal(err)
-		}
-
-		responseJSON = append(responseJSON, survey)
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set(contentTypeHeader, contentType)
-	json.NewEncoder(w).Encode(responseJSON)
+func listSurveysEndpoint(context *gin.Context) {
+	context.JSON(http.StatusOK, listSurveys())
 }
 
 // GET /surveys/{survey}
-func surveyDetailsHandler(w http.ResponseWriter, req *http.Request) {
-	survey := mux.Vars(req)["survey"]
-	log.Printf("Getting the details for survey '%s'", survey)
-
-	classifierTypes := getClassifierTypes(strings.ToUpper(survey))
-	b, err := json.Marshal(&classifierTypes)
-
-	if err != nil {
-		log.Fatal(err)
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	w.Header().Set(contentTypeHeader, contentType)
-	w.Write(b)
+func getSurveyEndpoint(context *gin.Context) {
+	survey := getSurvey(strings.ToUpper(context.Param("survey")))
+	context.JSON(http.StatusOK, survey)
 }
 
-func getClassifierTypes(survey string) classifierTypes {
-	rows, err := db.Query("SELECT classifiertype FROM survey.classifiertype INNER JOIN survey.survey ON classifiertype.surveyid = survey.surveyid WHERE survey= $1 ORDER BY classifiertype ASC", survey)
+func getSurvey(surveyName string) survey {
+	rows, err := db.Query("SELECT classifiertype FROM survey.classifiertype INNER JOIN survey.survey ON classifiertype.surveyid = survey.surveyid WHERE survey= $1 ORDER BY classifiertype ASC", surveyName)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer rows.Close()
-	var responseJSON classifierTypes
+	var survey survey
 	var classifierTypes []string
 
 	for rows.Next() {
@@ -124,8 +82,35 @@ func getClassifierTypes(survey string) classifierTypes {
 		log.Fatal(err)
 	}
 
-	responseJSON.Survey = survey
-	responseJSON.ClassifierTypes = classifierTypes
+	survey.Survey = surveyName
+	survey.ClassifierTypes = classifierTypes
 
-	return responseJSON
+	return survey
+}
+
+func listSurveys() []string {
+	rows, err := db.Query("SELECT survey FROM survey.survey ORDER BY survey ASC")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+	var surveys []string
+
+	for rows.Next() {
+		var survey string
+
+		if err := rows.Scan(&survey); err != nil {
+			log.Fatal(err)
+		}
+
+		surveys = append(surveys, survey)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return surveys
 }
