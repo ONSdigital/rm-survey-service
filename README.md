@@ -26,7 +26,9 @@ docker build -t surveysvc .
 ```
 
 ## Running
-From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. The following environment variables may be overridden:
+From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. Or compile the service first using `make` and execute the binary in the background using `./surveysvc &`.
+
+The following environment variables may be overridden:
 
 | Environment Variable | Purpose                               | Default Value                                                   |
 | :------------------- | :------------------------------------ | :-------------------------------------------------------------- |
