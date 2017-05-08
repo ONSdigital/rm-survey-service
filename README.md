@@ -37,7 +37,6 @@ docker exec -it postgres /bin/sh
 psql -U postgres -d postgres -f ./sql/groundzero.sql
 psql -U postgres -d postgres -f ./sql/survey_foundation_schema.sql
 psql -U postgres -d postgres -f ./sql/seed_data.sql
-psql postgres://postgres:password@localhost/postgres?sslmode=disable
 ```
 
 ## API Examples
