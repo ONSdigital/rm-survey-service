@@ -12,9 +12,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const contentTypeHeader string = "Content-Type"
-const contentType string = "application/json"
-
 var db *sql.DB
 var err error
 
