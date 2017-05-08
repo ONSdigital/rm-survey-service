@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
-  title: Survey Service API
-  description: The Survey service provides a list of available surveys and the details of individual surveys. It forms part of the Survey Data Collection platform.
+  title: Survey API
+  description: Initial API for the Survey microservice.
   version: 10.38.0
 schemes:
 - http
