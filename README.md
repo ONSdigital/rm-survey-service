@@ -8,29 +8,37 @@ This repository contains the Survey service. This microservice is a RESTful web 
 * Install the [Go PostgreSQL driver]() using `go get github.com/lib/pq`
 * Install the [Gorilla Mux URL router](http://www.gorillatoolkit.org/pkg/mux) using `go get github.com/gorilla/mux`
 
+## Building
+### Docker Image
+To build the Docker image, from the project root run:
+
+```
+docker build -t surveysvc .
+```
+
 ## Running
 From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. The following environment variables may be overridden:
 
-<table>
-  <thead>
-    <tr>
-      <th>Environment Variable</th>
-      <th>Purpose</th>
-      <th>Default Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>DATABASE_URL</td>
-      <td>PostgreSQL database connection string</td>
-      <td>postgres://postgres:password@localhost/postgres?sslmode=disable</td>
-    </tr>
-    <tr>
-      <td>PORT</td>
-      <td>HTTP listener port</td>
-      <td>:8080</td>
-  </tbody>
-</table>
+| Environment Variable | Purpose                               | Default Value                                                   |
+| :------------------- | :------------------------------------ | :-------------------------------------------------------------- |
+| DATABASE_URL         | PostgreSQL database connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
+| PORT                 | HTTP listener port                    | :8080                                                           |
+
+### Docker Image and PostgreSQL
+To start the Docker image, run:
+
+```
+docker-compose up -d
+```
+
+Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the SQL files in the `sql` directory:
+```
+docker exec -it postgres /bin/sh
+psql -U postgres -d postgres -f ./sql/groundzero.sql
+psql -U postgres -d postgres -f ./sql/survey_foundation_schema.sql
+psql -U postgres -d postgres -f ./sql/seed_data.sql
+psql postgres://postgres:password@localhost/postgres?sslmode=disable
+```
 
 ## API Examples
 ### List Surveys
@@ -59,27 +67,6 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
-
-## Building the Docker image
-To build the docker image, from the project root run
-```
-docker build -t surveysvc .
-```
-## Running the docker image and a postgres instance
-```
-docker-compose up -d
-```
-
-Initial data can be loaded into postgresql by starting the docker image and connecting, then running the statements in the sql directory
-```
-docker exec -it postgres /bin/sh
-psql postgres://postgres:password@localhost/postgres?sslmode=disable
-```
-
-then manually paste in the sql from each sql file in the following order
-groundzero.sql
-survey_foundation.sql
-seed_data.sql
 
 ## Copyright
 Copyright (C) 2017 Crown Copyright (Office for National Statistics)
