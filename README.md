@@ -9,6 +9,15 @@ This repository contains the Survey service. This microservice is a RESTful web 
 * Install the [Gorilla Mux URL router](http://www.gorillatoolkit.org/pkg/mux) using `go get github.com/gorilla/mux`
 
 ## Building
+### Make
+A Makefile is provided for compiling the code using `go build`:
+
+```
+make
+```
+
+The compiled executable is placed within the `build` directory tree.
+
 ### Docker Image
 To build the Docker image, from the project root run:
 
