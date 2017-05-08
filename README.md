@@ -7,6 +7,7 @@ This repository contains the Survey service. This microservice is a RESTful web 
 ## Prerequisites
 * Install the [Go PostgreSQL driver](https://github.com/lib/pq) using `go get github.com/lib/pq`
 * Install the [Gin HTTP web framework](https://gin-gonic.github.io/gin/) using `go get gopkg.in/gin-gonic/gin.v1`
+* Install the [Gin GZIP middleware](https://github.com/gin-contrib/gzip) using `go get github.com/gin-contrib/gzip`
 
 ## Building
 ### Make

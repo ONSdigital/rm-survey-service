@@ -7,8 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"gopkg.in/gin-gonic/gin.v1"
 )
 
 const contentTypeHeader string = "Content-Type"
@@ -41,8 +42,11 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.Use(gzip.Gzip(gzip.DefaultCompression))
+
 	router.GET("/surveys", listSurveysEndpoint)
 	router.GET("/surveys/:survey", getSurveyEndpoint)
+
 	router.Run(port)
 }
 
