@@ -48,7 +48,13 @@ func main() {
 
 // GET /surveys
 func listSurveysEndpoint(context *gin.Context) {
-	context.JSON(http.StatusOK, listSurveys())
+	surveys := getSurveys()
+
+	if len(surveys) == 0 {
+		context.AbortWithStatus(http.StatusNoContent)
+	} else {
+		context.JSON(http.StatusOK, surveys)
+	}
 }
 
 // GET /surveys/{survey}
@@ -88,7 +94,7 @@ func getSurvey(surveyName string) survey {
 	return survey
 }
 
-func listSurveys() []string {
+func getSurveys() []string {
 	rows, err := db.Query("SELECT survey FROM survey.survey ORDER BY survey ASC")
 
 	if err != nil {
