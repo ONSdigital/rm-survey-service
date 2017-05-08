@@ -43,9 +43,8 @@ func main() {
 
 	// If there's a trailing slash, redirect to the non-trailing slash URL.
 	router := mux.NewRouter().StrictSlash(true)
-	subRouter := router.PathPrefix("/surveys").Subrouter()
-	subRouter.HandleFunc("", surveysHandler)
-	subRouter.HandleFunc("/{survey}/classifiertypes", classifierTypesHandler)
+	router.HandleFunc("/surveys", surveysHandler)
+	router.HandleFunc("/surveys/{survey}", surveyDetailsHandler)
 
 	log.Printf("Survey service listening on %s", port)
 	log.Fatal(http.ListenAndServe(port, router))
@@ -81,10 +80,10 @@ func surveysHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(responseJSON)
 }
 
-// GET /surveys/{survey}/classifiertypes
-func classifierTypesHandler(w http.ResponseWriter, req *http.Request) {
+// GET /surveys/{survey}
+func surveyDetailsHandler(w http.ResponseWriter, req *http.Request) {
 	survey := mux.Vars(req)["survey"]
-	log.Printf("Getting the list of classifier types for survey '%s'", survey)
+	log.Printf("Getting the details for survey '%s'", survey)
 
 	classifierTypes := getClassifierTypes(strings.ToUpper(survey))
 	b, err := json.Marshal(&classifierTypes)

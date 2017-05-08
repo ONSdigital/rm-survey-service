@@ -1,7 +1,8 @@
 # Survey Service
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/) and has the following responsibilities:
 
-* Providing the classifier types applicable to a survey
+* Providing a list of available surveys
+* Providing the details for a survey (including classifier types)
 
 ## Prerequisites
 * Install the [Go PostgreSQL driver]() using `go get github.com/lib/pq`
@@ -40,9 +41,9 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 ["BRES"]
 ```
 
-### List Classifier Types for Survey
+### Get Survey
 
-* Running the command `curl http://localhost:8080/surveys/bres/classifiertypes` should return an HTTP 200 status code with the JSON response:
+* Running the command `curl http://localhost:8080/surveys/bres` should return an HTTP 200 status code with the JSON response:
 
 ```json
 {
