@@ -76,5 +76,11 @@ psql -U postgres -d postgres -f ./sql/seed_data.sql
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
 
+Run the tests using:
+
+```
+make test
+```
+
 ## Copyright
 Copyright (C) 2017 Crown Copyright (Office for National Statistics)
