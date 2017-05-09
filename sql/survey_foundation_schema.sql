@@ -1,31 +1,33 @@
 SET schema 'survey';
 
-CREATE SEQUENCE surveyidseq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 999999999999
-    CACHE 1;
-
-CREATE SEQUENCE classifiertypeidseq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 999999999999
-    CACHE 1;
-
 CREATE TABLE "survey" (
-    surveyid bigint NOT NULL,
-    survey character varying(20) NOT NULL
+    surveyid serial NOT NULL,
+    survey character varying(20) NOT NULL,
+    uuid uuid NOT NULL
 );
 
 ALTER TABLE "survey" OWNER TO survey;
 
 ALTER TABLE "survey" ADD CONSTRAINT survey_pkey PRIMARY KEY (surveyid);
+ALTER TABLE "survey" ADD CONSTRAINT survey_uuid_key UNIQUE (uuid);
+
+CREATE TABLE "classifiertypeselector" (
+    classifiertypeselectorid serial NOT NULL,
+    surveyid integer NOT NULL,
+    classifiertypeselector character varying(50) NOT NULL
+);
+
+ALTER TABLE "classifiertypeselector" OWNER TO survey;
+
+ALTER TABLE "classifiertypeselector"
+    ADD CONSTRAINT classifiertypeselector_pkey PRIMARY KEY (classifiertypeselectorid);
+
+ALTER TABLE "classifiertypeselector"
+    ADD CONSTRAINT surveyid_fkey FOREIGN KEY (surveyid) REFERENCES survey(surveyid);
 
 CREATE TABLE "classifiertype" (
-    classifiertypeid bigint NOT NULL,
-    surveyid bigint NOT NULL,
+    classifiertypeid serial NOT NULL,
+    classifiertypeselectorid integer NOT NULL,
     classifiertype character varying(50) NOT NULL
 );
 
@@ -35,4 +37,4 @@ ALTER TABLE "classifiertype"
     ADD CONSTRAINT classifiertype_pkey PRIMARY KEY (classifiertypeid);
 
 ALTER TABLE "classifiertype"
-    ADD CONSTRAINT surveyid_fkey FOREIGN KEY (surveyid) REFERENCES survey(surveyid);
+    ADD CONSTRAINT classifiertypeselectorid_fkey FOREIGN KEY (classifiertypeselectorid) REFERENCES classifiertypeselector(classifiertypeselectorid);

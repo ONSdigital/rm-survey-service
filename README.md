@@ -58,22 +58,29 @@ psql -U postgres -d postgres -f ./sql/seed_data.sql
 * Running the command `curl http://localhost:8080/surveys` should return an HTTP 200 status code with the JSON response:
 
 ```json
-["BRES"]
+[{
+    "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+    "survey": "BRES"
+}]
 ```
 
 ### Get Survey
 
-* Running the command `curl http://localhost:8080/surveys/bres` should return an HTTP 200 status code with the JSON response:
+* Running the command `curl http://localhost:8080/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87` should return an HTTP 200 status code with the JSON response:
 
 ```json
 {
-  "survey": "BRES",
-  "classifierTypes": [
-    "COLLECTION_EXERCISE",
-    "LEGAL_BASIS",
-    "RU_REF",
-    "SIC"
-  ]
+    "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+    "survey": "BRES",
+    "classifiertypeselectors": {
+        "COLLECTION_INSTRUMENT": [
+            "COLLECTION_EXERCISE",
+            "RU_REF"
+        ],
+        "COMMUNICATION_TEMPLATE": [
+            "LEGAL_BASIS"
+        ]
+    }
 }
 ```
 
