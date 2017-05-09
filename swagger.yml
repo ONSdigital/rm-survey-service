@@ -28,6 +28,8 @@ paths:
             type: array
             items:
               type: string
+            example:
+              - BRES
         204:
           description: No surveys
         default:
@@ -74,11 +76,17 @@ definitions:
       survey:
         description: Unique survey name
         type: string
+        example: BRES
       classifierTypes:
         description: Survey classifier types
         type: array
         items:
           type: string
+        example:
+          - COLLECTION_EXERCISE
+          - LEGAL_BASIS
+          - RU_REF
+          - SIC
   Error:
     type: object
     properties:
