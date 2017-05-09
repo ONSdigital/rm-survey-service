@@ -15,6 +15,11 @@ import (
 var db *sql.DB
 var err error
 
+type SurveySummary struct {
+	UUID   string `json:"id"`
+	Survey string `json:"survey"`
+}
+
 type survey struct {
 	Survey          string   `json:"survey"`
 	ClassifierTypes []string `json:"classifierTypes"`
@@ -95,29 +100,29 @@ func getSurvey(surveyName string) survey {
 	return survey
 }
 
-func getSurveys() []string {
-	rows, err := db.Query("SELECT survey FROM survey.survey ORDER BY survey ASC")
+func getSurveys() []SurveySummary {
+	rows, err := db.Query("SELECT uuid, survey FROM survey.survey ORDER BY survey ASC")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer rows.Close()
-	var surveys []string
+	var surveySummaries []SurveySummary
 
 	for rows.Next() {
-		var survey string
+		var surveySummary SurveySummary
 
-		if err := rows.Scan(&survey); err != nil {
+		if err := rows.Scan(&surveySummary.UUID, &surveySummary.Survey); err != nil {
 			log.Fatal(err)
 		}
 
-		surveys = append(surveys, survey)
+		surveySummaries = append(surveySummaries, surveySummary)
 	}
 
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
-	return surveys
+	return surveySummaries
 }
