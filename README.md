@@ -1,8 +1,8 @@
 # Survey Service
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/) and has the following responsibilities:
 
-* Providing a list of available surveys
-* Providing the details for a survey (including classifier types)
+* Providing a list of known surveys
+* Providing the details for a specified survey
 
 ## Prerequisites
 * Install the [Go PostgreSQL driver](https://github.com/lib/pq) using `go get github.com/lib/pq`
