@@ -72,7 +72,7 @@ psql -U postgres -d postgres -f ./sql/seed_data.sql
 {
     "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
     "survey": "BRES",
-    "classifiertypeselectors": {
+    "classifierTypeSelectors": {
         "COLLECTION_INSTRUMENT": [
             "COLLECTION_EXERCISE",
             "RU_REF"
