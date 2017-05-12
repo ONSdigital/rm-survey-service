@@ -71,16 +71,7 @@ psql -U postgres -d postgres -f ./sql/seed_data.sql
 ```json
 {
     "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-    "survey": "BRES",
-    "classifierTypeSelectors": {
-        "COLLECTION_INSTRUMENT": [
-            "COLLECTION_EXERCISE",
-            "RU_REF"
-        ],
-        "COMMUNICATION_TEMPLATE": [
-            "LEGAL_BASIS"
-        ]
-    }
+    "survey": "BRES"
 }
 ```
 
