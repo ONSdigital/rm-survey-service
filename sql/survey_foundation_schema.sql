@@ -2,14 +2,14 @@ SET schema 'survey';
 
 CREATE TABLE "survey" (
     surveyid serial NOT NULL,
-    survey character varying(20) NOT NULL,
-    uuid uuid NOT NULL
+    id uuid NOT NULL,
+    survey character varying(20) NOT NULL
 );
 
 ALTER TABLE "survey" OWNER TO survey;
 
 ALTER TABLE "survey" ADD CONSTRAINT survey_pkey PRIMARY KEY (surveyid);
-ALTER TABLE "survey" ADD CONSTRAINT survey_uuid_key UNIQUE (uuid);
+ALTER TABLE "survey" ADD CONSTRAINT survey_id_key UNIQUE (id);
 
 CREATE TABLE "classifiertypeselector" (
     classifiertypeselectorid serial NOT NULL,

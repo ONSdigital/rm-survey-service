@@ -1,4 +1,4 @@
-INSERT INTO survey.survey(surveyid, survey, uuid) VALUES (1, 'BRES', 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87');
+INSERT INTO survey.survey(surveyid, id, survey) VALUES (1, 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87', 'BRES');
 
 INSERT INTO survey.classifiertypeselector(classifiertypeselectorid, surveyid, classifiertypeselector) VALUES (1, 1, 'COLLECTION_INSTRUMENT');
 INSERT INTO survey.classifiertypeselector(classifiertypeselectorid, surveyid, classifiertypeselector) VALUES (2, 1, 'COMMUNICATION_TEMPLATE');
