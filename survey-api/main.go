@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -16,13 +15,13 @@ var db *sql.DB
 var err error
 
 type SurveySummary struct {
-	UUID   string `json:"id"`
+	ID     string `json:"id"`
 	Survey string `json:"survey"`
 }
 
-type survey struct {
-	Survey          string   `json:"survey"`
-	ClassifierTypes []string `json:"classifierTypes"`
+type Survey struct {
+	ID     string `json:"id"`
+	Survey string `json:"survey"`
 }
 
 func main() {
@@ -47,7 +46,7 @@ func main() {
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	router.GET("/surveys", listSurveysEndpoint)
-	router.GET("/surveys/:survey", getSurveyEndpoint)
+	router.GET("/surveys/:surveyid", getSurveyEndpoint)
 
 	router.Run(port)
 }
@@ -63,45 +62,37 @@ func listSurveysEndpoint(context *gin.Context) {
 	}
 }
 
-// GET /surveys/{survey}
+// GET /surveys/{surveyid}
 func getSurveyEndpoint(context *gin.Context) {
-	survey := getSurvey(strings.ToUpper(context.Param("survey")))
+	survey := getSurvey(context.Param("surveyid"))
 	context.JSON(http.StatusOK, survey)
 }
 
-func getSurvey(surveyName string) survey {
-	rows, err := db.Query("SELECT classifiertype FROM survey.classifiertype INNER JOIN survey.survey ON classifiertype.surveyid = survey.surveyid WHERE survey= $1 ORDER BY classifiertype ASC", surveyName)
+func getSurvey(surveyID string) Survey {
+	rows, err := db.Query("SELECT id, survey from survey.survey WHERE id = $1", surveyID)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer rows.Close()
-	var survey survey
-	var classifierTypes []string
+	var survey Survey
 
 	for rows.Next() {
-		var classifierType string
-
-		if err := rows.Scan(&classifierType); err != nil {
+		if err := rows.Scan(&survey.ID, &survey.Survey); err != nil {
 			log.Fatal(err)
 		}
-
-		classifierTypes = append(classifierTypes, classifierType)
 	}
 
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
-	survey.Survey = surveyName
-	survey.ClassifierTypes = classifierTypes
-
 	return survey
 }
 
 func getSurveys() []SurveySummary {
-	rows, err := db.Query("SELECT uuid, survey FROM survey.survey ORDER BY survey ASC")
+	rows, err := db.Query("SELECT id, survey FROM survey.survey ORDER BY survey ASC")
 
 	if err != nil {
 		log.Fatal(err)
@@ -113,7 +104,7 @@ func getSurveys() []SurveySummary {
 	for rows.Next() {
 		var surveySummary SurveySummary
 
-		if err := rows.Scan(&surveySummary.UUID, &surveySummary.Survey); err != nil {
+		if err := rows.Scan(&surveySummary.ID, &surveySummary.Survey); err != nil {
 			log.Fatal(err)
 		}
 
