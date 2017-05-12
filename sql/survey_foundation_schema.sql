@@ -13,6 +13,7 @@ ALTER TABLE "survey" ADD CONSTRAINT survey_id_key UNIQUE (id);
 
 CREATE TABLE "classifiertypeselector" (
     classifiertypeselectorid serial NOT NULL,
+    id uuid NOT NULL,
     surveyid integer NOT NULL,
     classifiertypeselector character varying(50) NOT NULL
 );
@@ -21,6 +22,9 @@ ALTER TABLE "classifiertypeselector" OWNER TO survey;
 
 ALTER TABLE "classifiertypeselector"
     ADD CONSTRAINT classifiertypeselector_pkey PRIMARY KEY (classifiertypeselectorid);
+    
+ALTER TABLE "classifiertypeselector"
+    ADD CONSTRAINT classifiertypeselector_id_key UNIQUE (id);
 
 ALTER TABLE "classifiertypeselector"
     ADD CONSTRAINT surveyid_fkey FOREIGN KEY (surveyid) REFERENCES survey(surveyid);
