@@ -57,17 +57,6 @@ func main() {
 	router.Run(port)
 }
 
-// GET /classifiertypes
-func listClassifierTypeSelectorsEndpoint(context *gin.Context) {
-	classifierTypeSelectors := getClassifierTypeSelectors(context.Param("surveyid"))
-
-	if len(classifierTypeSelectors) == 0 {
-		context.AbortWithStatus(http.StatusNoContent)
-	} else {
-		context.JSON(http.StatusOK, classifierTypeSelectors)
-	}
-}
-
 // GET /surveys
 func listSurveysEndpoint(context *gin.Context) {
 	surveys := getSurveys()
@@ -83,6 +72,17 @@ func listSurveysEndpoint(context *gin.Context) {
 func getSurveyEndpoint(context *gin.Context) {
 	survey := getSurvey(context.Param("surveyid"))
 	context.JSON(http.StatusOK, survey)
+}
+
+// GET /surveys/{surveyid}/classifiertypeselectors
+func listClassifierTypeSelectorsEndpoint(context *gin.Context) {
+	classifierTypeSelectors := getClassifierTypeSelectors(context.Param("surveyid"))
+
+	if len(classifierTypeSelectors) == 0 {
+		context.AbortWithStatus(http.StatusNoContent)
+	} else {
+		context.JSON(http.StatusOK, classifierTypeSelectors)
+	}
 }
 
 func getClassifierTypeSelectors(surveyID string) []ClassifierTypeSelector {
