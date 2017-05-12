@@ -14,6 +14,11 @@ import (
 var db *sql.DB
 var err error
 
+type ClassifierTypeSelector struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type SurveySummary struct {
 	ID     string `json:"id"`
 	Survey string `json:"survey"`
@@ -47,8 +52,20 @@ func main() {
 
 	router.GET("/surveys", listSurveysEndpoint)
 	router.GET("/surveys/:surveyid", getSurveyEndpoint)
+	router.GET("/surveys/:surveyid/classifiertypeselectors", listClassifierTypeSelectorsEndpoint)
 
 	router.Run(port)
+}
+
+// GET /classifiertypes
+func listClassifierTypeSelectorsEndpoint(context *gin.Context) {
+	classifierTypeSelectors := getClassifierTypeSelectors(context.Param("surveyid"))
+
+	if len(classifierTypeSelectors) == 0 {
+		context.AbortWithStatus(http.StatusNoContent)
+	} else {
+		context.JSON(http.StatusOK, classifierTypeSelectors)
+	}
 }
 
 // GET /surveys
@@ -66,6 +83,32 @@ func listSurveysEndpoint(context *gin.Context) {
 func getSurveyEndpoint(context *gin.Context) {
 	survey := getSurvey(context.Param("surveyid"))
 	context.JSON(http.StatusOK, survey)
+}
+
+func getClassifierTypeSelectors(surveyID string) []ClassifierTypeSelector {
+	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyid = survey.surveyid WHERE survey.id = $1 ORDER BY classifiertypeselector", surveyID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+	var classifierTypeSelectors []ClassifierTypeSelector
+	var classifierTypeSelector ClassifierTypeSelector
+
+	for rows.Next() {
+		if err := rows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name); err != nil {
+			log.Fatal(err)
+		}
+
+		classifierTypeSelectors = append(classifierTypeSelectors, classifierTypeSelector)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return classifierTypeSelectors
 }
 
 func getSurvey(surveyID string) Survey {
