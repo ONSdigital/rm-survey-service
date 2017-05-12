@@ -84,6 +84,31 @@ psql -U postgres -d postgres -f ./sql/seed_data.sql
 }
 ```
 
+### List Classifier Type Selectors
+
+* Running the command `curl http://localhost:8080/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors` should return an HTTP 200 status code with the JSON response:
+
+```json
+[
+  {
+    "id": "efa868fb-fb80-44c7-9f33-d6800a17c4da",
+    "name": "COLLECTION_INSTRUMENT"
+  },
+  {
+    "id": "e119ffd6-6fc1-426c-ae81-67a96f9a71ba",
+    "name": "COMMUNICATION_TEMPLATE"
+  }
+]
+```
+
+### Get Classifier Type Selector
+
+* Running the command `curl http://localhost:8080/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors/efa868fb-fb80-44c7-9f33-d6800a17c4da` should return an HTTP 200 status code with the JSON response:
+
+```json
+["COLLECTION_EXERCISE", "RU_REF"]
+```
+
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
 
