@@ -8,26 +8,10 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"github.com/onsdigital/rm-survey-service/survey-api/models"
 )
 
-var db *sql.DB
 var err error
-
-type ClassifierTypeSelector struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type SurveySummary struct {
-	ID     string `json:"id"`
-	Survey string `json:"survey"`
-}
-
-type Survey struct {
-	ID     string `json:"id"`
-	Survey string `json:"survey"`
-}
 
 func main() {
 	port := ":8080"
@@ -41,25 +25,26 @@ func main() {
 		dataSource = v
 	}
 
-	db, err = sql.Open("postgres", dataSource)
-
-	if err = db.Ping(); err != nil {
-		log.Fatal(err)
-	}
+	models.InitDB(dataSource)
 
 	router := gin.Default()
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	router.GET("/surveys", listSurveysEndpoint)
-	router.GET("/surveys/:surveyid", getSurveyEndpoint)
-	router.GET("/surveys/:surveyid/classifiertypeselectors", listClassifierTypeSelectorsEndpoint)
+	router.GET("/surveys", allSurveys)
+	router.GET("/surveys/:surveyid", getSurvey)
+	router.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 
 	router.Run(port)
 }
 
 // GET /surveys
-func listSurveysEndpoint(context *gin.Context) {
-	surveys := getSurveys()
+func allSurveys(context *gin.Context) {
+	surveys, err := models.AllSurveys()
+	if err != nil {
+		log.Println(err)
+		context.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	if len(surveys) == 0 {
 		context.AbortWithStatus(http.StatusNoContent)
@@ -69,94 +54,39 @@ func listSurveysEndpoint(context *gin.Context) {
 }
 
 // GET /surveys/{surveyid}
-func getSurveyEndpoint(context *gin.Context) {
-	survey := getSurvey(context.Param("surveyid"))
+func getSurvey(context *gin.Context) {
+	survey, err := models.GetSurvey(context.Param("surveyid"))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, "Survey not found")
+		} else {
+			log.Println(err)
+			context.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		return
+	}
+
 	context.JSON(http.StatusOK, survey)
 }
 
 // GET /surveys/{surveyid}/classifiertypeselectors
-func listClassifierTypeSelectorsEndpoint(context *gin.Context) {
-	classifierTypeSelectors := getClassifierTypeSelectors(context.Param("surveyid"))
+func allClassifierTypeSelectors(context *gin.Context) {
+	classifierTypeSelectors, err := models.AllClassifierTypeSelectors(context.Param("surveyid"))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, "Survey not found")
+		} else {
+			log.Println(err)
+			context.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		return
+	}
 
 	if len(classifierTypeSelectors) == 0 {
 		context.AbortWithStatus(http.StatusNoContent)
 	} else {
 		context.JSON(http.StatusOK, classifierTypeSelectors)
 	}
-}
-
-func getClassifierTypeSelectors(surveyID string) []ClassifierTypeSelector {
-	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyid = survey.surveyid WHERE survey.id = $1 ORDER BY classifiertypeselector", surveyID)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer rows.Close()
-	var classifierTypeSelectors []ClassifierTypeSelector
-	var classifierTypeSelector ClassifierTypeSelector
-
-	for rows.Next() {
-		if err := rows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name); err != nil {
-			log.Fatal(err)
-		}
-
-		classifierTypeSelectors = append(classifierTypeSelectors, classifierTypeSelector)
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return classifierTypeSelectors
-}
-
-func getSurvey(surveyID string) Survey {
-	rows, err := db.Query("SELECT id, survey from survey.survey WHERE id = $1", surveyID)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer rows.Close()
-	var survey Survey
-
-	for rows.Next() {
-		if err := rows.Scan(&survey.ID, &survey.Survey); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return survey
-}
-
-func getSurveys() []SurveySummary {
-	rows, err := db.Query("SELECT id, survey FROM survey.survey ORDER BY survey ASC")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer rows.Close()
-	var surveySummaries []SurveySummary
-
-	for rows.Next() {
-		var surveySummary SurveySummary
-
-		if err := rows.Scan(&surveySummary.ID, &surveySummary.Survey); err != nil {
-			log.Fatal(err)
-		}
-
-		surveySummaries = append(surveySummaries, surveySummary)
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return surveySummaries
 }
