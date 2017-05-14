@@ -32,12 +32,11 @@ func main() {
 
 	router.GET("/surveys", allSurveys)
 	router.GET("/surveys/:surveyid", getSurvey)
-	router.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
+	router.GET("/classifiertypeselectors/survey/:surveyid", allClassifierTypeSelectors)
 
 	router.Run(port)
 }
 
-// GET /surveys
 func allSurveys(context *gin.Context) {
 	surveys, err := models.AllSurveys()
 	if err != nil {
@@ -53,7 +52,6 @@ func allSurveys(context *gin.Context) {
 	}
 }
 
-// GET /surveys/{surveyid}
 func getSurvey(context *gin.Context) {
 	survey, err := models.GetSurvey(context.Param("surveyid"))
 	if err != nil {
@@ -70,7 +68,6 @@ func getSurvey(context *gin.Context) {
 	context.JSON(http.StatusOK, survey)
 }
 
-// GET /surveys/{surveyid}/classifiertypeselectors
 func allClassifierTypeSelectors(context *gin.Context) {
 	classifierTypeSelectors, err := models.AllClassifierTypeSelectors(context.Param("surveyid"))
 	if err != nil {
