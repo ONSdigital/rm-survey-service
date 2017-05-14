@@ -32,7 +32,8 @@ func main() {
 
 	router.GET("/surveys", allSurveys)
 	router.GET("/surveys/:surveyid", getSurvey)
-	router.GET("/classifiertypeselectors/survey/:surveyid", allClassifierTypeSelectors)
+	router.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
+	router.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
 
 	router.Run(port)
 }
@@ -53,7 +54,8 @@ func allSurveys(context *gin.Context) {
 }
 
 func getSurvey(context *gin.Context) {
-	survey, err := models.GetSurvey(context.Param("surveyid"))
+	surveyID := context.Param("surveyid")
+	survey, err := models.GetSurvey(surveyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, "Survey not found")
@@ -69,7 +71,8 @@ func getSurvey(context *gin.Context) {
 }
 
 func allClassifierTypeSelectors(context *gin.Context) {
-	classifierTypeSelectors, err := models.AllClassifierTypeSelectors(context.Param("surveyid"))
+	surveyID := context.Param("surveyid")
+	classifierTypeSelectors, err := models.AllClassifierTypeSelectors(surveyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, "Survey not found")
@@ -86,4 +89,22 @@ func allClassifierTypeSelectors(context *gin.Context) {
 	} else {
 		context.JSON(http.StatusOK, classifierTypeSelectors)
 	}
+}
+
+func getClassifierTypeSelector(context *gin.Context) {
+	surveyID := context.Param("surveyid")
+	classifierTypeSelectorID := context.Param("classifiertypeselectorid")
+	classifierTypeSelector, err := models.GetClassifierTypeSelector(surveyID, classifierTypeSelectorID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, "Survey or classifier type selector not found")
+		} else {
+			log.Println(err)
+			context.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		return
+	}
+
+	context.JSON(http.StatusOK, classifierTypeSelector)
 }

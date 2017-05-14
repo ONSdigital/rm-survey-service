@@ -46,3 +46,13 @@ func GetSurvey(surveyID string) (*Survey, error) {
 
 	return survey, nil
 }
+
+func getSurveyID(surveyID string) error {
+	var id string
+	err := db.QueryRow("SELECT id FROM survey.survey WHERE id = $1", surveyID).Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
