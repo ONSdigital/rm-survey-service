@@ -1,5 +1,5 @@
 # Survey Service API
-This page documents the Survey service API endpoints. These endpoints will be secured using HTTP basic authentication initially.
+This page documents the Survey service API endpoints. These endpoints will be secured using HTTP basic authentication initially. All endpoints return an `HTTP 200 OK` status code except where noted otherwise.
 
 ## List Surveys
 * `GET /surveys` will return a list of known surveys.
