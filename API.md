@@ -1,5 +1,5 @@
 # Survey Service API
-This page documents the Survey service API endpoints.
+This page documents the Survey service API endpoints. These endpoints will be secured using HTTP basic authentication initially.
 
 ## List Surveys
 * `GET /surveys` will return a list of known surveys.
