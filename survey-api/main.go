@@ -11,8 +11,6 @@ import (
 	"github.com/onsdigital/rm-survey-service/survey-api/models"
 )
 
-var err error
-
 func main() {
 	port := ":8080"
 	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
