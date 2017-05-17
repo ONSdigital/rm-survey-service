@@ -8,7 +8,7 @@ This page documents the Survey service API endpoints. These endpoints will be se
 ```json
 [{
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "survey": "BRES"
+  "name": "BRES"
 }]
 ```
 
