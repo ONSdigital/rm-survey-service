@@ -1,17 +1,17 @@
 package models
 
 type SurveySummary struct {
-	ID     string `json:"id"`
-	Survey string `json:"survey"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type Survey struct {
-	ID     string `json:"id"`
-	Survey string `json:"survey"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 func AllSurveys() ([]*SurveySummary, error) {
-	rows, err := db.Query("SELECT id, survey FROM survey.survey ORDER BY survey ASC")
+	rows, err := db.Query("SELECT id, name FROM survey.survey ORDER BY name ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 
 	for rows.Next() {
 		surveySummary := new(SurveySummary)
-		err := rows.Scan(&surveySummary.ID, &surveySummary.Survey)
+		err := rows.Scan(&surveySummary.ID, &surveySummary.Name)
 
 		if err != nil {
 			return nil, err
@@ -39,7 +39,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 
 func GetSurvey(surveyID string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, survey from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.Survey)
+	err := db.QueryRow("SELECT id, name from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.Name)
 	if err != nil {
 		return nil, err
 	}

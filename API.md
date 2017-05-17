@@ -4,7 +4,6 @@ This page documents the Survey service API endpoints. These endpoints will be se
 ## List Surveys
 * `GET /surveys` will return a list of known surveys.
 
-
 ### Example JSON  Response
 ```json
 [{
@@ -22,7 +21,7 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
 ```json
 {
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "survey": "BRES"
+  "name": "BRES"
 }
 ```
 

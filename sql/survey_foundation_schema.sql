@@ -3,7 +3,7 @@ SET schema 'survey';
 CREATE TABLE "survey" (
     surveyid serial NOT NULL,
     id uuid NOT NULL,
-    survey character varying(20) NOT NULL
+    name character varying(20) NOT NULL
 );
 
 ALTER TABLE "survey" OWNER TO survey;
