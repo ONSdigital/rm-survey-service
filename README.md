@@ -41,12 +41,19 @@ To start the Docker image, run:
 docker-compose up -d
 ```
 
-Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the SQL files in the `sql` directory:
+Run `docker ps` and note the ID of the running Docker container. Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the SQL files in the `sql` directory:
+
 ```
-docker exec -it postgres /bin/sh
-psql -U postgres -d postgres -f ./sql/groundzero.sql
-psql -U postgres -d postgres -f ./sql/survey_foundation_schema.sql
-psql -U postgres -d postgres -f ./sql/seed_data.sql
+docker exec -it <container-id> /bin/sh
+psql postgres://postgres:password@localhost/postgres?sslmode=disable
+```
+
+Manually copy and paste the contents of the SQL files in the following order:
+
+```
+groundzero.sql
+survey_foundation_schema.sql
+seed_data.sql
 ```
 
 ## API
