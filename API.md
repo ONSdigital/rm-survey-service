@@ -8,21 +8,21 @@ This page documents the Survey service API endpoints. These endpoints will be se
 ### Example JSON  Response
 ```json
 [{
-    "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-    "survey": "BRES"
+  "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+  "survey": "BRES"
 }]
 ```
 
 An `HTTP 204 No Content` status code is returned if there are no known surveys.
 
 ## Get Survey
-* `GET /surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87` will returns the details of the survey with an ID of `cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87`.
+* `GET /surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87` will return the details of the survey with an ID of `cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87`.
 
 ### Example JSON  Response
 ```json
 {
-    "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-    "survey": "BRES"
+  "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+  "survey": "BRES"
 }
 ```
 
