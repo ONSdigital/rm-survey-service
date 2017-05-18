@@ -27,6 +27,19 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
 
 An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
 
+## Get Survey by Name
+* `GET /surveys/name/bres` will return the details of the survey with the name `bres` (or `BRES`).
+
+### Example JSON Response
+```json
+{
+  "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+  "name": "BRES"
+}
+```
+
+An `HTTP 404 Not Found` status code is returned if the survey with the specified name could not be found.
+
 ## List Classifier Type Selectors
 * `GET /surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors` will return a list of classifier type selectors for the survey with an ID of `cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87`.
 

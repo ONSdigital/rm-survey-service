@@ -47,6 +47,16 @@ func GetSurvey(surveyID string) (*Survey, error) {
 	return survey, nil
 }
 
+func GetSurveyByName(name string) (*Survey, error) {
+	survey := new(Survey)
+	err := db.QueryRow("SELECT id, name from survey.survey WHERE LOWER(name) = LOWER($1)", name).Scan(&survey.ID, &survey.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return survey, nil
+}
+
 func getSurveyID(surveyID string) error {
 	var id string
 	err := db.QueryRow("SELECT id FROM survey.survey WHERE id = $1", surveyID).Scan(&id)
