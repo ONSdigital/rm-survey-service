@@ -13,17 +13,22 @@ import (
 
 func main() {
 	port := ":8080"
-	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
+	adminDataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
+	dataSource := "postgres://survey:password@localhost/postgres?sslmode=disable"
 
 	if v := os.Getenv("PORT"); len(v) > 0 {
 		port = v
+	}
+
+	if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
+		adminDataSource = v
 	}
 
 	if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
 		dataSource = v
 	}
 
-	models.InitDB(dataSource)
+	models.InitDB(adminDataSource, dataSource)
 
 	echo := echo.New()
 	echo.Use(middleware.Gzip())

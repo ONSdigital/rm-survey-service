@@ -27,10 +27,11 @@ From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-a
 
 The following environment variables may be overridden:
 
-| Environment Variable | Purpose                               | Default Value                                                   |
-| :------------------- | :------------------------------------ | :-------------------------------------------------------------- |
-| DATABASE_URL         | PostgreSQL database connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
-| PORT                 | HTTP listener port                    | :8080                                                           |
+| Environment Variable | Purpose                                      | Default Value                                                   |
+| :------------------- | :------------------------------------------- | :-------------------------------------------------------------- |
+| PG_DATABASE_URL      | PostgreSQL *postgres* user connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
+| DATABASE_URL         | PostgreSQL *survey* user connection string   | postgres://survey:password@localhost/postgres?sslmode=disable   |
+| PORT                 | HTTP listener port                           | :8080                                                           |
 
 ### Docker Image and PostgreSQL
 To start the Docker image, run:
@@ -39,20 +40,14 @@ To start the Docker image, run:
 docker-compose up -d
 ```
 
-Run `docker ps` and note the ID of the running Docker container. Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the SQL files in the `sql` directory:
+Run `docker ps` and note the ID of the running Docker container. Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the `sql/bootstrap.sql` file:
 
 ```
 docker exec -it <container-id> /bin/sh
 psql postgres://postgres:password@localhost/postgres?sslmode=disable
 ```
 
-Manually copy and paste the contents of the SQL files in the following order:
-
-```
-groundzero.sql
-survey_foundation_schema.sql
-seed_data.sql
-```
+Manually copy and paste the contents of the `sql/bootstrap.sql` file.
 
 ## API
 See [API.md](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md) for API documentation.
