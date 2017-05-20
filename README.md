@@ -4,6 +4,7 @@ This repository contains the Survey service. This microservice is a RESTful web 
 ## Prerequisites
 * Install the [Go PostgreSQL driver](https://github.com/lib/pq) using `go get github.com/lib/pq`
 * Install the [Echo web framework](https://github.com/labstack/echo) using `go get -u github.com/labstack/echo/...`
+* Install the [Zap structured logger](https://github.com/uber-go/zap) using `go get -u go.uber.org/zap`
 
 ## Building
 ### Make

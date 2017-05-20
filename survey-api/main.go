@@ -2,14 +2,26 @@ package main
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/onsdigital/rm-survey-service/survey-api/models"
 )
+
+const serviceName = "surveysvc"
+const timeFormat = "2006-01-02T15:04:05Z0700"
+
+var logger *zap.Logger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	defer logger.Sync()
+}
 
 func main() {
 	port := ":8080"
@@ -39,13 +51,23 @@ func main() {
 	echo.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
 
-	echo.Logger.Fatal(echo.Start(port))
+	logger.Info("Survey service started on port "+port,
+		zap.String("service", serviceName),
+		zap.String("event", "service started"),
+		zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+	echo.Start(port)
 }
 
 func allSurveys(context echo.Context) error {
 	surveys, err := models.AllSurveys()
 	if err != nil {
-		log.Println(err)
+		logger.Error("Error getting list of surveys",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -62,10 +84,16 @@ func getSurvey(context echo.Context) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return context.JSON(http.StatusNotFound, "Survey not found")
-		} else {
-			log.Println(err)
-			return context.JSON(http.StatusInternalServerError, err.Error())
 		}
+
+		logger.Error("Error getting survey '"+surveyID+"'",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		return context.JSON(http.StatusInternalServerError, err.Error())
+
 	}
 
 	return context.JSON(http.StatusOK, survey)
@@ -77,10 +105,15 @@ func getSurveyByName(context echo.Context) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return context.JSON(http.StatusNotFound, "Survey not found")
-		} else {
-			log.Println(err)
-			return context.JSON(http.StatusInternalServerError, err.Error())
 		}
+
+		logger.Error("Error getting survey '"+name+"'",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return context.JSON(http.StatusOK, survey)
@@ -92,10 +125,15 @@ func allClassifierTypeSelectors(context echo.Context) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return context.JSON(http.StatusNotFound, "Survey not found")
-		} else {
-			log.Println(err)
-			return context.JSON(http.StatusInternalServerError, err.Error())
 		}
+
+		logger.Error("Error getting list of classifier type selectors for survey '"+surveyID+"'",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	if len(classifierTypeSelectors) == 0 {
@@ -112,10 +150,15 @@ func getClassifierTypeSelector(context echo.Context) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return context.JSON(http.StatusNotFound, "Survey or classifier type selector not found")
-		} else {
-			log.Println(err)
-			return context.JSON(http.StatusInternalServerError, err.Error())
 		}
+
+		logger.Error("Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"'",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return context.JSON(http.StatusOK, classifierTypeSelector)
