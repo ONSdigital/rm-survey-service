@@ -1,0 +1,11 @@
+applications:
+- name: surveysvc
+  buildpack: https://github.com/cloudfoundry/go-buildpack.git
+  instances: 1
+  memory: 256M
+  path: survey-api
+  env:
+    GOVERSION: go1.8
+    GOPACKAGENAME: github.com/ONSdigital/rm-survey-service/survey-api
+  services:
+    - surveysvc_pg_db
