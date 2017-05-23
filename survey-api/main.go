@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strconv"
+	"log"
 
 	"go.uber.org/zap"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/onsdigital/rm-survey-service/survey-api/models"
+	"github.com/cloudfoundry-community/go-cfenv"
 )
 
 const serviceName = "surveysvc"
@@ -28,17 +31,39 @@ func main() {
 	adminDataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	dataSource := "postgres://survey:password@localhost/postgres?sslmode=disable"
 
-	if v := os.Getenv("PORT"); len(v) > 0 {
-		port = v
-	}
+	appenv, err := cfenv.Current()
 
-	if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
-		adminDataSource = v
-	}
+	if err != nil {
 
-	if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
-		dataSource = v
-	}
+		if v := os.Getenv("PORT"); len(v) > 0 {
+			port = v
+		}
+
+		if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
+			adminDataSource = v
+		}
+
+		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
+			dataSource = v
+		}
+
+    log.Printf("No CloudFoundry environment, using port %+v", port)
+  } else {
+    ps := appenv.Port
+    port = ":"+strconv.FormatInt(int64(ps), 10)
+		log.Printf("Found CloudFoundry environment: using port %+v", port)
+		pgSrv,err := appenv.Services.WithTag("postgresql")
+
+		if(err == nil){
+			pgUri, found := pgSrv[0].CredentialString("uri")
+
+			if(found){
+				adminDataSource = pgUri
+				dataSource = pgUri
+			}
+
+		}
+  }
 
 	models.InitDB(adminDataSource, dataSource)
 
