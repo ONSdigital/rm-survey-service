@@ -10,6 +10,10 @@
 # Build directory
 build/
 
+# Godeps directoy
+survey-api/Godeps/
+survey-api/vendor/
+
 # Test binary, build with `go test -c`
 *.test
 
