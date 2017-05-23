@@ -16,5 +16,9 @@ clean:
 	test -d $(BUILD) && rm -r $(BUILD)
 
 push:
+	cp -fr ./sql ./survey-api/sql
 	cd survey-api; godep get; godep save
 	cf push
+	rm -rf ./survey-api/sql
+	rm -rf ./survey-api/Godeps
+	rm -rf ./survey-api/vendor
