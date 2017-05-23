@@ -14,3 +14,7 @@ test:
 
 clean:
 	test -d $(BUILD) && rm -r $(BUILD)
+
+push:
+	cd survey-api; godep get; godep save
+	cf push
