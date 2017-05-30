@@ -1,3 +1,5 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5adaae19b8f4b899ce935fe856a85d9)](https://www.codacy.com/app/sdcplatform/rm-survey-service?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ONSdigital/rm-survey-service&amp;utm_campaign=Badge_Grade)
+
 # Survey Service
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). [API documentation](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md).
 
