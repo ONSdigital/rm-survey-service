@@ -21,7 +21,7 @@ func AllClassifierTypeSelectors(surveyID string) ([]*ClassifierTypeSelectorSumma
 	}
 
 	// Now we can get the classifier type selector records.
-	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyid = survey.surveyid WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", surveyID)
+	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", surveyID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func GetClassifierTypeSelector(surveyID string, classifierTypeSelectorID string)
 	}
 
 	// Now we can get the classifier type selector and classifier type records.
-	rows, err := db.Query("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorid = classifiertypeselector.classifiertypeselectorid WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC", classifierTypeSelectorID)
+	rows, err := db.Query("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC", classifierTypeSelectorID)
 	if err != nil {
 		return nil, err
 	}
