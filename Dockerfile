@@ -1,4 +1,5 @@
 FROM golang:alpine
+LABEL maintainer "Rob Smart" 
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash git openssh
@@ -7,7 +8,7 @@ RUN apk update && apk upgrade && \
 RUN mkdir -p /go/src/github.com/onsdigital/rm-survey-service/survey-api/
 
 # Add all source code
-ADD ./survey-api /go/src/github.com/onsdigital/rm-survey-service/survey-api/
+COPY ./survey-api /go/src/github.com/onsdigital/rm-survey-service/survey-api/
 
 # Run the Go installer
 RUN go get -v -d github.com/onsdigital/rm-survey-service/survey-api/
