@@ -22,12 +22,12 @@ func init() {
 	defer logger.Sync()
 }
 
-func InitDB(adminDataSource string, dataSource string) {
+func InitDB(dataSource string) {
 	const DriverName = "postgres"
 	var err error
-	db, err = sql.Open(DriverName, adminDataSource)
+	db, err = sql.Open(DriverName, dataSource)
 	if err != nil {
-		logger.Error("Error opening postgres user data source",
+		logger.Error("Error opening data source",
 			zap.String("service", serviceName),
 			zap.String("event", "error"),
 			zap.String("data", err.Error()),
@@ -35,7 +35,7 @@ func InitDB(adminDataSource string, dataSource string) {
 	}
 
 	if err = db.Ping(); err != nil {
-		logger.Error("Error establishing connection to postgres user data source",
+		logger.Error("Error establishing connection to data source",
 			zap.String("service", serviceName),
 			zap.String("event", "error"),
 			zap.String("data", err.Error()),
@@ -44,15 +44,6 @@ func InitDB(adminDataSource string, dataSource string) {
 
 	if !schemaExists() {
 		bootstrapSchema()
-	}
-
-	db, err = sql.Open(DriverName, dataSource)
-	if err != nil {
-		logger.Error("Error opening service user data source",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
 	}
 }
 

@@ -33,8 +33,7 @@ The following environment variables may be overridden:
 
 | Environment Variable | Purpose                                      | Default Value                                                   |
 | :------------------- | :------------------------------------------- | :-------------------------------------------------------------- |
-| PG_DATABASE_URL      | PostgreSQL *postgres* user connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
-| DATABASE_URL         | PostgreSQL *survey* user connection string   | postgres://survey:password@localhost/postgres?sslmode=disable   |
+| DATABASE_URL         | PostgreSQL *survey* user connection string   | postgres://postgres:password@localhost/postgres?sslmode=disable |
 | PORT                 | HTTP listener port                           | :8080                                                           |
 
 ### Docker Image and PostgreSQL

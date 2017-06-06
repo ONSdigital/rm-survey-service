@@ -27,8 +27,7 @@ func init() {
 
 func main() {
 	port := ":8080"
-	adminDataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
-	dataSource := "postgres://survey:password@localhost/postgres?sslmode=disable"
+	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	appEnv, err := cfenv.Current()
 
 	if err == nil {
@@ -45,7 +44,6 @@ func main() {
 			uri, found := postgresServer[0].CredentialString("uri")
 
 			if found {
-				adminDataSource = uri
 				dataSource = uri
 			}
 		}
@@ -59,16 +57,12 @@ func main() {
 			port = v
 		}
 
-		if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
-			adminDataSource = v
-		}
-
 		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
 			dataSource = v
 		}
 	}
 
-	models.InitDB(adminDataSource, dataSource)
+	models.InitDB(dataSource)
 
 	echo := echo.New()
 	echo.Use(middleware.Gzip())
