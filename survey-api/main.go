@@ -31,24 +31,7 @@ func main() {
 	dataSource := "postgres://survey:password@localhost/postgres?sslmode=disable"
 	appEnv, err := cfenv.Current()
 
-	if err != nil {
-		logger.Info("No Cloud Foundry environment",
-			zap.String("service", serviceName),
-			zap.String("event", "service startup"),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
-		if v := os.Getenv("PORT"); len(v) > 0 {
-			port = v
-		}
-
-		if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
-			adminDataSource = v
-		}
-
-		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
-			dataSource = v
-		}
-	} else {
+	if err == nil {
 		ps := appEnv.Port
 		port = ":" + strconv.FormatInt(int64(ps), 10)
 		postgresServer, err := appEnv.Services.WithTag("postgresql")
@@ -65,6 +48,23 @@ func main() {
 				adminDataSource = uri
 				dataSource = uri
 			}
+		}
+	} else {
+		logger.Info("No Cloud Foundry environment",
+			zap.String("service", serviceName),
+			zap.String("event", "service startup"),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		if v := os.Getenv("PORT"); len(v) > 0 {
+			port = v
+		}
+
+		if v := os.Getenv("PG_DATABASE_URL"); len(v) > 0 {
+			adminDataSource = v
+		}
+
+		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
+			dataSource = v
 		}
 	}
 
