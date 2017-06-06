@@ -70,6 +70,7 @@ func main() {
 	echo.GET("/surveys", allSurveys)
 	echo.GET("/surveys/:surveyid", getSurvey)
 	echo.GET("/surveys/name/:name", getSurveyByName)
+	echo.GET("/surveys/ref/:ref", getSurveyByReference)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
 
@@ -130,6 +131,26 @@ func getSurveyByName(context echo.Context) error {
 		}
 
 		logger.Error("Error getting survey '"+name+"'",
+			zap.String("service", serviceName),
+			zap.String("event", "error"),
+			zap.String("data", err.Error()),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return context.JSON(http.StatusOK, survey)
+}
+
+func getSurveyByReference(context echo.Context) error {
+	reference := context.Param("ref")
+	survey, err := models.GetSurveyByReference(reference)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return context.JSON(http.StatusNotFound, "Survey not found")
+		}
+
+		logger.Error("Error getting survey '"+reference+"'",
 			zap.String("service", serviceName),
 			zap.String("event", "error"),
 			zap.String("data", err.Error()),

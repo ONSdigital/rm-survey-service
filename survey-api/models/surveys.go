@@ -6,8 +6,9 @@ type SurveySummary struct {
 }
 
 type Survey struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Reference string `json:"surveyRef"`
 }
 
 func AllSurveys() ([]*SurveySummary, error) {
@@ -39,7 +40,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 
 func GetSurvey(surveyID string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, name from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.Name)
+	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.Name, &survey.Reference)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,17 @@ func GetSurvey(surveyID string) (*Survey, error) {
 
 func GetSurveyByName(name string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, name from survey.survey WHERE LOWER(name) = LOWER($1)", name).Scan(&survey.ID, &survey.Name)
+	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE LOWER(name) = LOWER($1)", name).Scan(&survey.ID, &survey.Name, &survey.Reference)
+	if err != nil {
+		return nil, err
+	}
+
+	return survey, nil
+}
+
+func GetSurveyByReference(reference string) (*Survey, error) {
+	survey := new(Survey)
+	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", reference).Scan(&survey.ID, &survey.Name, &survey.Reference)
 	if err != nil {
 		return nil, err
 	}
