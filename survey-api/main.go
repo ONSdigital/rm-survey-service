@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,10 +29,14 @@ func main() {
 	port := ":8080"
 	adminDataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	dataSource := "postgres://survey:password@localhost/postgres?sslmode=disable"
-
 	appEnv, err := cfenv.Current()
 
 	if err != nil {
+		logger.Info("No Cloud Foundry environment",
+			zap.String("service", serviceName),
+			zap.String("event", "service startup"),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+
 		if v := os.Getenv("PORT"); len(v) > 0 {
 			port = v
 		}
@@ -45,13 +48,15 @@ func main() {
 		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
 			dataSource = v
 		}
-
-		log.Printf("No Cloud Foundry environment, using port %+v", port)
 	} else {
 		ps := appEnv.Port
 		port = ":" + strconv.FormatInt(int64(ps), 10)
-		log.Printf("Found Cloud Foundry environment: using port %+v", port)
 		postgresServer, err := appEnv.Services.WithTag("postgresql")
+
+		logger.Info("Found Cloud Foundry environment",
+			zap.String("service", serviceName),
+			zap.String("event", "service startup"),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
 
 		if err == nil {
 			uri, found := postgresServer[0].CredentialString("uri")
