@@ -8,4 +8,4 @@ applications:
     GOVERSION: go1.8
     GOPACKAGENAME: github.com/ONSdigital/rm-survey-service/survey-api
   services:
-    - surveysvc_pg_db
+    - surveysvc-pg-db
