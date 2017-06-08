@@ -4,10 +4,11 @@
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). [API documentation](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md).
 
 ## Prerequisites
-* Install the [Go PostgreSQL driver](https://github.com/lib/pq) using `go get github.com/lib/pq`
-* Install the [Go CF environment package](https://github.com/cloudfoundry-community/go-cfenv) using `go get github.com/cloudfoundry-community/go-cfenv`
-* Install the [Echo web framework](https://github.com/labstack/echo) using `go get github.com/labstack/echo/...`
-* Install the [Zap structured logger](https://github.com/uber-go/zap) using `go get go.uber.org/zap`
+* Install the [Godep](https://github.com/tools/godep) package manager using `go get github.com/tools/godep`
+* Run `godep get` to download and install the other dependencies managed by Godep
+
+## API
+See [API.md](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md) for API documentation.
 
 ## Building
 ### Make
@@ -52,9 +53,6 @@ psql postgres://postgres:password@localhost/postgres?sslmode=disable
 
 Manually copy and paste the contents of the `sql/bootstrap.sql` file.
 
-## API
-See [API.md](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md) for API documentation.
-
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
 
@@ -62,6 +60,13 @@ Run the tests using:
 
 ```
 make test
+```
+
+## Deployment
+To deploy to Cloud Foundry, run:
+
+```
+make push
 ```
 
 ## Cleaning
