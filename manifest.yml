@@ -1,6 +1,5 @@
 applications:
 - name: surveysvc
-  buildpack: https://github.com/cloudfoundry/go-buildpack.git
   instances: 1
   memory: 256M
   path: survey-api
