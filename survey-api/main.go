@@ -1,4 +1,4 @@
-package main
+package main // import "github.com/onsdigital/rm-survey-service/survey-api"
 
 import (
 	"database/sql"
