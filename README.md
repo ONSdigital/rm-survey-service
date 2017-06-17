@@ -11,6 +11,8 @@ This repository contains the Survey service. This microservice is a RESTful web 
 See [API.md](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md) for API documentation.
 
 ## Building
+Install Go and ensure your `GOPATH` environment variable is set (usually it's `~/go`).
+
 ### Make
 A Makefile is provided for compiling the code using `go build`:
 
