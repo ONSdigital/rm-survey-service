@@ -26,11 +26,11 @@ The compiled executable is placed within the `build` directory tree.
 To build the Docker image, from the project root run:
 
 ```
-docker build -t surveysvc .
+docker build -t "sdcplatform/surveysvc" .
 ```
 
 ## Running
-From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/survey-api/main.go &` to start the Survey service in the background. Or compile the service first using `make` and execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
+From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/surveysvc.go &` to start the Survey service in the background. Or compile the service first using `make` and execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
 
 The following environment variables may be overridden:
 

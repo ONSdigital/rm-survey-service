@@ -1,8 +1,6 @@
-db:
-  container_name: pg
+database:
+  container_name: postgres
   image: k0st/alpine-postgres
-#  volumes:
-#  - /data/mydb:/var/lib/postgresql/data
   ports:
    - "5432:5432"
   environment:
@@ -11,11 +9,11 @@ db:
   - POSTGRES_PASSWORD=password
 
 survey:
-  container_name: survey
+  container_name: surveysvc
   image: sdcplatform/surveysvc
   ports:
    - "8080:8080"
   links:
-   - db
+   - database
   environment:
-  - DATABASE_URL=postgres://postgres:password@db/postgres?sslmode=disable
+  - DATABASE_URL=postgres://postgres:password@database/postgres?sslmode=disable

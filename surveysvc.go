@@ -1,4 +1,4 @@
-package main // import "github.com/onsdigital/rm-survey-service/survey-api"
+package main // import "github.com/onsdigital/rm-survey-service"
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/onsdigital/rm-survey-service/survey-api/models"
+	"github.com/onsdigital/rm-survey-service/models"
 )
 
 const serviceName = "surveysvc"
