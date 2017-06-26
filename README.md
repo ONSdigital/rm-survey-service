@@ -1,7 +1,9 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5adaae19b8f4b899ce935fe856a85d9)](https://www.codacy.com/app/sdcplatform/rm-survey-service?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ONSdigital/rm-survey-service&amp;utm_campaign=Badge_Grade)
 
 # Survey Service
-This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). [API documentation](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md).
+This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). This service features structured JSON logging, a self-bootstrapping database schema and database connection code that retries the connection if it's not available, increasing the time between each attempt. This [eliminates the need to deploy services in a specific order](https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c).
+
+* [API documentation](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md)
 
 ## Prerequisites
 * Install the [Godep](https://github.com/tools/godep) package manager using `go get github.com/tools/godep`
@@ -30,7 +32,7 @@ docker build -t "sdcplatform/surveysvc" .
 ```
 
 ## Running
-From `$GOPATH`, use `go run src/github.com/onsdigital/rm-survey-service/surveysvc.go &` to start the Survey service in the background. Or compile the service first using `make` and execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
+Compile the service first using `make` then execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
 
 The following environment variables may be overridden:
 
@@ -40,20 +42,17 @@ The following environment variables may be overridden:
 | PORT                 | HTTP listener port                           | :8080                                                           |
 
 ### Docker Image and PostgreSQL
-To start the Docker image, run:
+To start Docker containers for both PostgreSQL and the Survey service, run:
 
 ```
 docker-compose up -d
 ```
 
-Run `docker ps` and note the ID of the running Docker container. Initial data can be loaded into the PostgreSQL database by starting the Docker image and connecting, then loading the `sql/bootstrap.sql` file:
+To stop and remove the two Docker containers, run:
 
 ```
-docker exec -it <container-id> /bin/sh
-psql postgres://postgres:password@localhost/postgres?sslmode=disable
+docker-compose down
 ```
-
-Manually copy and paste the contents of the `sql/bootstrap.sql` file.
 
 ## Testing
 To follow once I've worked out how to write unit tests in Go :-)
@@ -72,7 +71,7 @@ make push
 ```
 
 ## Cleaning
-To clobber the `build` directory tree, run:
+To clobber the `build` directory tree that's created when running `make`, run:
 
 ```
 make clean
