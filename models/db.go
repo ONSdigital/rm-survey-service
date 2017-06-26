@@ -8,6 +8,10 @@ import (
 
 	"go.uber.org/zap"
 
+	"os"
+
+	"path"
+
 	_ "github.com/lib/pq"
 )
 
@@ -48,7 +52,9 @@ func InitDB(dataSource string) {
 }
 
 func bootstrapSchema() {
-	file, err := ioutil.ReadFile("sql/bootstrap.sql")
+	exe, _ := os.Executable()
+	exePath := path.Dir(exe)
+	file, err := ioutil.ReadFile(exePath + "/sql/bootstrap.sql")
 	if err != nil {
 		logger.Error("Error reading bootstrap schema SQL file",
 			zap.String("service", serviceName),
