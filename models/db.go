@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -29,11 +30,7 @@ func InitDB(dataSource string) {
 	var err error
 	db, err = sql.Open(DriverName, dataSource)
 	if err != nil {
-		logger.Error("Error opening data source",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+		logError("Error opening data source", err)
 	}
 
 	if err = db.Ping(); err != nil {
@@ -53,28 +50,18 @@ func bootstrapSchema() {
 	exe, _ := os.Executable()
 	exePath := path.Dir(exe)
 	file, err := ioutil.ReadFile(exePath + "/sql/bootstrap.sql")
+
 	if err != nil {
-		logger.Error("Error reading bootstrap schema SQL file",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+		logError(fmt.Sprintf("Error reading '%s/sql/bootstrap.sql' file", exePath), err)
 	}
 
-	logger.Info("Creating and populating database schema",
-		zap.String("service", serviceName),
-		zap.String("event", "database bootstrap"),
-		zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+	logInfo("Creating and populating database schema")
 	statements := strings.Split(string(file), ";")
+
 	for _, statement := range statements {
 		_, err := db.Exec(statement)
 		if err != nil {
-			logger.Error("Error executing bootstrap SQL statement",
-				zap.String("service", serviceName),
-				zap.String("event", "error"),
-				zap.String("data", err.Error()),
-				zap.String("created", time.Now().UTC().Format(timeFormat)))
+			logError(fmt.Sprintf("Error executing '%s/sql/bootstrap.sql file", exePath), err)
 		}
 	}
 }
@@ -84,25 +71,28 @@ func schemaExists() bool {
 	err := db.QueryRow("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'survey'").Scan(&schemaName)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			logger.Info("Database schema doesn't exist",
-				zap.String("service", serviceName),
-				zap.String("event", "database bootstrap"),
-				zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+			logInfo("Database schema doesn't exist")
 			return false
 		}
 
-		logger.Error("Error executing schema exists check SQL statement",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+		logError("Error executing schema exists check SQL statement", err)
 	}
 
-	logger.Info("Database schema exists",
+	logInfo("Database schema exists")
+	return true
+}
+
+func logError(message string, err error) {
+	logger.Error(message,
+		zap.String("service", serviceName),
+		zap.String("event", "error"),
+		zap.String("data", err.Error()),
+		zap.String("created", time.Now().UTC().Format(timeFormat)))
+}
+
+func logInfo(message string) {
+	logger.Info(message,
 		zap.String("service", serviceName),
 		zap.String("event", "database bootstrap"),
 		zap.String("created", time.Now().UTC().Format(timeFormat)))
-
-	return true
 }

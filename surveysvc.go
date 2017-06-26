@@ -34,11 +34,7 @@ func main() {
 		ps := appEnv.Port
 		port = ":" + strconv.FormatInt(int64(ps), 10)
 		postgresServer, err := appEnv.Services.WithTag("postgresql")
-
-		logger.Info("Found Cloud Foundry environment",
-			zap.String("service", serviceName),
-			zap.String("event", "service startup"),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+		logInfo("Found Cloud Foundry environment")
 
 		if err == nil {
 			uri, found := postgresServer[0].CredentialString("uri")
@@ -48,10 +44,7 @@ func main() {
 			}
 		}
 	} else {
-		logger.Info("No Cloud Foundry environment",
-			zap.String("service", serviceName),
-			zap.String("event", "service startup"),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+		logInfo("No Cloud Foundry environment")
 
 		if v := os.Getenv("PORT"); len(v) > 0 {
 			port = v
@@ -74,23 +67,14 @@ func main() {
 	echo.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
 
-	logger.Info("Survey service started on port "+port,
-		zap.String("service", serviceName),
-		zap.String("event", "service started"),
-		zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+	logInfo("Survey service started on port " + port)
 	echo.Start(port)
 }
 
 func allSurveys(context echo.Context) error {
 	surveys, err := models.AllSurveys()
 	if err != nil {
-		logger.Error("Error getting list of surveys",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting list of surveys", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -109,12 +93,7 @@ func getSurvey(context echo.Context) error {
 			return context.JSON(http.StatusNotFound, "Survey not found")
 		}
 
-		logger.Error("Error getting survey '"+surveyID+"'",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting survey '"+surveyID+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 
 	}
@@ -130,12 +109,7 @@ func getSurveyByName(context echo.Context) error {
 			return context.JSON(http.StatusNotFound, "Survey not found")
 		}
 
-		logger.Error("Error getting survey '"+name+"'",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting survey '"+name+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -150,12 +124,7 @@ func getSurveyByReference(context echo.Context) error {
 			return context.JSON(http.StatusNotFound, "Survey not found")
 		}
 
-		logger.Error("Error getting survey '"+reference+"'",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting survey '"+reference+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -170,12 +139,7 @@ func allClassifierTypeSelectors(context echo.Context) error {
 			return context.JSON(http.StatusNotFound, "Survey not found")
 		}
 
-		logger.Error("Error getting list of classifier type selectors for survey '"+surveyID+"'",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting list of classifier type selectors for survey '"+surveyID+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -195,14 +159,24 @@ func getClassifierTypeSelector(context echo.Context) error {
 			return context.JSON(http.StatusNotFound, "Survey or classifier type selector not found")
 		}
 
-		logger.Error("Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"'",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
-
+		logError("Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return context.JSON(http.StatusOK, classifierTypeSelector)
+}
+
+func logError(message string, err error) {
+	logger.Error(message,
+		zap.String("service", serviceName),
+		zap.String("event", "error"),
+		zap.String("data", err.Error()),
+		zap.String("created", time.Now().UTC().Format(timeFormat)))
+}
+
+func logInfo(message string) {
+	logger.Info(message,
+		zap.String("service", serviceName),
+		zap.String("event", "service startup"),
+		zap.String("created", time.Now().UTC().Format(timeFormat)))
 }
