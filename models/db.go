@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // Import the PostgreSQL driver
 	"go.uber.org/zap"
 )
 
@@ -23,6 +23,7 @@ func init() {
 	defer logger.Sync()
 }
 
+// InitDB opens dataSource and bootstraps the database schema if it doesn't already exist.
 func InitDB(dataSource string) {
 	const DriverName = "postgres"
 	var err error
