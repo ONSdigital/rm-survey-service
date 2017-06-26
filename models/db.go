@@ -33,12 +33,23 @@ func InitDB(dataSource string) {
 		logError("Error opening data source", err)
 	}
 
-	if err = db.Ping(); err != nil {
-		logger.Error("Error establishing connection to data source",
-			zap.String("service", serviceName),
-			zap.String("event", "error"),
-			zap.String("data", err.Error()),
-			zap.String("created", time.Now().UTC().Format(timeFormat)))
+	// Keep attempting to ping the database, increasing the time between each attempt.
+	// See https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c
+	maxAttempts := 20
+
+	for attempts := 1; attempts <= maxAttempts; attempts++ {
+		err = db.Ping()
+
+		if err == nil {
+			break
+		}
+
+		logError("Error pinging data source", err)
+		time.Sleep(time.Duration(attempts) * time.Second)
+	}
+
+	if err != nil {
+		logError("Error pinging data source", err)
 	}
 
 	if !schemaExists() {
