@@ -3,16 +3,13 @@ package models
 import (
 	"database/sql"
 	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
-	"os"
-
-	"path"
-
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 const serviceName = "surveysvc"
