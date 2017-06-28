@@ -4,8 +4,6 @@ MAINTAINER John Topley "john.topley@ons.gov.uk"
 RUN apk update && apk upgrade && \
     apk add --no-cache git openssh
 
-RUN mkdir "$GOPATH"/bin/sql
-RUN mkdir -p /go/src/github.com/onsdigital/rm-survey-service/models
 COPY ./models /go/src/github.com/onsdigital/rm-survey-service/models/
 COPY ./surveysvc.go /go/src/github.com/onsdigital/rm-survey-service/
 
