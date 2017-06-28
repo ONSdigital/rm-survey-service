@@ -3,10 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-	"strings"
 	"time"
 
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
@@ -58,21 +54,13 @@ func InitDB(dataSource string) {
 }
 
 func bootstrapSchema() {
-	exe, _ := os.Executable()
-	exePath := path.Dir(exe)
-	file, err := ioutil.ReadFile(exePath + "/sql/bootstrap.sql")
-
-	if err != nil {
-		logError(fmt.Sprintf("Error reading '%s/sql/bootstrap.sql' file", exePath), err)
-	}
-
 	logInfo("Creating and populating database schema")
-	statements := strings.Split(string(file), ";")
+	sql := bootstrapSQL()
 
-	for _, statement := range statements {
-		_, err := db.Exec(statement)
+	for _, query := range sql {
+		_, err := db.Exec(query)
 		if err != nil {
-			logError(fmt.Sprintf("Error executing '%s/sql/bootstrap.sql file", exePath), err)
+			logError(fmt.Sprintf("Error executing bootstrap statement: '%s'", query), err)
 		}
 	}
 }

@@ -5,8 +5,6 @@ export GOOS?=$(shell go env GOOS)
 export GOARCH?=$(shell go env GOARCH)
 
 build:
-	mkdir -p $(BUILD_ARCH)/bin/sql
-	cp sql/bootstrap.sql $(BUILD_ARCH)/bin/sql
 	go build -o $(BUILD_ARCH)/bin/surveysvc surveysvc.go
 
 test:
