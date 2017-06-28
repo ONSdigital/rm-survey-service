@@ -35,7 +35,6 @@ func InitDB(dataSource string) {
 
 	for attempts := 1; attempts <= maxAttempts; attempts++ {
 		err = db.Ping()
-
 		if err == nil {
 			break
 		}
