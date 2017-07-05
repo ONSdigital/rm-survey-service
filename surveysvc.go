@@ -90,7 +90,8 @@ func getSurvey(context echo.Context) error {
 	survey, err := models.GetSurvey(surveyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return context.JSON(http.StatusNotFound, "Survey not found")
+			re := models.NewRESTError("404", "Survey not found")
+			return context.JSON(http.StatusNotFound, re)
 		}
 
 		logError("Error getting survey '"+surveyID+"'", err)
@@ -106,7 +107,8 @@ func getSurveyByName(context echo.Context) error {
 	survey, err := models.GetSurveyByName(name)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return context.JSON(http.StatusNotFound, "Survey not found")
+			re := models.NewRESTError("404", "Survey not found")
+			return context.JSON(http.StatusNotFound, re)
 		}
 
 		logError("Error getting survey '"+name+"'", err)
@@ -121,7 +123,8 @@ func getSurveyByReference(context echo.Context) error {
 	survey, err := models.GetSurveyByReference(reference)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return context.JSON(http.StatusNotFound, "Survey not found")
+			re := models.NewRESTError("404", "Survey not found")
+			return context.JSON(http.StatusNotFound, re)
 		}
 
 		logError("Error getting survey '"+reference+"'", err)
@@ -136,7 +139,8 @@ func allClassifierTypeSelectors(context echo.Context) error {
 	classifierTypeSelectors, err := models.AllClassifierTypeSelectors(surveyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return context.JSON(http.StatusNotFound, "Survey not found")
+			re := models.NewRESTError("404", "Survey not found")
+			return context.JSON(http.StatusNotFound, re)
 		}
 
 		logError("Error getting list of classifier type selectors for survey '"+surveyID+"'", err)
@@ -156,7 +160,8 @@ func getClassifierTypeSelector(context echo.Context) error {
 	classifierTypeSelector, err := models.GetClassifierTypeSelector(surveyID, classifierTypeSelectorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return context.JSON(http.StatusNotFound, "Survey or classifier type selector not found")
+			re := models.NewRESTError("404", "Survey or classifier type selector not found")
+			return context.JSON(http.StatusNotFound, re)
 		}
 
 		logError("Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"'", err)
