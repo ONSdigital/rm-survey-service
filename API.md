@@ -1,6 +1,20 @@
 # Survey Service API
 This page documents the Survey service API endpoints. These endpoints will be secured using HTTP basic authentication initially. All endpoints return an `HTTP 200 OK` status code except where noted otherwise.
 
+## About Service
+* `GET /about` will return information about this service, collated from when it was last built.
+
+### Example JSON Response
+```json
+{
+    "name": "surveysvc",
+    "origin": "git@github.com:ONSdigital/rm-survey-service.git",
+    "commit": "c81fc1dc2155aed0fc201f2273333d3af75e10e0",
+    "branch": "master",
+    "built": "2017-07-05T18:47:28Z"
+}
+```
+
 ## List Surveys
 * `GET /surveys` will return a list of known surveys.
 

@@ -60,6 +60,7 @@ func main() {
 	echo := echo.New()
 	echo.Use(middleware.Gzip())
 
+	echo.GET("/about", about)
 	echo.GET("/surveys", allSurveys)
 	echo.GET("/surveys/:surveyid", getSurvey)
 	echo.GET("/surveys/name/:name", getSurveyByName)
@@ -69,6 +70,10 @@ func main() {
 
 	logInfo("Survey service started on port " + port)
 	echo.Start(port)
+}
+
+func about(context echo.Context) error {
+	return context.JSON(http.StatusOK, models.NewVersion())
 }
 
 func allSurveys(context echo.Context) error {
