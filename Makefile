@@ -1,6 +1,12 @@
-# Output directory structure.
+# Cross-compilation values.
+ARCH=amd64
+OS_LINUX=linux
+OS_MAC=darwin
+
+# Output directory structures.
 BUILD=build
-BUILD_ARCH=$(BUILD)/$(GOOS)-$(GOARCH)
+LINUX_BUILD_ARCH=$(BUILD)/$(OS_LINUX)-$(ARCH)
+MAC_BUILD_ARCH=$(BUILD)/$(OS_MAC)-$(ARCH)
 
 # Flags to pass to the Go linker using the -ldflags="-X ..." option.
 PACKAGE_PATH = github.com/onsdigital/rm-survey-service
@@ -8,10 +14,6 @@ BRANCH_FLAG = $(PACKAGE_PATH)/models.branch=$(BRANCH)
 BUILT_FLAG = $(PACKAGE_PATH)/models.built=$(BUILT)
 COMMIT_FLAG = $(PACKAGE_PATH)/models.commit=$(COMMIT)
 ORIGIN_FLAG = $(PACKAGE_PATH)/models.origin=$(ORIGIN)
-
-# Get the operating system details as reported by the Go environment.
-export GOOS?=$(shell go env GOOS)
-export GOARCH?=$(shell go env GOARCH)
 
 # Get the Git branch the commit is from, stripping the leading asterisk.
 export BRANCH?=$(shell git branch --contains $(COMMIT) | grep \* | cut -d ' ' -f2)
@@ -25,9 +27,10 @@ export COMMIT?=$(shell git rev-parse HEAD)
 # Get the Git repo origin.
 export ORIGIN?=$(shell git remote get-url origin)
 
-# Build the binary, setting linker flags for information returned by the GET /about endpoint.
-build:	
-	go build -o $(BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(BRANCH_FLAG) -X $(ORIGIN_FLAG)" surveysvc.go
+# Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /about endpoint.
+build: clean
+	GOOS=$(OS_LINUX) GOARCH=$(ARCH) go build -o $(LINUX_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(BRANCH_FLAG) -X $(ORIGIN_FLAG)" surveysvc.go
+	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(BRANCH_FLAG) -X $(ORIGIN_FLAG)" surveysvc.go
 
 # Run the tests.
 test:
@@ -37,7 +40,19 @@ test:
 clean:
 	test -d $(BUILD) && rm -r $(BUILD)
 
-# Update dependencies then push to Cloud Foundry.
-push:
-	godep get; godep save
-	cf push
+# Run a build then push to Cloud Foundry.
+push-demo: build
+	cf target -s demo
+	cf push surveysvc-demo
+
+push-dev: build
+	cf target -s dev
+	cf push surveysvc-dev
+
+push-int: build
+	cf target -s int
+	cf push surveysvc-int
+
+push-test: build
+	cf target -s test
+	cf push surveysvc-test

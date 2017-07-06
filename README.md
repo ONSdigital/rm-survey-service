@@ -66,10 +66,13 @@ make test
 ```
 
 ## Deployment
-To deploy to Cloud Foundry, run:
+To deploy to Cloud Foundry, run one of the targets below depending on the Cloud Foundry space you wish to push to:
 
 ```
-make push
+make push-demo
+make push-dev
+make push-int
+make push-test
 ```
 
 ## Cleaning
