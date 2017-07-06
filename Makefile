@@ -25,7 +25,7 @@ export BUILT?=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 export COMMIT?=$(shell git rev-parse HEAD)
 
 # Get the Git repo origin.
-export ORIGIN?=$(shell git remote get-url origin)
+export ORIGIN?=$(shell git config --get remote.origin.url)
 
 # Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /about endpoint.
 build: clean
