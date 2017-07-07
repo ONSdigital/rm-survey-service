@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.6
 MAINTAINER John Topley "john.topley@ons.gov.uk"
 RUN apk update && apk upgrade
 COPY ./build/linux-amd64/bin/ /usr/local/bin/
