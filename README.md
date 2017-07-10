@@ -31,8 +31,6 @@ To build the Docker image, from the project root run:
 docker build -t "sdcplatform/surveysvc" .
 ```
 
-Note that an [automated build for this service](https://hub.docker.com/r/sdcplatform/surveysvc/) has been configured on Docker Hub.
-
 ## Running
 Compile the service first using `make` then execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
 
