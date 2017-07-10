@@ -1,18 +1,19 @@
 package models
 
 type SurveySummary struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	ShortName string `json:"shortName"`
 }
 
 type Survey struct {
 	ID        string `json:"id"`
-	Name      string `json:"name"`
+	ShortName string `json:"shortName"`
+	LongName  string `json:"longName"`
 	Reference string `json:"surveyRef"`
 }
 
 func AllSurveys() ([]*SurveySummary, error) {
-	rows, err := db.Query("SELECT id, name FROM survey.survey ORDER BY name ASC")
+	rows, err := db.Query("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +23,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 
 	for rows.Next() {
 		surveySummary := new(SurveySummary)
-		err := rows.Scan(&surveySummary.ID, &surveySummary.Name)
+		err := rows.Scan(&surveySummary.ID, &surveySummary.ShortName)
 
 		if err != nil {
 			return nil, err
@@ -40,7 +41,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 
 func GetSurvey(surveyID string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.Name, &survey.Reference)
+	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
 		return nil, err
 	}
@@ -48,9 +49,9 @@ func GetSurvey(surveyID string) (*Survey, error) {
 	return survey, nil
 }
 
-func GetSurveyByName(name string) (*Survey, error) {
+func GetSurveyByShortName(shortName string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE LOWER(name) = LOWER($1)", name).Scan(&survey.ID, &survey.Name, &survey.Reference)
+	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", shortName).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func GetSurveyByName(name string) (*Survey, error) {
 
 func GetSurveyByReference(reference string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, name, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", reference).Scan(&survey.ID, &survey.Name, &survey.Reference)
+	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", reference).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
 		return nil, err
 	}

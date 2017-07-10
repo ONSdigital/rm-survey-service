@@ -63,7 +63,7 @@ func main() {
 	echo.GET("/info", info)
 	echo.GET("/surveys", allSurveys)
 	echo.GET("/surveys/:surveyid", getSurvey)
-	echo.GET("/surveys/name/:name", getSurveyByName)
+	echo.GET("/surveys/shortname/:shortname", getSurveyByShortName)
 	echo.GET("/surveys/ref/:ref", getSurveyByReference)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 	echo.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
@@ -107,16 +107,16 @@ func getSurvey(context echo.Context) error {
 	return context.JSON(http.StatusOK, survey)
 }
 
-func getSurveyByName(context echo.Context) error {
-	name := context.Param("name")
-	survey, err := models.GetSurveyByName(name)
+func getSurveyByShortName(context echo.Context) error {
+	shortName := context.Param("shortname")
+	survey, err := models.GetSurveyByShortName(shortName)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			re := models.NewRESTError("404", "Survey not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 
-		logError("Error getting survey '"+name+"'", err)
+		logError("Error getting survey '"+shortName+"'", err)
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 

@@ -23,7 +23,7 @@ This page documents the Survey service API endpoints. These endpoints will be se
 ```json
 [{
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "name": "BRES"
+  "shortName": "BRES"
 }]
 ```
 
@@ -36,26 +36,28 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
 ```json
 {
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "name": "BRES",
+  "shortName": "BRES",
+  "longName": "Business Register and Employment Survey",
   "surveyRef": "221"
 }
 ```
 
 An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
 
-## Get Survey by Name
-* `GET /surveys/name/bres` will return the details of the survey with the name `bres` (or `BRES`).
+## Get Survey by Short Name
+* `GET /surveys/shortname/bres` will return the details of the survey with the short name `bres` (or `BRES`).
 
 ### Example JSON Response
 ```json
 {
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "name": "BRES",
+  "shortName": "BRES",
+  "longName": "Business Register and Employment Survey",
   "surveyRef": "221"
 }
 ```
 
-An `HTTP 404 Not Found` status code is returned if the survey with the specified name could not be found.
+An `HTTP 404 Not Found` status code is returned if the survey with the specified short name could not be found.
 
 ## Get Survey by Reference
 * `GET /surveys/ref/221` will return the details of the survey with the reference `221`.
@@ -64,7 +66,8 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
 ```json
 {
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "name": "BRES",
+  "shortName": "BRES",
+  "longName": "Business Register and Employment Survey",
   "surveyRef": "221"
 }
 ```
