@@ -42,7 +42,7 @@ test:
 
 # Remote the build directory tree.
 clean:
-	test -d $(BUILD) && rm -r $(BUILD)
+	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 # Run a build then push to Cloud Foundry.
 push-demo: build
