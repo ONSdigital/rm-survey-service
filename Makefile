@@ -1,5 +1,5 @@
 # Service version.
-VERSION=10.42.0
+VERSION = 10.42.0
 
 # Cross-compilation values.
 ARCH=amd64
@@ -12,12 +12,12 @@ LINUX_BUILD_ARCH=$(BUILD)/$(OS_LINUX)-$(ARCH)
 MAC_BUILD_ARCH=$(BUILD)/$(OS_MAC)-$(ARCH)
 
 # Flags to pass to the Go linker using the -ldflags="-X ..." option.
-PACKAGE_PATH = github.com/onsdigital/rm-survey-service
-BRANCH_FLAG = $(PACKAGE_PATH)/models.branch=$(BRANCH)
-BUILT_FLAG = $(PACKAGE_PATH)/models.built=$(BUILT)
-COMMIT_FLAG = $(PACKAGE_PATH)/models.commit=$(COMMIT)
-ORIGIN_FLAG = $(PACKAGE_PATH)/models.origin=$(ORIGIN)
-VERSION_FLAG = $(PACKAGE_PATH)/models.version=$(VERSION)
+PACKAGE_PATH=github.com/onsdigital/rm-survey-service
+BRANCH_FLAG=$(PACKAGE_PATH)/models.branch=$(BRANCH)
+BUILT_FLAG=$(PACKAGE_PATH)/models.built=$(BUILT)
+COMMIT_FLAG=$(PACKAGE_PATH)/models.commit=$(COMMIT)
+ORIGIN_FLAG=$(PACKAGE_PATH)/models.origin=$(ORIGIN)
+VERSION_FLAG=$(PACKAGE_PATH)/models.version=$(VERSION)
 
 # Get the Git branch the commit is from, stripping the leading asterisk.
 export BRANCH?=$(shell git branch --contains $(COMMIT) | grep \* | cut -d ' ' -f2)
@@ -33,8 +33,8 @@ export ORIGIN?=$(shell git config --get remote.origin.url)
 
 # Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /about endpoint.
 build: clean
-	GOOS=$(OS_LINUX) GOARCH=$(ARCH) go build -o $(LINUX_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(BRANCH_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
-	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(BRANCH_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
+	GOOS=$(OS_LINUX) GOARCH=$(ARCH) go build -o $(LINUX_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
+	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
 
 # Run the tests.
 test:
