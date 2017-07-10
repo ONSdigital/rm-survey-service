@@ -8,6 +8,7 @@ This page documents the Survey service API endpoints. These endpoints will be se
 ```json
 {
     "name": "surveysvc",
+    "version": "10.42.0",
     "origin": "git@github.com:ONSdigital/rm-survey-service.git",
     "commit": "c81fc1dc2155aed0fc201f2273333d3af75e10e0",
     "branch": "master",
