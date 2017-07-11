@@ -15,6 +15,6 @@ type RESTError struct {
 
 // NewRESTError returns a RESTError with the Timestamp field pre-populated.
 func NewRESTError(code string, message string) RESTError {
-	ts := strconv.Itoa(int(time.Now().Unix()))
+	ts := strconv.Itoa(int(time.Now().UTC().Unix()))
 	return RESTError{Code: code, Message: message, Timestamp: ts}
 }
