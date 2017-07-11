@@ -31,7 +31,7 @@ export COMMIT?=$(shell git rev-parse HEAD)
 # Get the Git repo origin.
 export ORIGIN?=$(shell git config --get remote.origin.url)
 
-# Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /about endpoint.
+# Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /info endpoint.
 build: clean
 	GOOS=$(OS_LINUX) GOARCH=$(ARCH) go build -o $(LINUX_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
 	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/surveysvc -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" surveysvc.go
