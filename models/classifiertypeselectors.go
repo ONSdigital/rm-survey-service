@@ -1,16 +1,19 @@
 package models
 
+// ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
 type ClassifierTypeSelectorSummary struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
+// ClassifierTypeSelector represents the detail of a classifier type selector.
 type ClassifierTypeSelector struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	ClassifierTypes []string `json:"classifierTypes"`
 }
 
+// AllClassifierTypeSelectors returns all the classifier type selectors for the survey identified by the string surveyID. The classifier type selectors are returned in ascending order.
 func AllClassifierTypeSelectors(surveyID string) ([]*ClassifierTypeSelectorSummary, error) {
 	// We need to run a query first to check if the survey exists so an HTTP 404 can be correctly
 	// returned if it doesn't exist. Without this check an HTTP 204 is incorrectly returned for an
@@ -47,6 +50,8 @@ func AllClassifierTypeSelectors(surveyID string) ([]*ClassifierTypeSelectorSumma
 	return classifierTypeSelectorSummaries, nil
 }
 
+// GetClassifierTypeSelector returns the details of the classifier type selector for the survey identified by the string surveyID and
+// the classifier type selector identified by the string classifierTypeSelectorID.
 func GetClassifierTypeSelector(surveyID string, classifierTypeSelectorID string) (*ClassifierTypeSelector, error) {
 	// We need to run two queries first to check if the survey and classifier type selector both exist
 	// so an HTTP 404 can be correctly returned if the don't exist. Without this check and HTTP 204 is
