@@ -40,7 +40,7 @@ build: clean
 test:
 	go test -cover *.go
 
-# Remote the build directory tree.
+# Remove the build directory tree.
 clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
