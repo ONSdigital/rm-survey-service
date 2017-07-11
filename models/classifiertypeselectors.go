@@ -54,7 +54,7 @@ func AllClassifierTypeSelectors(surveyID string) ([]*ClassifierTypeSelectorSumma
 // the classifier type selector identified by the string classifierTypeSelectorID.
 func GetClassifierTypeSelector(surveyID string, classifierTypeSelectorID string) (*ClassifierTypeSelector, error) {
 	// We need to run two queries first to check if the survey and classifier type selector both exist
-	// so an HTTP 404 can be correctly returned if the don't exist. Without this check and HTTP 204 is
+	// so an HTTP 404 can be correctly returned if they don't exist. Without this check and HTTP 204 is
 	// incorrectly return for an invalid survey ID or classifier type selector ID.
 	err := getSurveyID(surveyID)
 	if err != nil {
