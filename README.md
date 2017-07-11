@@ -3,8 +3,6 @@
 # Survey Service
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). This service features structured JSON logging, a self-bootstrapping database schema and database connection code that retries the connection if it's not available, increasing the time between each attempt. This [eliminates the need to deploy services in a specific order](https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c).
 
-* [API documentation](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md)
-
 ## Prerequisites
 * Install the [Godep](https://github.com/tools/godep) package manager using `go get github.com/tools/godep`
 * Run `godep get` to download and install the other dependencies managed by Godep
