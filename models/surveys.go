@@ -77,10 +77,5 @@ func GetSurveyByReference(reference string) (*Survey, error) {
 
 func getSurveyID(surveyID string) error {
 	var id string
-	err := db.QueryRow("SELECT id FROM survey.survey WHERE id = $1", surveyID).Scan(&id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow("SELECT id FROM survey.survey WHERE id = $1", surveyID).Scan(&id)
 }
