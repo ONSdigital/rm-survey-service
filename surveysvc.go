@@ -41,6 +41,10 @@ func main() {
 
 			if found {
 				dataSource = uri
+			} else {
+				message := "Unable to retrieve PostgreSQL URI from Cloud Foundry environment"
+				logInfo(message)
+				panic(message)
 			}
 		}
 	} else {
