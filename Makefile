@@ -45,6 +45,10 @@ clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 # Run a build then push to Cloud Foundry.
+push-ci: build
+	cf target -s ci
+	cf push surveysvc-ci
+	
 push-demo: build
 	cf target -s demo
 	cf push surveysvc-demo
