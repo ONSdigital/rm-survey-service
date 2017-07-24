@@ -14,7 +14,7 @@ See [API.md](https://github.com/ONSdigital/rm-survey-service/blob/master/API.md)
 Install Go and ensure your `GOPATH` environment variable is set (usually it's `~/go`).
 
 ### Make
-A Makefile is provided for compiling the code using `go build`:
+A Makefile is provided for compiling the code:
 
 ```
 make
@@ -23,14 +23,14 @@ make
 The compiled executable is placed within the `build` directory tree.
 
 ### Docker Image
-To build the Docker image, from the project root run:
+To build the Docker image, first compile the code using `make` then from the project root run:
 
 ```
 docker build -t "sdcplatform/surveysvc" .
 ```
 
 ## Running
-Compile the service first using `make` then execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
+First compile the code using `make` then execute the binary in the background using `./surveysvc &` from within the `bin` directory within the `build` directory tree.
 
 The following environment variables may be overridden:
 
