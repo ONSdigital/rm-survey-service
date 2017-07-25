@@ -3,6 +3,9 @@ export PATH=$PATH:/usr/local/bin/go/bin
 export PROJ=`git config --get remote.origin.url | sed 's/^https:\/\///' | sed 's/\.git$//' | tr '[:upper:]' '[:lower:]'`
 export GOPATH=`pwd`
 
+# Ensure a fully statically-linked binary that runs on different Linux distros
+export CGO_ENABLED=0
+
 # Clean directory
 git clean -dfx
 
