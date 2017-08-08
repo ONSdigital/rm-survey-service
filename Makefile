@@ -47,11 +47,11 @@ clean:
 # Run a build then push to Cloud Foundry.
 push-ci: build
 	cf target -s ci
-	cf push surveysvc-ci
+	cf push -f manifest-ci.yml
 	
 push-demo: build
 	cf target -s demo
-	cf push surveysvc-demo
+	cf push -f manifest-demo.yml
 
 push-dev: build
 	cf target -s dev
@@ -59,8 +59,8 @@ push-dev: build
 
 push-int: build
 	cf target -s int
-	cf push surveysvc-int
+	cf push -f manifest-int.yml
 
 push-test: build
 	cf target -s test
-	cf push surveysvc-test
+	cf push -f manifest-test.yml

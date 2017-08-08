@@ -2,7 +2,7 @@
 # linker flags that set the build date, Git commit SHA etc. for display by the /info endpoint.
 # This information would be lost if compiling within the Diego Cell using the Go buildpack.
 applications:
-- name: surveysvc-sit
+- name: surveysvc-test
   instances: 1
   memory: 256M
   buildpack: binary_buildpack

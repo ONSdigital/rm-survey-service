@@ -1,5 +1,5 @@
 # We have to use the binary buildpack and upload the Linux binary to Cloud Foundry because it's compiled with
-# linker flags that set the build date, Git commit SHA etc. for display by the /about endpoint.
+# linker flags that set the build date, Git commit SHA etc. for display by the /info endpoint.
 # This information would be lost if compiling within the Diego Cell using the Go buildpack.
 applications:
 - name: surveysvc-demo
