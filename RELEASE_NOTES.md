@@ -1,8 +1,11 @@
-# Survey Service
+Survey Service
+==============
 Version: 10.43.2
 
-## Changes
+Changes
+-------
 This is the first formal release of the Survey service.
 
-## Known Issues
+Known Issues
+------------
 None.
