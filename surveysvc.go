@@ -61,19 +61,26 @@ func main() {
 
 	models.InitDB(dataSource)
 
-	echo := echo.New()
-	echo.Use(middleware.Gzip())
+	e := echo.New()
+	e.Use(middleware.Gzip())
 
-	echo.GET("/info", info)
-	echo.GET("/surveys", allSurveys)
-	echo.GET("/surveys/:surveyid", getSurvey)
-	echo.GET("/surveys/shortname/:shortname", getSurveyByShortName)
-	echo.GET("/surveys/ref/:ref", getSurveyByReference)
-	echo.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
-	echo.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
+	e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		if username == "joe" && password == "secret" {
+			return true, nil
+		}
+		return false, nil
+	}))
+
+	e.GET("/info", info)
+	e.GET("/surveys", allSurveys)
+	e.GET("/surveys/:surveyid", getSurvey)
+	e.GET("/surveys/shortname/:shortname", getSurveyByShortName)
+	e.GET("/surveys/ref/:ref", getSurveyByReference)
+	e.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
+	e.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
 
 	logInfo("Survey service started on port " + port)
-	echo.Start(port)
+	e.Start(port)
 }
 
 func info(context echo.Context) error {
