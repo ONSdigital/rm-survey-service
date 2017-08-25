@@ -10,38 +10,38 @@
 		},
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
-			"Comment": "v3.0.0-18-g6c8dedd",
-			"Rev": "6c8dedd55f8a2e41f605de6d5d66e51ed1f299fc"
+			"Comment": "v3.0.0-20-ga539ee1",
+			"Rev": "a539ee1a749a2b895533f979515ac7e6e0f5b650"
 		},
 		{
 			"ImportPath": "github.com/labstack/echo",
-			"Comment": "v3.1.0-13-g3359eae",
-			"Rev": "3359eae3067d1f6dba4785ea0377796405a34429"
+			"Comment": "3.2.2",
+			"Rev": "6c54ff78a2351623e91ccf085d94a78d02b1882c"
 		},
 		{
 			"ImportPath": "github.com/labstack/echo/middleware",
-			"Comment": "v3.1.0-13-g3359eae",
-			"Rev": "3359eae3067d1f6dba4785ea0377796405a34429"
+			"Comment": "3.2.2",
+			"Rev": "6c54ff78a2351623e91ccf085d94a78d02b1882c"
 		},
 		{
 			"ImportPath": "github.com/labstack/gommon/bytes",
-			"Comment": "v0.2.1",
-			"Rev": "1121fd3e243c202482226a7afe4dcd07ffc4139a"
+			"Comment": "0.2.2",
+			"Rev": "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
 		},
 		{
 			"ImportPath": "github.com/labstack/gommon/color",
-			"Comment": "v0.2.1",
-			"Rev": "1121fd3e243c202482226a7afe4dcd07ffc4139a"
+			"Comment": "0.2.2",
+			"Rev": "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
 		},
 		{
 			"ImportPath": "github.com/labstack/gommon/log",
-			"Comment": "v0.2.1",
-			"Rev": "1121fd3e243c202482226a7afe4dcd07ffc4139a"
+			"Comment": "0.2.2",
+			"Rev": "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
 		},
 		{
 			"ImportPath": "github.com/labstack/gommon/random",
-			"Comment": "v0.2.1",
-			"Rev": "1121fd3e243c202482226a7afe4dcd07ffc4139a"
+			"Comment": "0.2.2",
+			"Rev": "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -55,8 +55,8 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
-			"Comment": "v0.0.7-24-gded68f7",
-			"Rev": "ded68f7a9561c023e790de24279db7ebf473ea80"
+			"Comment": "v0.0.9-6-gad5389d",
+			"Rev": "ad5389df28cdac544c99bd7b9161a0b5b6ca9d1b"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
@@ -117,11 +117,11 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/acme",
-			"Rev": "0fe963104e9d1877082f8fb38f816fcd97eb1d10"
+			"Rev": "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/acme/autocert",
-			"Rev": "0fe963104e9d1877082f8fb38f816fcd97eb1d10"
+			"Rev": "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
