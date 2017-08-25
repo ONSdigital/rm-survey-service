@@ -26,6 +26,15 @@ func init() {
 }
 
 func main() {
+	envUserName := os.Getenv("security_user_name")
+	envPassword := os.Getenv("security_user_password")
+
+	if len(envUserName) == 0 || len(envPassword) == 0 {
+		message := "security_user_* environment variables aren't set"
+		logInfo(message)
+		panic(message)
+	}
+
 	port := ":8080"
 	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	appEnv, err := cfenv.Current()
@@ -63,13 +72,12 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Gzip())
-
-	e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
-		if username == "joe" && password == "secret" {
+	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{Validator: func(userName, password string, c echo.Context) (bool, error) {
+		if userName == envUserName && password == envPassword {
 			return true, nil
 		}
 		return false, nil
-	}))
+	}, Realm: "sdc"}))
 
 	e.GET("/info", info)
 	e.GET("/surveys", allSurveys)

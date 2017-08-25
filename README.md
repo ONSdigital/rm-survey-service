@@ -34,10 +34,12 @@ First compile the code using `make` then execute the binary in the background us
 
 The following environment variables may be overridden:
 
-| Environment Variable | Purpose                                      | Default Value                                                   |
-| :------------------- | :------------------------------------------- | :-------------------------------------------------------------- |
-| DATABASE_URL         | PostgreSQL *postgres* user connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
-| PORT                 | HTTP listener port                           | :8080                                                           |
+| Environment Variable   | Purpose                                      | Default Value                                                   |
+| :--------------------- | :------------------------------------------- | :-------------------------------------------------------------- |
+| DATABASE_URL           | PostgreSQL *postgres* user connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
+| PORT                   | HTTP listener port                           | :8080                                                           |
+| security_user_name     | HTTP basic authentication user name          | N/A                                                             |
+| security_user_password | HTTP basic authentication password           | N/A                                                             |
 
 ### Docker Image and PostgreSQL
 To start Docker containers for both PostgreSQL and the Survey service, run:
