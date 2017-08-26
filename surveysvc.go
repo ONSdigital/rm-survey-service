@@ -76,6 +76,14 @@ func configureEnvironment() (dataSource, port string) {
 }
 
 func configureMiddleware(e *echo.Echo) {
+
+	// Ignore any trailing slash in the URL.
+	e.Pre(middleware.RemoveTrailingSlash())
+
+	// Compress the response.
+	e.Use(middleware.Gzip())
+
+	// Add authentication.
 	envUserName := os.Getenv("security_user_name")
 	envPassword := os.Getenv("security_user_password")
 
@@ -85,10 +93,6 @@ func configureMiddleware(e *echo.Echo) {
 		panic(message)
 	}
 
-	// Compress the response.
-	e.Use(middleware.Gzip())
-
-	// Add authentication.
 	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 
 		// Skip authenticaton for the /info endpoint.
