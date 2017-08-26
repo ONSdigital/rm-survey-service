@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ import (
 	"github.com/onsdigital/rm-survey-service/models"
 )
 
+const realm = "sdc"
 const serviceName = "surveysvc"
 const timeFormat = "2006-01-02T15:04:05Z0700"
 
@@ -83,14 +85,28 @@ func configureMiddleware(e *echo.Echo) {
 		panic(message)
 	}
 
+	// Compress the response.
 	e.Use(middleware.Gzip())
-	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{Validator: func(userName, password string, c echo.Context) (bool, error) {
-		if userName == envUserName && password == envPassword {
-			return true, nil
-		}
 
-		return false, nil
-	}, Realm: "sdc"}))
+	// Add authentication.
+	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
+
+		// Skip authenticaton for the /info endpoint.
+		Skipper: func(c echo.Context) bool {
+			if strings.HasSuffix(c.Request().URL.Path, "info") {
+				return true
+			}
+
+			return false
+		},
+
+		Validator: func(userName, password string, c echo.Context) (bool, error) {
+			if userName == envUserName && password == envPassword {
+				return true, nil
+			}
+
+			return false, nil
+		}, Realm: realm}))
 }
 
 func configureRouting(e *echo.Echo) {
