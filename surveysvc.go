@@ -26,17 +26,19 @@ func init() {
 }
 
 func main() {
-	envUserName := os.Getenv("security_user_name")
-	envPassword := os.Getenv("security_user_password")
+	dataSource, port := configureEnvironment()
+	models.InitDB(dataSource)
 
-	if len(envUserName) == 0 || len(envPassword) == 0 {
-		message := "security_user_* environment variables aren't set"
-		logInfo(message)
-		panic(message)
-	}
+	e := echo.New()
+	configureMiddleware(e)
+	configureRouting(e)
+	logInfo("Survey service started on port " + port)
+	e.Start(port)
+}
 
-	port := ":8080"
-	dataSource := "postgres://postgres:password@localhost/postgres?sslmode=disable"
+func configureEnvironment() (dataSource, port string) {
+	dataSource = "postgres://postgres:password@localhost/postgres?sslmode=disable"
+	port = ":8080"
 	appEnv, err := cfenv.Current()
 
 	if err == nil {
@@ -68,17 +70,30 @@ func main() {
 		}
 	}
 
-	models.InitDB(dataSource)
+	return dataSource, port
+}
 
-	e := echo.New()
+func configureMiddleware(e *echo.Echo) {
+	envUserName := os.Getenv("security_user_name")
+	envPassword := os.Getenv("security_user_password")
+
+	if len(envUserName) == 0 || len(envPassword) == 0 {
+		message := "security_user_* environment variables aren't set"
+		logInfo(message)
+		panic(message)
+	}
+
 	e.Use(middleware.Gzip())
 	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{Validator: func(userName, password string, c echo.Context) (bool, error) {
 		if userName == envUserName && password == envPassword {
 			return true, nil
 		}
+
 		return false, nil
 	}, Realm: "sdc"}))
+}
 
+func configureRouting(e *echo.Echo) {
 	e.GET("/info", info)
 	e.GET("/surveys", allSurveys)
 	e.GET("/surveys/:surveyid", getSurvey)
@@ -86,9 +101,6 @@ func main() {
 	e.GET("/surveys/ref/:ref", getSurveyByReference)
 	e.GET("/surveys/:surveyid/classifiertypeselectors", allClassifierTypeSelectors)
 	e.GET("/surveys/:surveyid/classifiertypeselectors/:classifiertypeselectorid", getClassifierTypeSelector)
-
-	logInfo("Survey service started on port " + port)
-	e.Start(port)
 }
 
 func info(context echo.Context) error {
