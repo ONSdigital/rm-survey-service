@@ -10,5 +10,7 @@ applications:
   env:
     GOVERSION: go1.8
     GOPACKAGENAME: github.com/ONSdigital/rm-survey-service
+    security_user_name: REPLACE_BA_USERNAME
+    security_user_password: REPLACE_BA_PASSWORD
   services:
     - DATABASE
