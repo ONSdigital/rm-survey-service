@@ -17,3 +17,5 @@ survey:
    - database
   environment:
   - DATABASE_URL=postgres://postgres:password@database/postgres?sslmode=disable
+  - security_user_name=admin
+  - security_user_password=secret
