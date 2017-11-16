@@ -20,4 +20,7 @@ build/
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
+# IDE
+.idea/
+
 # End of https://www.gitignore.io/api/go
