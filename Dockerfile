@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 COPY build/linux-amd64/bin/surveysvc /usr/local/bin/
 
