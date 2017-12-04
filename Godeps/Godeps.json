@@ -1,12 +1,26 @@
 {
 	"ImportPath": "github.com/onsdigital/rm-survey-service",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Deps": [
+		{
+			"ImportPath": "github.com/appleboy/gofight",
+			"Comment": "v2.0.0-13-g75baa59",
+			"Rev": "75baa5975d3cbc68045c40d5a7f94d69c5c226a6"
+		},
+		{
+			"ImportPath": "github.com/buger/jsonparser",
+			"Rev": "5096fddd2cca678b0801ece8513a06e580981fd2"
+		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfenv",
 			"Comment": "v1.17.0",
 			"Rev": "f920e9562d5f951cbf11785728f67258c38a10d0"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-9-gecdeabc",
+			"Rev": "ecdeabc65495df2dec95d7c4a4c3e021903035e5"
 		},
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
@@ -66,6 +80,16 @@
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
 			"Rev": "d0303fe809921458f417bcf828397a65db30a7e4"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-72-g2aa2c17",
+			"Rev": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
 		},
 		{
 			"ImportPath": "github.com/valyala/bytebufferpool",
