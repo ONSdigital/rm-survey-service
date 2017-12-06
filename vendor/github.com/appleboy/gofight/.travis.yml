@@ -1,0 +1,25 @@
+sudo: required
+
+language: go
+
+services:
+  - docker
+
+go:
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - tip
+
+install:
+  - echo "nothing"
+  - go get -u github.com/kardianos/govendor
+  - govendor sync
+
+script:
+  - make test
+  - make docker_test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f .cover/coverage.txt
+

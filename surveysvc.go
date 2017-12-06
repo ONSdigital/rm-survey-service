@@ -31,11 +31,19 @@ func main() {
 	dataSource, port := configureEnvironment()
 	models.InitDB(dataSource)
 
-	e := echo.New()
-	configureMiddleware(e)
-	configureRouting(e)
+	e := EchoEngine()
+
 	logInfo("Survey service started on port " + port)
 	e.Start(port)
+}
+
+func EchoEngine() *echo.Echo {
+	// Echo instance
+	e := echo.New()
+	configureRouting(e)
+	configureMiddleware(e)
+
+	return e
 }
 
 func configureEnvironment() (dataSource, port string) {
