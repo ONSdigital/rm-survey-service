@@ -56,7 +56,14 @@ func GetSurvey(surveyID string) (*Survey, error) {
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.
 func GetSurveyByShortName(shortName string) (*Survey, error) {
 	survey := new(Survey)
-	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", shortName).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+
+	query := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
+	err := db.QueryRow(query, shortName).
+		Scan(&survey.ID,
+			&survey.ShortName,
+			&survey.LongName,
+			&survey.Reference)
+
 	if err != nil {
 		return nil, err
 	}
