@@ -38,7 +38,7 @@ func main() {
 }
 
 func EchoEngine() *echo.Echo {
-	//Echo instance
+	// Echo instance
 	e := echo.New()
 	configureRouting(e)
 	configureMiddleware(e)
