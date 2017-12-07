@@ -14,8 +14,18 @@ type Survey struct {
 	Reference string `json:"surveyRef"`
 }
 
+type ModelsInterface interface {
+	AllSurveys() *SurveySummary
+	GetSurvey() *Survey
+	GetSurveyByShortName() *Survey
+	GetSurveyByReference() *Survey
+}
+
+type Model struct {
+}
+
 // AllSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
-func AllSurveys() ([]*SurveySummary, error) {
+func (m *Model) AllSurveys() ([]*SurveySummary, error) {
 	rows, err := db.Query("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC")
 	if err != nil {
 		return nil, err
@@ -43,7 +53,7 @@ func AllSurveys() ([]*SurveySummary, error) {
 }
 
 // GetSurvey returns the details of the survey identified by the string surveyID.
-func GetSurvey(surveyID string) (*Survey, error) {
+func (m *Model) GetSurvey(surveyID string) (*Survey, error) {
 	survey := new(Survey)
 	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", surveyID).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
@@ -54,7 +64,7 @@ func GetSurvey(surveyID string) (*Survey, error) {
 }
 
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.
-func GetSurveyByShortName(shortName string) (*Survey, error) {
+func (m *Model) GetSurveyByShortName(shortName string) (*Survey, error) {
 	survey := new(Survey)
 
 	query := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
@@ -72,7 +82,7 @@ func GetSurveyByShortName(shortName string) (*Survey, error) {
 }
 
 // GetSurveyByReference returns the details of the survey identified by the string reference.
-func GetSurveyByReference(reference string) (*Survey, error) {
+func (m *Model) GetSurveyByReference(reference string) (*Survey, error) {
 	survey := new(Survey)
 	err := db.QueryRow("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", reference).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
@@ -82,7 +92,7 @@ func GetSurveyByReference(reference string) (*Survey, error) {
 	return survey, nil
 }
 
-func getSurveyID(surveyID string) error {
+func (m *Model) getSurveyID(surveyID string) error {
 	var id string
 	return db.QueryRow("SELECT id FROM survey.survey WHERE id = $1", surveyID).Scan(&id)
 }
