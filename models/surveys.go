@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/onsdigital/rm-survey-service/models"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -38,8 +37,8 @@ type Survey struct {
 }
 
 type API struct {
-	AllSurveysStmt       *sql.Stmt
-	GetSurveyStmnt       *sql.Stmt
+	AllSurveys           *sql.Stmt
+	GetSurvey            *sql.Stmt
 	GetSurveyByShortName *sql.Stmt
 	GetSurveyByReference *sql.Stmt
 	GetSurveyID          *sql.Stmt
@@ -47,7 +46,7 @@ type API struct {
 
 func NewAPI(db *sql.DB, id string) (*API, error) {
 	allSurveysSql := "SELECT id, shortname FROM survey.survey ORDER BY shortname ASC"
-	allSurveyStmt, err := createStmt(allSurveySql, db)
+	allSurveyStmt, err := createStmt(allSurveysSql, db)
 	if err != nil {
 		return nil, err
 	}
@@ -77,26 +76,25 @@ func NewAPI(db *sql.DB, id string) (*API, error) {
 	}
 
 	return &API{
-
-		AllSurveysStmt:           collectionStmt,
-		GetSurveyStmnt:           getSurveyStmt,
-		GetSurveyByShortNameStmt: getSurveyByShortNameStmt,
-		GetSurveyByReferenceStmt: getSurveyByReferenceStmt,
-		GetSurveyIDStmt:          getSurveyIdStmt,
+		AllSurveys:           allSurveyStmt,
+		GetSurvey:            getSurveyStmt,
+		GetSurveyByShortName: getSurveyByShortNameStmt,
+		GetSurveyByReference: getSurveyByReferenceStmt,
+		GetSurveyID:          getSurveyIdStmt,
 	}, nil
 }
 
-func Info(w http.ResponseWriter, r *http.Request) error {
+func Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(models.NewVersion()); err != nil {
+	if err := json.NewEncoder(w).Encode(NewVersion()); err != nil {
 		panic(err)
 	}
 }
 
 // AllSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) error {
-	rows, err := db.Query(api.AllSurveysStmt)
+	rows, err := db.Query(api.AllSurveys)
 
 	if err != nil {
 		LogError("Error getting list of surveys", err)
@@ -133,7 +131,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) error {
 	err := db.QueryRow(fmt.Sprintf(api.GetSurveyStmnt, id)).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			re := models.NewRESTError("404", "Survey not found")
+			re := NewRESTError("404", "Survey not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 
@@ -159,7 +157,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) err
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			re := models.NewRESTError("404", "Survey not found")
+			re := NewRESTError("404", "Survey not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 
@@ -179,7 +177,7 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) err
 	err := db.QueryRow(fmt.Sprintf(api.GetSurveyByReferenceStmt, id)).Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			re := models.NewRESTError("404", "Survey not found")
+			re := NewRESTError("404", "Survey not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 
@@ -208,7 +206,7 @@ func AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Request) error {
 	// Now we can get the classifier type selector records.
 	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", surveyID)
 	if err != nil {
-		re := models.NewRESTError("404", "Survey not found")
+		re := NewRESTError("404", "Survey not found")
 		return context.JSON(http.StatusNotFound, re)
 	}
 
@@ -234,7 +232,7 @@ func AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Request) error {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			re := models.NewRESTError("404", "Survey not found")
+			re := NewRESTError("404", "Survey not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 
@@ -301,7 +299,7 @@ func GetClassifierTypeSelector(w http.ResponseWriter, r *http.Request) error {
 
 	if err = rows.Err(); err != nil {
 		if err == sql.ErrNoRows {
-			re := models.NewRESTError("404", "Survey or classifier type selector not found")
+			re := NewRESTError("404", "Survey or classifier type selector not found")
 			return context.JSON(http.StatusNotFound, re)
 		}
 

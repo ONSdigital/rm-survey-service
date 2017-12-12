@@ -12,7 +12,7 @@ LINUX_BUILD_ARCH=$(BUILD)/$(OS_LINUX)-$(ARCH)
 MAC_BUILD_ARCH=$(BUILD)/$(OS_MAC)-$(ARCH)
 
 # Flags to pass to the Go linker using the -ldflags="-X ..." option.
-PACKAGE_PATH=github.com/onsdigital/rm-survey-service
+PACKAGE_PATH=github.com/ONSDigital/rm-survey-service
 BRANCH_FLAG=$(PACKAGE_PATH)/models.branch=$(BRANCH)
 BUILT_FLAG=$(PACKAGE_PATH)/models.built=$(BUILT)
 COMMIT_FLAG=$(PACKAGE_PATH)/models.commit=$(COMMIT)

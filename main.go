@@ -13,10 +13,10 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/ONSdigital/rm-survey-service/models"
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/onsdigital/rm-survey-service/models"
 )
 
 const (

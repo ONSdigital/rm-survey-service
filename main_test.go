@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ONSDigital/rm-survey-service/models"
 	"github.com/appleboy/gofight"
 	"github.com/buger/jsonparser"
-	"github.com/onsdigital/rm-survey-service/models"
 	"github.com/stretchr/testify/assert"
 )
 
