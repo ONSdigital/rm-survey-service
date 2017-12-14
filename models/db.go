@@ -21,7 +21,7 @@ func init() {
 }
 
 // InitDB opens dataSource and bootstraps the database schema if it doesn't already exist.
-func InitDB(dataSource string) {
+func InitDB(dataSource string) *sql.DB {
 	const DriverName = "postgres"
 	var err error
 	db, err = sql.Open(DriverName, dataSource)
@@ -46,10 +46,10 @@ func InitDB(dataSource string) {
 	if err != nil {
 		logError("Error pinging data source", err)
 	}
-
 	if !schemaExists() {
 		bootstrapSchema()
 	}
+	return db
 }
 
 func bootstrapSchema() {
