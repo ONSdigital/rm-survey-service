@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -34,46 +33,29 @@ func init() {
 
 func main() {
 	dataSource, port := configureEnvironment()
-	models.InitDB(dataSource)
+	db := models.InitDB(dataSource)
 
 	// Set up the signal handler to watch for SIGTERM and SIGINT signals so we
 	// can at least attempt to gracefully shut down before the PaaS/docker etc
 	// running us unceremoneously kills us with a SIGKILL.
-	cancelSigWatch := signals.HandleFunc(
-		func(sig os.Signal) {
-			log.Printf(`event="Shutting down" signal="%s"`, sig.String())
-			// If any clean-up of attached services is needed, do it here
-			log.Print(`event="Exiting"`)
-			os.Exit(0)
-		},
-		syscall.SIGTERM,
-		syscall.SIGINT,
-	)
-	defer cancelSigWatch()
+
+	api, _ := models.NewAPI(db)
 
 	// Webserver - strictslash set to true to match trailing slashes to routes
 	r := mux.NewRouter().StrictSlash(true)
-
-	r.HandleFunc("/info", surveys.Info).Methods("GET")
-	r.HandleFunc("/surveys", use(surveys.AllSurveys, basicAuth)).Methods("GET")
-	r.HandleFunc("/surveys/{surveyId}", use(surveys.GetSurveyByIdHandler, basicAuth)).Methods("GET")
-	r.HandleFunc("/surveys/shortname/{shortName}", use(surveys.GetSurveyByShortName, basicAuth)).
-		Methods("GET")
-	r.HandleFunc("/surveys/ref/{ref}", use(surveys.GetSurveyByReference, basicAuth)).Methods("GET")
-	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors", use(surveys.AllClassifierTypeSelectors, BasicAuth)).
-		Methods("GET")
-	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}",
-		use(surveys.GetClassifierTypeSelector, basicAuth)).
-		Method("GET")
+	r.HandleFunc("/info", api.Info).Methods("GET")
+	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/shortname/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
 
 	http.Handle("/", r)
 
 	// CompressHandler gzips responses where possible
-	compressHandler := handlers.CompressHandler()
+	compressHandler := handlers.CompressHandler(r)
 	log.Print(http.ListenAndServe(fmt.Sprintf(":%s", port), compressHandler))
 }
 
-func use(h http.HandlerFunc, m middleware, f ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {
+func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {
 	for _, m := range middleware {
 		h = m(h)
 	}
