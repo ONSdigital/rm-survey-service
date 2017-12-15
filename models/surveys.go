@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -39,6 +40,8 @@ type API struct {
 	AllSurveysStmt           *sql.Stmt
 	GetSurveyStmt            *sql.Stmt
 	GetSurveyByShortNameStmt *sql.Stmt
+	GetSurveyByReferenceStmt *sql.Stmt
+	GetSurveyIDStmt          *sql.Stmt
 }
 
 func NewAPI(db *sql.DB) (*API, error) {
@@ -54,8 +57,20 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getSurveyByShortNameSql := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
-	getSurveyByShortNameStmt, err := createStmt(getSurveyByShortNameSql, db)
+	getSurveyByShortNameSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
+	getSurveyByShortNameStmt, err := createStmt(getSurveyByShortNameSQL, db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveyByReferenceSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)"
+	getSurveyByReferenceStmt, err := createStmt(getSurveyByReferenceSQL, db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveyIdSQL := "SELECT id FROM survey.survey WHERE id = $1"
+	getSurveyIdStmt, err := createStmt(getSurveyIdSQL, db)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +79,8 @@ func NewAPI(db *sql.DB) (*API, error) {
 		AllSurveysStmt:           allSurveyStmt,
 		GetSurveyStmt:            getSurveyStmt,
 		GetSurveyByShortNameStmt: getSurveyByShortNameStmt,
+		GetSurveyByReferenceStmt: getSurveyByReferenceStmt,
+		GetSurveyIDStmt:          getSurveyIdStmt,
 	}, nil
 }
 
@@ -137,12 +154,87 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Survey not found", http.StatusNotFound)
 		} else {
-			http.Error(w, "get survey query failed", http.StatusInternalServerError)
+			fmt.Println("ERROR: " + err.Error())
+			http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
 		}
 	}
 
 	data, _ := json.Marshal(survey)
 	w.Write(data)
+
+}
+
+// GetSurveyByReference returns the details of the survey identified by the string ref.
+func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["ref"]
+	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
+	survey := new(Survey)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "get survey by reference query failed", http.StatusInternalServerError)
+		}
+	}
+
+	data, _ := json.Marshal(survey)
+	w.Write(data)
+
+}
+
+// AllClassifierTypeSelectors returns all the classifier type selectors for the survey identified by the string surveyID. The classifier type selectors are returned in ascending order.
+func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Request) {
+	// We need to run a query first to check if the survey exists so an HTTP 404 can be correctly
+	// returned if it doesn't exist. Without this check an HTTP 204 is incorrectly returned for an
+	// invalid survey ID.
+	vars := mux.Vars(r)
+	surveyId := vars["surveyId"]
+
+	err := api.getSurveyID(surveyId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	// Now we can get the classifier type selector records.
+	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", surveyId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
+		} else {
+			fmt.Println("HELLO")
+			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	defer rows.Close()
+	classifierTypeSelectorSummaries := make([]*ClassifierTypeSelectorSummary, 0)
+
+	for rows.Next() {
+		classifierTypeSelectorSummary := new(ClassifierTypeSelectorSummary)
+		err := rows.Scan(&classifierTypeSelectorSummary.ID, &classifierTypeSelectorSummary.Name)
+
+		if err != nil {
+			//LogError("Error getting list of classifier type selectors for survey '"+surveyID+"'", err)
+			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		classifierTypeSelectorSummaries = append(classifierTypeSelectorSummaries, classifierTypeSelectorSummary)
+	}
+
+	data, _ := json.Marshal(classifierTypeSelectorSummaries)
+	w.Write(data)
+}
+
+func (api *API) getSurveyID(surveyId string) error {
+	var id string
+	return api.GetSurveyIDStmt.QueryRow(surveyId).Scan(&id)
 }
 
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {

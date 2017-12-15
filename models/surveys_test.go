@@ -160,6 +160,138 @@ func TestSurveyGetInternalServerError(t *testing.T) {
 	})
 }
 
+func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
+	Convey("Survey GET by shortname returns a survey resource", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref"}).AddRow("testid", "test-shortname", "test-longname", "test-reference")
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/shortname/test-shortname", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByShortName(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+		expected := Survey{ID: "testid", ShortName: "test-shortname", LongName: "test-longname", Reference: "test-reference"}
+		res := Survey{}
+		json.Unmarshal(w.Body.Bytes(), &res)
+		So(res.ID, ShouldEqual, expected.ID)
+		So(res.ShortName, ShouldEqual, expected.ShortName)
+		So(res.LongName, ShouldEqual, expected.LongName)
+		So(res.Reference, ShouldEqual, expected.Reference)
+	})
+}
+
+func TestSurveyGetByShortNameNotFound(t *testing.T) {
+	Convey("Survey Get by shortname returns an 404 not found", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "reference"})
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/survey/shortname/test-shortname", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByShortName(w, r)
+		So(w.Code, ShouldEqual, http.StatusNotFound)
+	})
+}
+
+func TestSurveyGetByShortNameInternalServerError(t *testing.T) {
+	Convey("Survey GET by shortname returns a 500", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/survey/testid", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByShortName(w, r)
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+}
+
+func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
+	Convey("Survey GET by reference returns a survey resource", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref"}).AddRow("testid", "test-shortname", "test-longname", "test-reference")
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/ref/test-reference", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByReference(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+		expected := Survey{ID: "testid", ShortName: "test-shortname", LongName: "test-longname", Reference: "test-reference"}
+		res := Survey{}
+		json.Unmarshal(w.Body.Bytes(), &res)
+		So(res.ID, ShouldEqual, expected.ID)
+		So(res.ShortName, ShouldEqual, expected.ShortName)
+		So(res.LongName, ShouldEqual, expected.LongName)
+		So(res.Reference, ShouldEqual, expected.Reference)
+	})
+}
+
+func TestSurveyGetByReferenceNotFound(t *testing.T) {
+	Convey("Survey Get by reference returns an 404 not found", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "reference"})
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/survey/ref/test-reference", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByReference(w, r)
+		So(w.Code, ShouldEqual, http.StatusNotFound)
+	})
+}
+
+func TestSurveyGetByReferenceInternalServerError(t *testing.T) {
+	Convey("Survey GET by reference returns a 500", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/survey/testid", nil)
+		So(err, ShouldBeNil)
+		api.GetSurveyByReference(w, r)
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+}
+
 func makeCollectionRow() *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{"id", "shortname"}).
 		AddRow("testid", "test-shortname")
@@ -171,5 +303,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.MatchExpectationsInOrder(false)
 	m.ExpectPrepare("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = ?")
-	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER(?)")
+	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey")
+	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?")
 }
