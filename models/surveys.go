@@ -37,11 +37,13 @@ type Survey struct {
 }
 
 type API struct {
-	AllSurveysStmt           *sql.Stmt
-	GetSurveyStmt            *sql.Stmt
-	GetSurveyByShortNameStmt *sql.Stmt
-	GetSurveyByReferenceStmt *sql.Stmt
-	GetSurveyIDStmt          *sql.Stmt
+	AllSurveysStmt                    *sql.Stmt
+	GetSurveyStmt                     *sql.Stmt
+	GetSurveyByShortNameStmt          *sql.Stmt
+	GetSurveyByReferenceStmt          *sql.Stmt
+	GetSurveyIDStmt                   *sql.Stmt
+	GetClassifierTypeSelectorStmt     *sql.Stmt
+	GetClassifierTypeSelectorByIdStmt *sql.Stmt
 }
 
 func NewAPI(db *sql.DB) (*API, error) {
@@ -75,12 +77,26 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	getClassifierTypeSelectorSql := "SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC"
+	getClassifierTypeSelectorStmt, err := createStmt(getClassifierTypeSelectorSql, db)
+	if err != nil {
+		return nil, err
+	}
+
+	getClassifierTypeSelectoreByIdSql := "SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC"
+	getClassifierTypeSelectorByIdStmt, err := createStmt(getClassifierTypeSelectoreByIdSql, db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &API{
-		AllSurveysStmt:           allSurveyStmt,
-		GetSurveyStmt:            getSurveyStmt,
-		GetSurveyByShortNameStmt: getSurveyByShortNameStmt,
-		GetSurveyByReferenceStmt: getSurveyByReferenceStmt,
-		GetSurveyIDStmt:          getSurveyIdStmt,
+		AllSurveysStmt:                    allSurveyStmt,
+		GetSurveyStmt:                     getSurveyStmt,
+		GetSurveyByShortNameStmt:          getSurveyByShortNameStmt,
+		GetSurveyByReferenceStmt:          getSurveyByReferenceStmt,
+		GetSurveyIDStmt:                   getSurveyIdStmt,
+		GetClassifierTypeSelectorStmt:     getClassifierTypeSelectorStmt,
+		GetClassifierTypeSelectorByIdStmt: getClassifierTypeSelectorByIdStmt,
 	}, nil
 }
 
@@ -202,7 +218,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Now we can get the classifier type selector records.
-	rows, err := db.Query("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", surveyId)
+	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
@@ -222,7 +238,6 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			//LogError("Error getting list of classifier type selectors for survey '"+surveyID+"'", err)
 			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
-			return
 		}
 
 		classifierTypeSelectorSummaries = append(classifierTypeSelectorSummaries, classifierTypeSelectorSummary)
@@ -230,6 +245,61 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 
 	data, _ := json.Marshal(classifierTypeSelectorSummaries)
 	w.Write(data)
+}
+
+// GetClassifierTypeSelector returns the details of the classifier type selector for the survey identified by the string surveyID and
+// the classifier type selector identified by the str	ing classifierTypeSelectorID.
+func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyId := vars["surveyId"]
+	classifierTypeSelectorId := vars["classifierTypeSelectorId"]
+
+	err := api.getSurveyID(surveyId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	// Now we can get the classifier type selector and classifier type records.
+	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyId, classifierTypeSelectorId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	defer rows.Close()
+	classifierTypeSelector := new(ClassifierTypeSelector)
+
+	// Using make here ensures the JSON contains an empty array if there are no classifier
+	// types, rather than null.
+	classifierTypes := make([]string, 0)
+	var classifierType string
+
+	for rows.Next() {
+		err := rows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
+
+		if err != nil {
+			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
+
+		classifierTypes = append(classifierTypes, classifierType)
+	}
+
+	classifierTypeSelector.ClassifierTypes = classifierTypes
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+	}
+
+	data, _ := json.Marshal(classifierTypeSelector)
+	w.Write(data)
+
 }
 
 func (api *API) getSurveyID(surveyId string) error {
