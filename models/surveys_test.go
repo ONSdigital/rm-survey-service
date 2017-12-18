@@ -362,6 +362,34 @@ func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
 	})
 }
 
+func TestClassifierTypeSelectorByIdReturnsJSON(t *testing.T) {
+	Convey("ClassifierType GET by reference returns a classifier resource", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		id_row := sqlmock.NewRows([]string{"id"}).AddRow("id").AddRow("id")
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector", "classifiertype"}).AddRow("test-id", "test-name", "test-type")
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(id_row)
+		mock.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = .* ORDER BY classifiertype ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.GetClassifierTypeSelectorById(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+		var a = []string{"test"}
+		expected := ClassifierTypeSelector{ID: "test-id", Name: "test-name", ClassifierTypes: a}
+		res := ClassifierTypeSelector{}
+		json.Unmarshal(w.Body.Bytes(), &res)
+		So(res.ID, ShouldEqual, expected.ID)
+		So(res.Name, ShouldEqual, expected.Name)
+	})
+}
+
 func makeCollectionRow() *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{"id", "shortname"}).
 		AddRow("testid", "test-shortname")
