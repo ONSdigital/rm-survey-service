@@ -49,7 +49,7 @@ func main() {
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.GetSurveyByReference, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors", use(api.AllClassifierTypeSelectors, basicAuth)).Methods("GET")
-	r.HandleFunc("/surveys/{surveyid}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorById, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorById, basicAuth)).Methods("GET")
 	http.Handle("/", r)
 
 	// CompressHandler gzips responses where possible

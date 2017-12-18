@@ -170,7 +170,6 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Survey not found", http.StatusNotFound)
 		} else {
-			fmt.Println("ERROR: " + err.Error())
 			http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
 		}
 	}
@@ -264,16 +263,7 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	}
 
 	// Now we can get the classifier type selector and classifier type records.
-	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyId, classifierTypeSelectorId)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
-		} else {
-			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
-		}
-	}
-
-	defer rows.Close()
+	classifierRow := api.GetClassifierTypeSelectorByIdStmt.QueryRow(classifierTypeSelectorId)
 	classifierTypeSelector := new(ClassifierTypeSelector)
 
 	// Using make here ensures the JSON contains an empty array if there are no classifier
@@ -281,21 +271,18 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	classifierTypes := make([]string, 0)
 	var classifierType string
 
-	for rows.Next() {
-		err := rows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
-
-		if err != nil {
+	err = classifierRow.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
+	if err != nil {
+		if err == sql.ErrNoRows {
 			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		} else {
+			fmt.Println(err)
+			http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
 		}
-
-		classifierTypes = append(classifierTypes, classifierType)
 	}
 
+	classifierTypes = append(classifierTypes, classifierType)
 	classifierTypeSelector.ClassifierTypes = classifierTypes
-
-	if err = rows.Err(); err != nil {
-		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
-	}
 
 	data, _ := json.Marshal(classifierTypeSelector)
 	w.Write(data)
