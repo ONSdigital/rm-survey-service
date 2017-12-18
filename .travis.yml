@@ -7,7 +7,7 @@ language: go
 go:
  - 1.8
 
-go_import_path: github.com/onsdigital/rm-survey-service
+go_import_path: github.com/ONSdigital/rm-survey-service
 
 after_success:
   - docker build . -t sdcplatform/surveysvc
