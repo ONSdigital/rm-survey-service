@@ -300,7 +300,7 @@ func TestAllClassifierTypeSelectorsReturnsJSON(t *testing.T) {
 		id_row := sqlmock.NewRows([]string{"id"}).AddRow("id").AddRow("id")
 		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector"}).AddRow("test-id", "test-name")
 		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(id_row)
-		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .* ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 		api, err := NewAPI(db)
@@ -312,10 +312,10 @@ func TestAllClassifierTypeSelectorsReturnsJSON(t *testing.T) {
 		api.AllClassifierTypeSelectors(w, r)
 		So(w.Code, ShouldEqual, http.StatusOK)
 		expected := ClassifierTypeSelectorSummary{ID: "test-id", Name: "test-name"}
-		res := ClassifierTypeSelectorSummary{}
+		res := []ClassifierTypeSelectorSummary{}
 		json.Unmarshal(w.Body.Bytes(), &res)
-		So(res.ID, ShouldEqual, expected.ID)
-		So(res.Name, ShouldEqual, expected.Name)
+		So(res[0].ID, ShouldEqual, expected.ID)
+		So(res[0].Name, ShouldEqual, expected.Name)
 	})
 }
 
