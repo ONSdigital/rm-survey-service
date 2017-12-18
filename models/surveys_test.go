@@ -319,6 +319,49 @@ func TestAllClassifierTypeSelectorsReturnsJSON(t *testing.T) {
 	})
 }
 
+func TestAllClassifierTypeSelectorsNotFound(t *testing.T) {
+	Convey("ClassifierType GET returns a 404 not found", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		id_row := sqlmock.NewRows([]string{"id"})
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector"}).AddRow("test-id", "test-name")
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(id_row)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .* ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.AllClassifierTypeSelectors(w, r)
+		So(w.Code, ShouldEqual, http.StatusNotFound)
+	})
+}
+
+func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
+	Convey("ClassifierType GET returns a 500", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector"}).AddRow("test-id", "test-name")
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .* ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.AllClassifierTypeSelectors(w, r)
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+}
+
 func makeCollectionRow() *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{"id", "shortname"}).
 		AddRow("testid", "test-shortname")
