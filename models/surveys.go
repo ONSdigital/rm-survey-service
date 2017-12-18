@@ -222,7 +222,6 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 		if err == sql.ErrNoRows {
 			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
 		} else {
-			fmt.Println("HELLO")
 			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
 		}
 	}
