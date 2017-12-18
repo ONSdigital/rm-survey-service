@@ -292,6 +292,33 @@ func TestSurveyGetByReferenceInternalServerError(t *testing.T) {
 	})
 }
 
+func TestAllClassifierTypeSelectorsReturnsJSON(t *testing.T) {
+	Convey("ClassifierType GET by reference returns a classifier resource", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		id_row := sqlmock.NewRows([]string{"id"}).AddRow("id").AddRow("id")
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector"}).AddRow("test-id", "test-name")
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(id_row)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.AllClassifierTypeSelectors(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+		expected := ClassifierTypeSelectorSummary{ID: "test-id", Name: "test-name"}
+		res := ClassifierTypeSelectorSummary{}
+		json.Unmarshal(w.Body.Bytes(), &res)
+		So(res.ID, ShouldEqual, expected.ID)
+		So(res.Name, ShouldEqual, expected.Name)
+	})
+}
+
 func makeCollectionRow() *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{"id", "shortname"}).
 		AddRow("testid", "test-shortname")
@@ -305,7 +332,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = ?")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
-	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?")
+	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk .*")
 }
