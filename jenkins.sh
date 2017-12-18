@@ -17,10 +17,10 @@ ls -1 | grep -v ^src | xargs -I{} mv {} src/$PROJ/
 go get github.com/tools/godep
 export PATH=$PATH:$WORKSPACE/bin
 cd src
-godep get -v github.com/ONSDigital/rm-survey-service
+godep get -v github.com/ONSdigital/rm-survey-service
 
 # Build the project
-cd github.com/ONSDigital/rm-survey-service
+cd github.com/ONSdigital/rm-survey-service
 make build
 
 # Create TAR file and upload to Artifactory
