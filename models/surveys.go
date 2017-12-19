@@ -47,44 +47,37 @@ type API struct {
 }
 
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveysSQL := "SELECT id, shortname FROM survey.survey ORDER BY shortname ASC"
-	allSurveyStmt, err := createStmt(allSurveysSQL, db)
+	allSurveyStmt, err := createStmt("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveySQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1"
-	getSurveyStmt, err := createStmt(getSurveySQL, db)
+	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
-	getSurveyByShortNameStmt, err := createStmt(getSurveyByShortNameSQL, db)
+	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)"
-	getSurveyByReferenceStmt, err := createStmt(getSurveyByReferenceSQL, db)
+	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyIdSQL := "SELECT id FROM survey.survey WHERE id = $1"
-	getSurveyIdStmt, err := createStmt(getSurveyIdSQL, db)
+	getSurveyIdStmt, err := createStmt("SELECT id FROM survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorSql := "SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC"
-	getClassifierTypeSelectorStmt, err := createStmt(getClassifierTypeSelectorSql, db)
+	getClassifierTypeSelectorStmt, err := createStmt("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getClassifierTypeSelectoreByIdSql := "SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC"
-	getClassifierTypeSelectorByIdStmt, err := createStmt(getClassifierTypeSelectoreByIdSql, db)
+	getClassifierTypeSelectorByIdStmt, err := createStmt("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC", db)
 	if err != nil {
 		return nil, err
 	}
