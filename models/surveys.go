@@ -126,7 +126,7 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		surveySummary := new(SurveySummary)
-		err := rows.Scan(&surveySummary.ID, &surveySummary.ShortName)
+		err = rows.Scan(&surveySummary.ID, &surveySummary.ShortName)
 
 		if err != nil {
 			http.Error(w, "No surveys found", http.StatusInternalServerError)
@@ -268,7 +268,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 
 	for rows.Next() {
 		classifierTypeSelectorSummary := new(ClassifierTypeSelectorSummary)
-		err := rows.Scan(&classifierTypeSelectorSummary.ID, &classifierTypeSelectorSummary.Name)
+		err = rows.Scan(&classifierTypeSelectorSummary.ID, &classifierTypeSelectorSummary.Name)
 
 		if err != nil {
 			//LogError("Error getting list of classifier type selectors for survey '"+surveyID+"'", err)
