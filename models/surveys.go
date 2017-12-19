@@ -258,9 +258,6 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	// Now we can get the classifier type selector records.
 	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyID)
 
-	if err == sql.ErrNoRows {
-		http.Error(w, "Classifier type selector not found", http.StatusNoContent)
-	}
 	if err != nil {
 		http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 		return
@@ -285,6 +282,11 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	data, err := json.Marshal(classifierTypeSelectorSummaries)
 	if err != nil {
 		http.Error(w, "Failed to marshal classifier type selector summary JSON", http.StatusInternalServerError)
+		return
+	}
+
+	if len(classifierTypeSelectorSummaries) == 0 {
+		http.Error(w, "No classifier type selectors found", http.StatusNoContent)
 		return
 	}
 

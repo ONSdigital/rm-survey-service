@@ -363,7 +363,7 @@ func TestAllClassifierTypeSelectorsNotFound(t *testing.T) {
 	})
 }
 
-func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
+func TestAllClassifierTypeSelectorsSurveyReturnsInternalServerError(t *testing.T) {
 	Convey("ClassifierType GET returns a 500", t, func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
@@ -378,6 +378,25 @@ func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
 		defer api.Close()
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.AllClassifierTypeSelectors(w, r)
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+}
+
+func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
+	Convey("ClassifierType GET returns a 500", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .* ").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors", nil)
 		So(err, ShouldBeNil)
 		api.AllClassifierTypeSelectors(w, r)
 		So(w.Code, ShouldEqual, http.StatusInternalServerError)
