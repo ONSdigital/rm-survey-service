@@ -115,6 +115,12 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		//LogError("Error getting list of surveys", err)
 		http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
+		}
+		w.Write(data)
 		return
 	}
 
