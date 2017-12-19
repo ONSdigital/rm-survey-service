@@ -47,37 +47,44 @@ type API struct {
 }
 
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveyStmt, err := createStmt("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC", db)
+	allSurveysSQL := "SELECT id, shortname FROM survey.survey ORDER BY shortname ASC"
+	allSurveyStmt, err := createStmt(allSurveysSQL, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", db)
+	getSurveySQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1"
+	getSurveyStmt, err := createStmt(getSurveySQL, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
+	getSurveyByShortNameSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)"
+	getSurveyByShortNameStmt, err := createStmt(getSurveyByShortNameSQL, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyByReferenceSQL := "SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)"
+	getSurveyByReferenceStmt, err := createStmt(getSurveyByReferenceSQL, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyIdStmt, err := createStmt("SELECT id FROM survey.survey WHERE id = $1", db)
+	getSurveyIdSQL := "SELECT id FROM survey.survey WHERE id = $1"
+	getSurveyIdStmt, err := createStmt(getSurveyIdSQL, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorStmt, err := createStmt("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", db)
+	getClassifierTypeSelectorSql := "SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC"
+	getClassifierTypeSelectorStmt, err := createStmt(getClassifierTypeSelectorSql, db)
 	if err != nil {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorByIdStmt, err := createStmt("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC", db)
+	getClassifierTypeSelectoreByIdSql := "SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC"
+	getClassifierTypeSelectorByIdStmt, err := createStmt(getClassifierTypeSelectoreByIdSql, db)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +104,7 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(NewVersion()); err != nil {
-		http.Error(w, "info encoding failed", http.StatusInternalServerError)
+		panic(err)
 	}
 }
 
@@ -129,10 +136,10 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No surveys found", http.StatusNoContent)
 		return
 	}
-	data, _ := json.Marshal(surveySummaries)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(surveySummaries)
+	if err != nil {
+		http.Error(w, "Error decoding survey summary JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 }
 
@@ -143,18 +150,18 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	survey := new(Survey)
 	surveyRow := api.GetSurveyStmt.QueryRow(id)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Survey not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "get survey query failed", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "get survey query failed", http.StatusInternalServerError)
+		}
 	}
 
-	data, _ := json.Marshal(survey)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(survey)
+	if err != nil {
+		http.Error(w, "Error decoding survey JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 }
 
@@ -165,18 +172,18 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Survey not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
+		}
 	}
 
-	data, _ := json.Marshal(survey)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(survey)
+	if err != nil {
+		http.Error(w, "Error decoding survey JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 
 }
@@ -188,18 +195,18 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Survey not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "get survey by reference query failed", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "get survey by reference query failed", http.StatusInternalServerError)
+		}
 	}
 
-	data, _ := json.Marshal(survey)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(survey)
+	if err != nil {
+		http.Error(w, "Error decoding survey JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 
 }
@@ -213,22 +220,22 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	surveyId := vars["surveyId"]
 
 	err := api.getSurveyID(surveyId)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Survey not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 
 	// Now we can get the classifier type selector records.
 	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyId)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Classifier type selector not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Classifier type selector not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 
 	defer rows.Close()
@@ -246,10 +253,10 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 		classifierTypeSelectorSummaries = append(classifierTypeSelectorSummaries, classifierTypeSelectorSummary)
 	}
 
-	data, _ := json.Marshal(classifierTypeSelectorSummaries)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(classifierTypeSelectorSummaries)
+	if err != nil {
+		http.Error(w, "Error decoding classifier type select summary JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 }
 
@@ -261,12 +268,12 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	classifierTypeSelectorId := vars["classifierTypeSelectorId"]
 
 	err := api.getSurveyID(surveyId)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Survey not found", http.StatusNotFound)
-	}
 	if err != nil {
-		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Survey not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 
 	// Now we can get the classifier type selector and classifier type records.
@@ -279,22 +286,22 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	var classifierType string
 
 	err = classifierRow.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
-
-	if err == sql.ErrNoRows {
-		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
-	}
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		} else {
+			fmt.Println(err)
+			http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
+		}
 	}
 
 	classifierTypes = append(classifierTypes, classifierType)
 	classifierTypeSelector.ClassifierTypes = classifierTypes
 
-	data, _ := json.Marshal(classifierTypeSelector)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	data, err := json.Marshal(classifierTypeSelector)
+	if err != nil {
+		http.Error(w, "Error decoding classifier type selector JSON", http.StatusInternalServerError)
+	}
 	w.Write(data)
 
 }
