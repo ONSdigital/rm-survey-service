@@ -130,6 +130,9 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, _ := json.Marshal(surveySummaries)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
 
@@ -149,6 +152,9 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(survey)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
 
@@ -168,6 +174,9 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(survey)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 
 }
@@ -188,6 +197,9 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(survey)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 
 }
@@ -235,6 +247,9 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	}
 
 	data, _ := json.Marshal(classifierTypeSelectorSummaries)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
 
@@ -277,6 +292,9 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	classifierTypeSelector.ClassifierTypes = classifierTypes
 
 	data, _ := json.Marshal(classifierTypeSelector)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 
 }
