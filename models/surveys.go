@@ -124,6 +124,7 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			http.Error(w, "No surveys found", http.StatusInternalServerError)
+			return
 		}
 
 		surveySummaries = append(surveySummaries, surveySummary)
