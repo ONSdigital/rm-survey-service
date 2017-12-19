@@ -43,24 +43,3 @@ test:
 # Remove the build directory tree.
 clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
-
-# Run a build then push to Cloud Foundry.
-push-ci: build
-	cf target -s ci
-	cf push -f manifest-ci.yml
-
-push-demo: build
-	cf target -s demo
-	cf push -f manifest-demo.yml
-
-push-dev: build
-	cf target -s dev
-	cf push surveysvc-dev
-
-push-int: build
-	cf target -s int
-	cf push -f manifest-int.yml
-
-push-test: build
-	cf target -s test
-	cf push -f manifest-test.yml
