@@ -163,7 +163,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
@@ -202,7 +202,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
@@ -242,7 +242,7 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
@@ -284,7 +284,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
@@ -353,7 +353,7 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
@@ -383,7 +383,7 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(http.StatusOk)
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 
 		return
