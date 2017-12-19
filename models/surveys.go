@@ -214,7 +214,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	// returned if it doesn't exist. Without this check an HTTP 204 is incorrectly returned for an
 	// invalid survey ID.
 	vars := mux.Vars(r)
-	surveyID := vars["surveyId"]
+	surveyID := vars["surveyID"]
 
 	err := api.getSurveyID(surveyID)
 
