@@ -215,7 +215,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	// returned if it doesn't exist. Without this check an HTTP 204 is incorrectly returned for an
 	// invalid survey ID.
 	vars := mux.Vars(r)
-	surveyID := vars["surveyID"]
+	surveyID := vars["surveyId"]
 
 	err := api.getSurveyID(surveyID)
 
@@ -230,7 +230,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	rows, err := api.GetClassifierTypeSelectorStmt.Query(surveyID)
 
 	if err == sql.ErrNoRows {
-		http.Error(w, "Classifier type selector not found", http.StatusNotFound)
+		http.Error(w, "Classifier type selector not found", http.StatusNoContent)
 	}
 	if err != nil {
 		http.Error(w, "Error getting list of classifier type selectors for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
