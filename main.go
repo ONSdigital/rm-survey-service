@@ -39,7 +39,10 @@ func main() {
 	// can at least attempt to gracefully shut down before the PaaS/docker etc
 	// running us unceremoneously kills us with a SIGKILL.
 
-	api, _ := models.NewAPI(db)
+	api, err := models.NewAPI(db)
+	if err != nil {
+		log.Fatal(`event="Failed to start" error="unable to initialise API model"`)
+	}
 
 	// Webserver - strictslash set to true to match trailing slashes to routes
 	r := mux.NewRouter().StrictSlash(true)
@@ -52,9 +55,13 @@ func main() {
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorByID, basicAuth)).Methods("GET")
 	http.Handle("/", r)
 
-	// CompressHandler gzips responses where possible
-	compressHandler := handlers.CompressHandler(r)
-	log.Print(http.ListenAndServe(fmt.Sprintf(":%s", port), compressHandler))
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%s", port),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Handler:      handlers.CompressHandler(r),
+	}
+	log.Fatalf(`event="Stopped" error="%v"`, srv.ListenAndServe())
 }
 
 func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {
