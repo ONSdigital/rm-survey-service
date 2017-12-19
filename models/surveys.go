@@ -257,24 +257,24 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	w.Write(data)
 }
 
-// GetClassifierTypeSelector returns the details of the classifier type selector for the survey identified by the string surveyID and
+// GetClassifierTypeSelectorByID returns the details of the classifier type selector for the survey identified by the string surveyID and
 // the classifier type selector identified by the str	ing classifierTypeSelectorID.
-func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Request) {
+func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	surveyId := vars["surveyId"]
-	classifierTypeSelectorId := vars["classifierTypeSelectorId"]
+	surveyID := vars["surveyId"]
+	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
 
-	err := api.getSurveyID(surveyId)
+	err := api.getSurveyID(surveyID)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "Survey not found", http.StatusNotFound)
 	}
 	if err != nil {
-		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 	}
 
 	// Now we can get the classifier type selector and classifier type records.
-	classifierRow := api.GetClassifierTypeSelectorByIDStmt.QueryRow(classifierTypeSelectorId)
+	classifierRow := api.GetClassifierTypeSelectorByIDStmt.QueryRow(classifierTypeSelectorID)
 	classifierTypeSelector := new(ClassifierTypeSelector)
 
 	// Using make here ensures the JSON contains an empty array if there are no classifier
@@ -285,7 +285,7 @@ func (api *API) GetClassifierTypeSelectorById(w http.ResponseWriter, r *http.Req
 	err = classifierRow.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
 
 	if err == sql.ErrNoRows {
-		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorId+"' for survey '"+surveyId+"' - "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error getting classifier type selector '"+classifierTypeSelectorID+"' for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -312,6 +312,7 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
 
+//Close closes all db connections on the api struct
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }
