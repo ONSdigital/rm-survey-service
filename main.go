@@ -102,24 +102,7 @@ func configureEnvironment() (dataSource, port string) {
 	port = "8080"
 	appEnv, err := cfenv.Current()
 
-	if err == nil {
-		ps := appEnv.Port
-		port = ":" + strconv.FormatInt(int64(ps), 10)
-		postgresServer, err := appEnv.Services.WithTag("postgresql")
-		LogInfo("Found Cloud Foundry environment")
-
-		if err == nil {
-			uri, found := postgresServer[0].CredentialString("uri")
-
-			if found {
-				dataSource = uri
-			} else {
-				message := "Unable to retrieve PostgreSQL URI from Cloud Foundry environment"
-				LogInfo(message)
-				panic(message)
-			}
-		}
-	} else {
+	if err != nil {
 		LogInfo("No Cloud Foundry environment")
 
 		if v := os.Getenv("PORT"); len(v) > 0 {
@@ -128,6 +111,25 @@ func configureEnvironment() (dataSource, port string) {
 
 		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
 			dataSource = v
+		}
+
+		return dataSource, port
+	}
+
+	ps := appEnv.Port
+	port = ":" + strconv.FormatInt(int64(ps), 10)
+	postgresServer, err := appEnv.Services.WithTag("postgresql")
+	LogInfo("Found Cloud Foundry environment")
+
+	if err == nil {
+		uri, found := postgresServer[0].CredentialString("uri")
+
+		if found {
+			dataSource = uri
+		} else {
+			message := "Unable to retrieve PostgreSQL URI from Cloud Foundry environment"
+			LogInfo(message)
+			panic(message)
 		}
 	}
 
