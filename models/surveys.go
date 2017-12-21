@@ -365,7 +365,12 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	}
 
 	// Now we can get the classifier type selector and classifier type records.
-	classifierRow := api.GetClassifierTypeSelectorByIDStmt.QueryRow(classifierTypeSelectorID)
+	classifierRows, err := api.GetClassifierTypeSelectorByIDStmt.Query(classifierTypeSelectorID)
+
+	if err != nil {
+		http.Error(w, "Get classifiers query failed", http.StatusInternalServerError)
+
+	}
 	classifierTypeSelector := new(ClassifierTypeSelector)
 
 	// Using make here ensures the JSON contains an empty array if there are no classifier
@@ -373,8 +378,19 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	classifierTypes := make([]string, 0)
 	var classifierType string
 
-	err = classifierRow.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
-	if err == sql.ErrNoRows {
+	for classifierRows.Next() {
+		err = classifierRows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
+
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
+			return
+		}
+
+		classifierTypes = append(classifierTypes, classifierType)
+	}
+
+	if len(classifierTypes) == 0 {
 		re := NewRESTError("404", "Classifier Type Selector not found")
 		data, err := json.Marshal(re)
 		if err != nil {
@@ -389,13 +405,6 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
-		return
-	}
-
-	classifierTypes = append(classifierTypes, classifierType)
 	classifierTypeSelector.ClassifierTypes = classifierTypes
 
 	data, err := json.Marshal(classifierTypeSelector)
