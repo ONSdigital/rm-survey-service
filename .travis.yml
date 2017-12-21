@@ -9,8 +9,11 @@ go:
 
 go_import_path: github.com/ONSdigital/rm-survey-service
 
-after_success:
+script:
+  - make
   - docker build . -t sdcplatform/surveysvc
+
+after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push sdcplatform/surveysvc;
