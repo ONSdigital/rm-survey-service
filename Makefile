@@ -38,7 +38,7 @@ build: clean
 
 # Run the tests.
 test:
-	go test -cover *.go
+	go test -cover ./...
 
 # Remove the build directory tree.
 clean:
