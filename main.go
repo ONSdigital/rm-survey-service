@@ -95,7 +95,7 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if pair[0] != os.Getenv("username") || pair[1] != os.Getenv("password") {
+		if pair[0] != os.Getenv("security_user_name") || pair[1] != os.Getenv("security_user_password") {
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
 		}
