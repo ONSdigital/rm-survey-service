@@ -43,3 +43,6 @@ test:
 # Remove the build directory tree.
 clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
+
+docker: build
+	docker build . -t sdcplatform/surveysvc
