@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-COPY build/linux-amd64/bin/surveysvc /usr/local/bin/
+COPY build/linux-amd64/bin/main /usr/local/bin/
 
 EXPOSE 8080
 
