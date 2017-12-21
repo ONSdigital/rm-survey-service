@@ -404,7 +404,7 @@ func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
 }
 
 func TestClassifierTypeSelectorByIdReturnsJSON(t *testing.T) {
-	Convey("ClassifierType GET by reference returns a classifier resource", t, func() {
+	Convey("ClassifierType GET by ID returns a classifier resource", t, func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
@@ -432,7 +432,7 @@ func TestClassifierTypeSelectorByIdReturnsJSON(t *testing.T) {
 }
 
 func TestClassifierTypeSelectorByIdReturns404(t *testing.T) {
-	Convey("ClassifierType GET by reference returns a classifier resource", t, func() {
+	Convey("ClassifierType GET by ID returns a classifier resource", t, func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
@@ -447,6 +447,28 @@ func TestClassifierTypeSelectorByIdReturns404(t *testing.T) {
 		defer api.Close()
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/", nil)
+		So(err, ShouldBeNil)
+		api.GetClassifierTypeSelectorByID(w, r)
+		So(w.Code, ShouldEqual, http.StatusNotFound)
+	})
+}
+
+func TestClassifierTypeSelectorByIdNoClassifierTypesReturns404(t *testing.T) {
+	Convey("ClassifierType GET by ID returns 404 if no classifier types exist", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		idRow := sqlmock.NewRows([]string{"id"}).AddRow("test-id")
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector", "classifiertype"})
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(idRow)
+		mock.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = .* ORDER BY classifiertype ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/test-id/classifiertypeselectors/test-selector", nil)
 		So(err, ShouldBeNil)
 		api.GetClassifierTypeSelectorByID(w, r)
 		So(w.Code, ShouldEqual, http.StatusNotFound)
