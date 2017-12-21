@@ -124,7 +124,7 @@ func configureEnvironment() (dataSource, port string) {
 	}
 
 	ps := appEnv.Port
-	port = ":" + strconv.FormatInt(int64(ps), 10)
+	port = strconv.FormatInt(int64(ps), 10)
 	postgresServer, err := appEnv.Services.WithTag("postgresql")
 	LogInfo("Found Cloud Foundry environment")
 
