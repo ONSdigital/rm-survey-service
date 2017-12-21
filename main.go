@@ -143,6 +143,7 @@ func configureEnvironment() (dataSource, port string) {
 	return dataSource, port
 }
 
+//LogError log out error messages
 func LogError(message string, err error) {
 	logger.Error(message,
 		zap.String("service", serviceName),
@@ -151,6 +152,7 @@ func LogError(message string, err error) {
 		zap.String("created", time.Now().UTC().Format(timeFormat)))
 }
 
+//LogInfo log out info log messages
 func LogInfo(message string) {
 	logger.Info(message,
 		zap.String("service", serviceName),
