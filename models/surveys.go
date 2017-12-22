@@ -105,7 +105,6 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	rows, err := api.AllSurveysStmt.Query()
 
 	if err != nil {
-		//LogError("Error getting list of surveys", err)
 		http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
 		return
 	}
