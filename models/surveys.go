@@ -22,12 +22,6 @@ type ClassifierTypeSelector struct {
 	ClassifierTypes []string `json:"classifierTypes"`
 }
 
-// SurveySummary represents a summary of a survey.
-type SurveySummary struct {
-	ID        string `json:"id"`
-	ShortName string `json:"shortName"`
-}
-
 // Survey represents the details of a survey.
 type Survey struct {
 	ID        string `json:"id"`
@@ -50,7 +44,7 @@ type API struct {
 
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveyStmt, err := createStmt("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC", db)
+	allSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis FROM survey.survey ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
@@ -117,26 +111,26 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer rows.Close()
-	surveySummaries := make([]*SurveySummary, 0)
+	surveys := make([]*Survey, 0)
 
 	for rows.Next() {
-		surveySummary := new(SurveySummary)
-		err = rows.Scan(&surveySummary.ID, &surveySummary.ShortName)
+		survey := new(Survey)
+		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 		if err != nil {
 			http.Error(w, "Failed to get surveys from database", http.StatusInternalServerError)
 			return
 		}
 
-		surveySummaries = append(surveySummaries, surveySummary)
+		surveys = append(surveys, survey)
 	}
 
-	if len(surveySummaries) == 0 {
+	if len(surveys) == 0 {
 		http.Error(w, "No surveys found", http.StatusNoContent)
 		return
 	}
 
-	data, err := json.Marshal(surveySummaries)
+	data, err := json.Marshal(surveys)
 	if err != nil {
 		http.Error(w, "Failed to marshal survey summary JSON", http.StatusInternalServerError)
 		return
