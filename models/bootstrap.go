@@ -1,7 +1,7 @@
 package models
 
-func bootstrapSQL() [18]string {
-	sql := [18]string{
+func bootstrapSQL() [63]string {
+	sql := [63]string{
 		"CREATE SCHEMA survey",
 		"SET schema 'survey'",
 		"CREATE TABLE survey (surveypk serial NOT NULL, id uuid NOT NULL, shortname character varying(20) NOT NULL, longname character varying(100) NOT NULL, surveyref character varying(20) NOT NULL)",
