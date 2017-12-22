@@ -34,6 +34,7 @@ type Survey struct {
 	ShortName string `json:"shortName"`
 	LongName  string `json:"longName"`
 	Reference string `json:"surveyRef"`
+	LegalBasis string `json:"legalBasis"`
 }
 
 //API contains all the pre-prepared sql statments
@@ -54,17 +55,17 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", db)
+	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
+	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +153,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	id := vars["surveyId"]
 	survey := new(Survey)
 	surveyRow := api.GetSurveyStmt.QueryRow(id)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -191,7 +192,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	id := vars["shortName"]
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -231,7 +232,7 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	id := vars["ref"]
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
