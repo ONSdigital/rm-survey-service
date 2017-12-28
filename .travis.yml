@@ -10,7 +10,7 @@ go:
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
-  - make build docker
+  - make build test docker
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
