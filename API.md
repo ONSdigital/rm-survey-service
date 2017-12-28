@@ -23,7 +23,10 @@ This page documents the Survey service API endpoints. Apart from the Service Inf
 ```json
 [{
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-  "shortName": "BRES"
+  "shortName": "BRES",
+   "longName": "Business Register and Employment Survey",
+   "surveyRef": "221",
+   "legalBasis": "Statistics of Trade Act 1947"
 }]
 ```
 
@@ -38,7 +41,8 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
   "shortName": "BRES",
   "longName": "Business Register and Employment Survey",
-  "surveyRef": "221"
+  "surveyRef": "221",
+  "legalBasis": "Statistics of Trade Act 1947"
 }
 ```
 
@@ -53,7 +57,8 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
   "shortName": "BRES",
   "longName": "Business Register and Employment Survey",
-  "surveyRef": "221"
+  "surveyRef": "221",
+  "legalBasis": "Statistics of Trade Act 1947"
 }
 ```
 
@@ -68,7 +73,8 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
   "shortName": "BRES",
   "longName": "Business Register and Employment Survey",
-  "surveyRef": "221"
+  "surveyRef": "221",
+  "legalBasis": "Statistics of Trade Act 1947"
 }
 ```
 
