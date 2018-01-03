@@ -22,18 +22,13 @@ type ClassifierTypeSelector struct {
 	ClassifierTypes []string `json:"classifierTypes"`
 }
 
-// SurveySummary represents a summary of a survey.
-type SurveySummary struct {
-	ID        string `json:"id"`
-	ShortName string `json:"shortName"`
-}
-
 // Survey represents the details of a survey.
 type Survey struct {
 	ID        string `json:"id"`
 	ShortName string `json:"shortName"`
 	LongName  string `json:"longName"`
 	Reference string `json:"surveyRef"`
+	LegalBasis string `json:"legalBasis"`
 }
 
 //API contains all the pre-prepared sql statments
@@ -49,22 +44,22 @@ type API struct {
 
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveyStmt, err := createStmt("SELECT id, shortname FROM survey.survey ORDER BY shortname ASC", db)
+	allSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis FROM survey.survey ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE id = $1", db)
+	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
+	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -110,32 +105,31 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	rows, err := api.AllSurveysStmt.Query()
 
 	if err != nil {
-		//LogError("Error getting list of surveys", err)
 		http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
 		return
 	}
 
 	defer rows.Close()
-	surveySummaries := make([]*SurveySummary, 0)
+	surveys := make([]*Survey, 0)
 
 	for rows.Next() {
-		surveySummary := new(SurveySummary)
-		err = rows.Scan(&surveySummary.ID, &surveySummary.ShortName)
+		survey := new(Survey)
+		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 		if err != nil {
 			http.Error(w, "Failed to get surveys from database", http.StatusInternalServerError)
 			return
 		}
 
-		surveySummaries = append(surveySummaries, surveySummary)
+		surveys = append(surveys, survey)
 	}
 
-	if len(surveySummaries) == 0 {
+	if len(surveys) == 0 {
 		http.Error(w, "No surveys found", http.StatusNoContent)
 		return
 	}
 
-	data, err := json.Marshal(surveySummaries)
+	data, err := json.Marshal(surveys)
 	if err != nil {
 		http.Error(w, "Failed to marshal survey summary JSON", http.StatusInternalServerError)
 		return
@@ -152,7 +146,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	id := vars["surveyId"]
 	survey := new(Survey)
 	surveyRow := api.GetSurveyStmt.QueryRow(id)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -191,7 +185,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	id := vars["shortName"]
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -231,7 +225,7 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	id := vars["ref"]
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")

@@ -46,9 +46,7 @@ func InitDB(dataSource string) *sql.DB {
 	if err != nil {
 		logError("Error pinging data source", err)
 	}
-	if !schemaExists() {
-		bootstrapSchema()
-	}
+	bootstrapSchema()
 	return db
 }
 
@@ -62,22 +60,6 @@ func bootstrapSchema() {
 			logError(fmt.Sprintf("Error executing bootstrap statement: '%s'", query), err)
 		}
 	}
-}
-
-func schemaExists() bool {
-	var schemaName string
-	err := db.QueryRow("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'survey'").Scan(&schemaName)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			logInfo("Database schema doesn't exist")
-			return false
-		}
-
-		logError("Error executing schema exists check SQL statement", err)
-	}
-
-	logInfo("Database schema exists")
-	return true
 }
 
 func logError(message string, err error) {
