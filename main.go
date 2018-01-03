@@ -41,7 +41,7 @@ func main() {
 
 	api, err := models.NewAPI(db)
 	if err != nil {
-		log.Fatal(`event="Failed to start" error="unable to initialise API model"`)
+		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise API model" error_message=%s`, err.Error()))
 	}
 
 	// Webserver - strictslash set to true to match trailing slashes to routes
