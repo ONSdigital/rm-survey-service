@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -146,7 +147,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
 
-	if !isUuid(id, "Survey", w) {
+	if !isUuid(id, "surveyId", w) {
 		return
 	}
 
@@ -273,7 +274,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
-	if !isUuid(surveyID, "Survey", w) {
+	if !isUuid(surveyID, "surveyId", w) {
 		return
 	}
 
@@ -346,10 +347,10 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
 
-	if !isUuid(surveyID, "Survey", w) {
+	if !isUuid(surveyID, "surveyId", w) {
 		return
 	}
-	if !isUuid(classifierTypeSelectorID, "Classifier Type Selector", w) {
+	if !isUuid(classifierTypeSelectorID, "classifierTypeSelectorId", w) {
 		return
 	}
 
@@ -439,7 +440,7 @@ func isUuid(id string, idName string, w http.ResponseWriter) bool {
 	_, err := uuid.Parse(id)
 
 	if err != nil {
-		re := NewRESTError("400", "Invalid "+idName+" ID")
+		re := NewRESTError(strconv.Itoa(http.StatusBadRequest), "Invalid "+idName)
 		data, err := json.Marshal(re)
 		if err != nil {
 			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
