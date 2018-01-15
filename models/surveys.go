@@ -147,7 +147,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
 
-	if !isUuid(id, "surveyId", w) {
+	if !isUUID(id, "surveyId", w) {
 		return
 	}
 
@@ -274,7 +274,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
-	if !isUuid(surveyID, "surveyId", w) {
+	if !isUUID(surveyID, "surveyId", w) {
 		return
 	}
 
@@ -347,10 +347,10 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
 
-	if !isUuid(surveyID, "surveyId", w) {
+	if !isUUID(surveyID, "surveyId", w) {
 		return
 	}
-	if !isUuid(classifierTypeSelectorID, "classifierTypeSelectorId", w) {
+	if !isUUID(classifierTypeSelectorID, "classifierTypeSelectorId", w) {
 		return
 	}
 
@@ -436,7 +436,7 @@ func (api *API) getSurveyID(surveyID string) error {
 	return api.GetSurveyIDStmt.QueryRow(surveyID).Scan(&id)
 }
 
-func isUuid(id string, idName string, w http.ResponseWriter) bool {
+func isUUID(id string, idName string, w http.ResponseWriter) bool {
 	_, err := uuid.Parse(id)
 
 	if err != nil {
