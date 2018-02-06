@@ -7,6 +7,19 @@ pipeline {
 
     stages {
 
+        stage('build') {
+            agent {
+                docker {
+                    image 'golang'
+                    args '-u root'
+                }
+            }
+
+            steps {
+                sh "make"
+            }
+        }
+
         stage('dev') {
             agent {
                 docker {
