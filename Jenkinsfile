@@ -62,6 +62,7 @@ pipeline {
                 environment name: 'deploy_ci', value: 'yes'
             }
 
+            environment {
                 CLOUDFOUNDRY_API = credentials('CLOUDFOUNDRY_API')
                 CF_DOMAIN = credentials('CF_DOMAIN')
                 CI_SECURITY = credentials('CI_SECURITY')
@@ -125,7 +126,6 @@ pipeline {
                 sh 'cf push -f manifest-template.yml'
             }
         }
-    }
 
     post {
         always {
