@@ -126,6 +126,7 @@ pipeline {
                 sh 'cf push -f manifest-template.yml'
             }
         }
+    }
 
     post {
         always {
