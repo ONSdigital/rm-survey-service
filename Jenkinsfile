@@ -11,12 +11,12 @@ pipeline {
             agent {
                 docker {
                     image 'golang'
-                    args '-u root'
+                    args '-u root -v $(pwd):/go/src/app'
                 }
             }
 
             steps {
-                sh "make"
+                sh "cd /go/src/app && make"
             }
         }
 
