@@ -17,7 +17,7 @@ pipeline {
 
             steps {
                 sh "mkdir -p /go/src/github.com/ONSdigital/rm-survey-service"
-                sh "cp -r /go/src/github.com/ONSdigital/rm-survey-service && /go/src/github.com/ONSdigital/rm-survey-service/"
+                sh "cp -r . /go/src/github.com/ONSdigital/rm-survey-service"
                 sh "cd /go/src/github.com/ONSdigital/rm-survey-service && make"
                 sh "cp /go/src/github.com/ONSdigital/rm-survey-service/build ."
             }
