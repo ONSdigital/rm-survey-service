@@ -11,7 +11,7 @@ pipeline {
             agent {
                 docker {
                     image 'golang'
-                    args '-u root -v ${env.WORKSPACE}:/go/src/github.com/ONSdigital/rm-survey-service'
+                    args '-u root'
                 }
             }
 
