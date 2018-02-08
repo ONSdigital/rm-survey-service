@@ -11,12 +11,12 @@ pipeline {
             agent {
                 docker {
                     image 'golang'
-                    args '-u root -v $(pwd):/go/src/app'
+                    args '-u root -v $(pwd):/go/src/github.com/ONSdigital/rm-survey-service'
                 }
             }
 
             steps {
-                sh "cd /go/src/app && make"
+                sh "cd /go/src/github.com/ONSdigital/rm-survey-service && make"
             }
         }
 
@@ -93,20 +93,43 @@ pipeline {
             }
         }
 
-        stage('test?') {
+        stage('release?') {
             agent none
             steps {
                 script {
                     try {
                         timeout(time: 60, unit: 'SECONDS') {
                             script {
-                                env.deploy_test = input message: 'Deploy to test?', id: 'deploy_test', parameters: [choice(name: 'Deploy to test', choices: 'no\nyes', description: 'Choose "yes" if you want to deploy to test')]
+                                env.do_release = input message: 'Do a release?', id: 'do_release', parameters: [choice(name: 'Deploy to test', choices: 'no\nyes', description: 'Choose "yes" if you want to create a tag')]
                             }
                         }
                     } catch (ignored) {
                         echo 'Skipping test deployment'
                     }
                 }
+            }
+        }
+
+        stage('release') {
+            agent {
+                docker {
+                    image 'node'
+                    args '-u root'
+                }
+
+            }
+            environment {
+                GITHUB_API_KEY = credentials('GITHUB_API_KEY')
+            }
+            when {
+                environment name: 'do_release', value: 'yes'
+            }
+            steps {
+                // Prune any local tags created by any other builds
+                sh "git tag -l | xargs git tag -d && git fetch -t"
+                sh "git remote set-url origin https://ons-sdc:${GITHUB_API_KEY}@github.com/ONSdigital/response-operations-ui.git"
+                sh "npm install -g bmpr"
+                sh "bmpr patch|xargs git push origin"
             }
         }
 
@@ -119,7 +142,7 @@ pipeline {
 
             }
             when {
-                environment name: 'deploy_test', value: 'yes'
+                environment name: 'do_release', value: 'yes'
             }
 
             environment {
