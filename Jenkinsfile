@@ -7,19 +7,6 @@ pipeline {
 
     stages {
 
-        stage('build') {
-            agent {
-                docker {
-                    image 'golang'
-                    args '-u root -v ${env.WORKSPACE}:/go/src/github.com/ONSdigital/rm-survey-service'
-                }
-            }
-
-            steps {
-                sh "cd /go/src/github.com/ONSdigital/rm-survey-service && make"
-            }
-        }
-
         stage('dev') {
             agent {
                 docker {
@@ -127,7 +114,7 @@ pipeline {
             steps {
                 // Prune any local tags created by any other builds
                 sh "git tag -l | xargs git tag -d && git fetch -t"
-                sh "git remote set-url origin https://ons-sdc:${GITHUB_API_KEY}@github.com/ONSdigital/response-operations-ui.git"
+                sh "git remote set-url origin https://ons-sdc:${GITHUB_API_KEY}@github.com/ONSdigital/rm-survey-service.git"
                 sh "npm install -g bmpr"
                 sh "bmpr patch|xargs git push origin"
             }
