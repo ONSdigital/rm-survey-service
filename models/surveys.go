@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -24,10 +26,10 @@ type ClassifierTypeSelector struct {
 
 // Survey represents the details of a survey.
 type Survey struct {
-	ID        string `json:"id"`
-	ShortName string `json:"shortName"`
-	LongName  string `json:"longName"`
-	Reference string `json:"surveyRef"`
+	ID         string `json:"id"`
+	ShortName  string `json:"shortName"`
+	LongName   string `json:"longName"`
+	Reference  string `json:"surveyRef"`
 	LegalBasis string `json:"legalBasis"`
 }
 
@@ -144,6 +146,11 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
+
+	if !isUUID(id, "surveyId", w) {
+		return
+	}
+
 	survey := new(Survey)
 	surveyRow := api.GetSurveyStmt.QueryRow(id)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
@@ -267,6 +274,10 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
+	if !isUUID(surveyID, "surveyId", w) {
+		return
+	}
+
 	err := api.getSurveyID(surveyID)
 
 	if err == sql.ErrNoRows {
@@ -335,6 +346,13 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
+
+	if !isUUID(surveyID, "surveyId", w) {
+		return
+	}
+	if !isUUID(classifierTypeSelectorID, "classifierTypeSelectorId", w) {
+		return
+	}
 
 	err := api.getSurveyID(surveyID)
 
@@ -416,6 +434,26 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 func (api *API) getSurveyID(surveyID string) error {
 	var id string
 	return api.GetSurveyIDStmt.QueryRow(surveyID).Scan(&id)
+}
+
+func isUUID(id string, idName string, w http.ResponseWriter) bool {
+	_, err := uuid.Parse(id)
+
+	if err != nil {
+		re := NewRESTError(strconv.Itoa(http.StatusBadRequest), "Invalid "+idName)
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return false
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(data)
+
+		return false
+	}
+	return true
 }
 
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
