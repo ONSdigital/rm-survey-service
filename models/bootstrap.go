@@ -1,6 +1,6 @@
 package models
 
-func bootstrapSQL() [64]string {
+func bootstrapSQL() [102]string {
 	sql := [102]string{
 		"DROP SCHEMA survey CASCADE",
 		"CREATE SCHEMA survey",
