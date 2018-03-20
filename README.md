@@ -27,7 +27,7 @@ The compiled executable is placed within the `build` directory tree.
 To build the Docker image, first compile the code using `make` then from the project root run:
 
 ```
-docker build -t "sdcplatform/surveysvc" .
+make docker
 ```
 
 ## Running
