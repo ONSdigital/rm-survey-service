@@ -1,7 +1,7 @@
 package models
 
-func bootstrapSQL() [103]string {
-	sql := [103]string{
+func bootstrapSQL() [104]string {
+	sql := [104]string{
 		"DROP SCHEMA survey CASCADE",
 		"CREATE SCHEMA survey",
 		"SET schema 'survey'",
@@ -87,24 +87,25 @@ func bootstrapSQL() [103]string {
 		"INSERT INTO survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (13, '6aa8896f-ced5-4694-800c-6cd661b0c8b2', 'ASHE', 'Annual Survey of Hours and Earnings', '141', 'Statistics of Trade Act 1947');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (25, 'f8bb27c4-e63a-11e7-80c1-9a214cf093ae', 13, 'COLLECTION_INSTRUMENT');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (26, 'f8bb2698-e63a-11e7-80c1-9a214cf093ae', 13, 'COMMUNICATION_TEMPLATE');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (34, 26, 'LEGAL_BASIS');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (35, 26, 'REGION');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (34, 25, 'FORM_TYPE');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (35, 26, 'LEGAL_BASIS');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (36, 26, 'REGION');",
 		"INSERT INTO survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (14, '7a2c9d6c-9aaf-4cf0-a68c-1d50b3f1b296', 'NBS', 'National Balance Sheet', '199', 'Voluntary Not Stated');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (27, 'f8bb256c-e63a-11e7-80c1-9a214cf093ae', 14, 'COLLECTION_INSTRUMENT');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (28, 'f8bb2422-e63a-11e7-80c1-9a214cf093ae', 14, 'COMMUNICATION_TEMPLATE');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (36, 27, 'FORM_TYPE');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (37, 28, 'LEGAL_BASIS');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (38, 28, 'REGION');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (37, 27, 'FORM_TYPE');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (38, 28, 'LEGAL_BASIS');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (39, 28, 'REGION');",
 		"INSERT INTO survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (15, '0fc6fa22-8938-43b6-81c5-f1ccca5a5494', 'OFATS', 'Outward Foreign Affiliates Statistics Survey', '225', 'Statistics of Trade Act 1947');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (29, 'f8bb2184-e63a-11e7-80c1-9a214cf093ae', 15, 'COLLECTION_INSTRUMENT');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (30, 'f8bb2044-e63a-11e7-80c1-9a214cf093ae', 15, 'COMMUNICATION_TEMPLATE');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (39, 30, 'LEGAL_BASIS');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (40, 30, 'REGION');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (40, 30, 'LEGAL_BASIS');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (41, 30, 'REGION');",
 		"INSERT INTO survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (16, 'a81f8a72-47e1-4fcf-a88b-0c175829e02b', 'GovERD', 'Government Research and Development Survey', '500', 'GovERD');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (31, 'f8bb1efa-e63a-11e7-80c1-9a214cf093ae', 16, 'COLLECTION_INSTRUMENT');",
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (32, 'f8bb1c52-e63a-11e7-80c1-9a214cf093ae', 16, 'COMMUNICATION_TEMPLATE');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (41, 32, 'LEGAL_BASIS');",
-		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (42, 32, 'REGION');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (42, 32, 'LEGAL_BASIS');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (43, 32, 'REGION');",
 	}
 
 	return sql
