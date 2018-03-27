@@ -1,7 +1,7 @@
 package models
 
-func bootstrapSQL() [104]string {
-	sql := [104]string{
+func bootstrapSQL() [105]string {
+	sql := [105]string{
 		"DROP SCHEMA survey CASCADE",
 		"CREATE SCHEMA survey",
 		"SET schema 'survey'",
@@ -106,6 +106,7 @@ func bootstrapSQL() [104]string {
 		"INSERT INTO classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (32, 'f8bb1c52-e63a-11e7-80c1-9a214cf093ae', 16, 'COMMUNICATION_TEMPLATE');",
 		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (42, 32, 'LEGAL_BASIS');",
 		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (43, 32, 'REGION');",
+		"INSERT INTO classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (44, 21, 'FORM_TYPE');",
 	}
 
 	return sql
