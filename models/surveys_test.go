@@ -513,7 +513,7 @@ func TestPutShortName(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456/shortname/changed-name", nil)
 		So(err, ShouldBeNil)
-		api.getSurveyRef("jhgjhg")
+		api.PutSurveyShortName(w, r)
 		So(w.Code, ShouldEqual, http.StatusOK)
 	})
 }
