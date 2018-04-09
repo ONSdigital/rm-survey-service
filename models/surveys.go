@@ -24,10 +24,10 @@ type ClassifierTypeSelector struct {
 
 // Survey represents the details of a survey.
 type Survey struct {
-	ID        string `json:"id"`
-	ShortName string `json:"shortName"`
-	LongName  string `json:"longName"`
-	Reference string `json:"surveyRef"`
+	ID         string `json:"id"`
+	ShortName  string `json:"shortName"`
+	LongName   string `json:"longName"`
+	Reference  string `json:"surveyRef"`
 	LegalBasis string `json:"legalBasis"`
 }
 
@@ -40,6 +40,9 @@ type API struct {
 	GetSurveyIDStmt                   *sql.Stmt
 	GetClassifierTypeSelectorStmt     *sql.Stmt
 	GetClassifierTypeSelectorByIDStmt *sql.Stmt
+	GetSurveyRefStmt                  *sql.Stmt
+	PutSurveyShortNameBySurveyRefStmt *sql.Stmt
+	PutSurveyLongNameBySurveyRefStmt  *sql.Stmt
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -79,6 +82,21 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	getSurveyRefStmt, err := createStmt("SELECT surveyref FROM survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	if err != nil {
+		return nil, err
+	}
+
+	putSurveyShortNameBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET shortname = $2 WHERE LOWER(surveyref) = LOWER($1)", db)
+	if err != nil {
+		return nil, err
+	}
+
+	putSurveyLongNameBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET longname = $2 WHERE LOWER(surveyref) = LOWER($1)", db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &API{
 		AllSurveysStmt:                    allSurveyStmt,
 		GetSurveyStmt:                     getSurveyStmt,
@@ -87,7 +105,77 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetSurveyIDStmt:                   getSurveyIDStmt,
 		GetClassifierTypeSelectorStmt:     getClassifierTypeSelectorStmt,
 		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
+		GetSurveyRefStmt:                  getSurveyRefStmt,
+		PutSurveyShortNameBySurveyRefStmt: putSurveyShortNameBySurveyRefStmt,
+		PutSurveyLongNameBySurveyRefStmt:  putSurveyLongNameBySurveyRefStmt,
 	}, nil
+}
+
+//PutSurveyShortName endpoint handler changes a survey short name using the survey reference
+func (api *API) PutSurveyShortName(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyRef := vars["surveyRef"]
+	newShortName := vars["shortName"]
+
+	err := api.getSurveyRef(surveyRef)
+
+	if err == sql.ErrNoRows {
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	res, err := api.PutSurveyShortNameBySurveyRefStmt.Query(surveyRef, newShortName)
+
+	if err != nil {
+		http.Error(w, "Update survey short name query failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	defer res.Close()
+}
+
+//PutSurveyLongName endpoint handler changes a survey long name using the survey reference
+func (api *API) PutSurveyLongName(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyRef := vars["surveyRef"]
+	newLongName := vars["newLongName"]
+	err := api.getSurveyRef(surveyRef)
+
+	if err == sql.ErrNoRows {
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	res, err := api.PutSurveyLongNameBySurveyRefStmt.Query(surveyRef, newLongName)
+
+	if err != nil {
+		http.Error(w, "Update survey long name query failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	defer res.Close()
 }
 
 //Info endpoint handler returns info like name, version, origin, commit, branch
@@ -416,6 +504,11 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 func (api *API) getSurveyID(surveyID string) error {
 	var id string
 	return api.GetSurveyIDStmt.QueryRow(surveyID).Scan(&id)
+}
+
+func (api *API) getSurveyRef(surveyRef string) error {
+	var surveyref string
+	return api.GetSurveyRefStmt.QueryRow(surveyRef).Scan(&surveyref)
 }
 
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {

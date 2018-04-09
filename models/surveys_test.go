@@ -497,6 +497,27 @@ func TestClassifierTypeSelectorByIdInternalServerError(t *testing.T) {
 	})
 }
 
+func TestPutShortName(t *testing.T) {
+	Convey("Survey Short Name PUT by Survey Reference success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		refRow := sqlmock.NewRows([]string{"surveyref"}).AddRow("456")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER(surveyref) = LOWER(?)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
+		mock.ExpectPrepare("UPDATE survey.survey SET shortname = ? WHERE LOWER(surveyref) = LOWER(?)").ExpectExec().WithArgs("changed-name", "456").WillReturnResult(sqlmock.NewResult(0, 1))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456/shortname/changed-name", nil)
+		So(err, ShouldBeNil)
+		api.getSurveyRef("jhgjhg")
+		So(w.Code, ShouldEqual, http.StatusOK)
+	})
+}
+
 func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectBegin()
 	m.MatchExpectationsInOrder(false)
@@ -504,6 +525,9 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE id = ?")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("UPDATE survey.survey SET shortname = .* WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("UPDATE survey.survey SET longname = .* WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk .*")
