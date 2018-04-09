@@ -8,9 +8,6 @@ go:
  - 1.9
  - tip
 
-before_install:
-  -go get -t -v ./...
-
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
