@@ -6,17 +6,23 @@ services:
 language: go
 go:
  - 1.9
+ -tip
+
+before_install:
+  -go get -t -v ./...
 
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
   - make build test docker
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push sdcplatform/surveysvc;
     fi
+  - bash <(curl -s https://codecov.io/bash)
 
 notifications:
   slack:
