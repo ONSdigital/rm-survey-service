@@ -38,7 +38,7 @@ build: clean
 
 # Run the tests.
 test:
-	go test -race -coverprofile=coverage.txt -covermode=count ./...
+	go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 # Remove the build directory tree.
 clean:
