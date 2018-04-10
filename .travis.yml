@@ -12,7 +12,6 @@ go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
   - make build test docker
-  - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
