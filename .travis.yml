@@ -5,7 +5,7 @@ services:
 
 language: go
 go:
- - 1.9
+ - 1.10
  - tip
 
 go_import_path: github.com/ONSdigital/rm-survey-service
