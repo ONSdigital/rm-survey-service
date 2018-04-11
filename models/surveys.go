@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -107,14 +108,27 @@ func NewAPI(db *sql.DB) (*API, error) {
 //PutSurveyShortName endpoint handler changes a survey short name using the survey reference
 func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	surveyRef := vars["surveyRef"]
+	surveyRef := vars["ref"]
 
-	data := json.Marshal(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
 
-	shortName := data["short_name"]
-	longName := data["long_name"]
+	type Data struct {
+		surveyID   string `json: "surveyId"`
+		surveyRef  string `json: "surveyRef"`
+		shortName  string `json: "shortName"`
+		longName   string `json: "longName"`
+		legalBasis string `json: "legalBasis"`
+	}
+	var putData Data
+	err = json.Unmarshal(body, &putData)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+	}
 
-	err := api.getSurveyRef(surveyRef)
+	shortName := putData.shortName
+	longName := putData.longName
+
+	err = api.getSurveyRef(surveyRef)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")

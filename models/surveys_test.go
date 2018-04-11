@@ -512,7 +512,7 @@ func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer api.Close()
 		w := httptest.NewRecorder()
-		var jsonStr = []byte(`{"short_name": "test-short-name", "long_name":"test-long-name"}`)
+		var jsonStr = []byte(`{"shortName": "test-short-name", "longName":"test-long-name"}`)
 		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456", bytes.NewBuffer(jsonStr))
 		So(err, ShouldBeNil)
 		api.PutSurveyDetails(w, r)
