@@ -41,8 +41,7 @@ type API struct {
 	GetClassifierTypeSelectorStmt     *sql.Stmt
 	GetClassifierTypeSelectorByIDStmt *sql.Stmt
 	GetSurveyRefStmt                  *sql.Stmt
-	PutSurveyShortNameBySurveyRefStmt *sql.Stmt
-	PutSurveyLongNameBySurveyRefStmt  *sql.Stmt
+	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -87,12 +86,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	putSurveyShortNameBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET shortname = $2 WHERE LOWER(surveyref) = LOWER($1)", db)
-	if err != nil {
-		return nil, err
-	}
-
-	putSurveyLongNameBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET longname = $2 WHERE LOWER(surveyref) = LOWER($1)", db)
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET shortname = $2, longname = $3 WHERE LOWER(surveyref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -106,16 +100,19 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetClassifierTypeSelectorStmt:     getClassifierTypeSelectorStmt,
 		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
 		GetSurveyRefStmt:                  getSurveyRefStmt,
-		PutSurveyShortNameBySurveyRefStmt: putSurveyShortNameBySurveyRefStmt,
-		PutSurveyLongNameBySurveyRefStmt:  putSurveyLongNameBySurveyRefStmt,
+		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
 	}, nil
 }
 
 //PutSurveyShortName endpoint handler changes a survey short name using the survey reference
-func (api *API) PutSurveyShortName(w http.ResponseWriter, r *http.Request) {
+func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyRef := vars["surveyRef"]
-	newShortName := vars["shortName"]
+
+	data := json.Marshal(r.Body)
+
+	shortName := data["short_name"]
+	longName := data["long_name"]
 
 	err := api.getSurveyRef(surveyRef)
 
@@ -134,43 +131,10 @@ func (api *API) PutSurveyShortName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := api.PutSurveyShortNameBySurveyRefStmt.Query(surveyRef, newShortName)
+	res, err := api.PutSurveyDetailsBySurveyRefStmt.Query(surveyRef, shortName, longName)
 
 	if err != nil {
-		http.Error(w, "Update survey short name query failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	defer res.Close()
-}
-
-//PutSurveyLongName endpoint handler changes a survey long name using the survey reference
-func (api *API) PutSurveyLongName(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	surveyRef := vars["surveyRef"]
-	newLongName := vars["newLongName"]
-	err := api.getSurveyRef(surveyRef)
-
-	if err == sql.ErrNoRows {
-		re := NewRESTError("404", "Survey not found")
-		data, err := json.Marshal(re)
-		if err != nil {
-			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(data)
-
-		return
-	}
-
-	res, err := api.PutSurveyLongNameBySurveyRefStmt.Query(surveyRef, newLongName)
-
-	if err != nil {
-		http.Error(w, "Update survey long name query failed", http.StatusInternalServerError)
+		http.Error(w, "Update survey details query failed", http.StatusInternalServerError)
 		return
 	}
 
