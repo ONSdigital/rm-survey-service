@@ -499,20 +499,20 @@ func TestClassifierTypeSelectorByIdInternalServerError(t *testing.T) {
 }
 
 func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
-	Convey("Survey Short Name PUT by Survey Reference success", t, func() {
+	Convey("Survey Details PUT by Survey Reference success", t, func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		refRow := sqlmock.NewRows([]string{"surveyref"}).AddRow("456")
 		prepareMockStmts(mock)
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER(surveyref) = LOWER(?)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
-		mock.ExpectPrepare("UPDATE survey.survey SET shortname = ? , longname = ? WHERE LOWER(surveyref) = LOWER(?)").ExpectExec().WithArgs("changed-short-name", "changed-long-name", "456").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("UPDATE survey.survey SET shortname = ?, longname = ? WHERE LOWER(surveyref) = LOWER(?)").ExpectExec().WithArgs("changed-short-name", "changed-long-name", "456").WillReturnResult(sqlmock.NewResult(0, 1))
 		db.Begin()
 		defer db.Close()
 		api, err := NewAPI(db)
 		So(err, ShouldBeNil)
 		defer api.Close()
 		w := httptest.NewRecorder()
-		var jsonStr = []byte(`{"shortName": "test-short-name", "longName":"test-long-name"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name"}`)
 		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456", bytes.NewBuffer(jsonStr))
 		So(err, ShouldBeNil)
 		api.PutSurveyDetails(w, r)

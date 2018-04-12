@@ -105,7 +105,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 	}, nil
 }
 
-//PutSurveyShortName endpoint handler changes a survey short name using the survey reference
+// PutSurveyDetails endpoint handler changes a survey short name using the survey reference
 func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyRef := vars["ref"]
@@ -113,11 +113,11 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
 	type Data struct {
-		surveyID   string `json: "surveyId"`
-		surveyRef  string `json: "surveyRef"`
-		shortName  string `json: "shortName"`
-		longName   string `json: "longName"`
-		legalBasis string `json: "legalBasis"`
+		SurveyID   string `json: "surveyId"`
+		SurveyRef  string `json: "surveyRef"`
+		ShortName  string `json: "shortName"`
+		LongName   string `json: "longName"`
+		LegalBasis string `json: "legalBasis"`
 	}
 	var putData Data
 	err = json.Unmarshal(body, &putData)
@@ -125,8 +125,8 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
 	}
 
-	shortName := putData.shortName
-	longName := putData.longName
+	shortName := putData.ShortName
+	longName := putData.LongName
 
 	err = api.getSurveyRef(surveyRef)
 
@@ -145,7 +145,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := api.PutSurveyDetailsBySurveyRefStmt.Query(surveyRef, shortName, longName)
+	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
 
 	if err != nil {
 		http.Error(w, "Update survey details query failed", http.StatusInternalServerError)
@@ -153,7 +153,6 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	defer res.Close()
 }
 
 //Info endpoint handler returns info like name, version, origin, commit, branch
