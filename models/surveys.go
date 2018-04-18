@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
 	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -43,6 +43,7 @@ type API struct {
 	GetClassifierTypeSelectorByIDStmt *sql.Stmt
 	GetSurveyRefStmt                  *sql.Stmt
 	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
+	CreateSurvey   					  *sql.Stmt
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -92,6 +93,11 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey_surveypk_seq') $1, $2, $3, $4, $5)", db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &API{
 		AllSurveysStmt:                    allSurveyStmt,
 		GetSurveyStmt:                     getSurveyStmt,
@@ -102,7 +108,58 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
 		GetSurveyRefStmt:                  getSurveyRefStmt,
 		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
-	}, nil
+		CreateSurvey:					   createSurvey }, nil
+}
+
+// PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
+func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+
+	type Data struct {
+		SurveyID   string `json: "surveyId"`
+		SurveyRef  string `json: "surveyRef"`
+		ShortName  string `json: "shortName"`
+		LongName   string `json: "longName"`
+		LegalBasis string `json: "legalBasis"`
+	}
+
+	var putData Data
+	err = json.Unmarshal(body, &putData)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+	}
+
+	shortName := putData.ShortName
+	longName := putData.LongName
+	surveyRef := putData.SurveyRef
+	legalBasis := putData.LegalBasis
+
+	surveyId, err := uuid.NewV4()
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate a UUID for new survey - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = api.getSurveyRef(surveyRef)
+
+	if err == sql.ErrNoRows {
+		// Reference is unique - this is good
+		_, err = api.CreateSurvey.Exec(surveyId, surveyRef, shortName, longName, legalBasis)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	} else if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
+		return
+	} else {
+		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", err), http.StatusConflict)
+		return
+	}
 }
 
 // PutSurveyDetails endpoint handler changes a survey short name using the survey reference

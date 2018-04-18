@@ -51,6 +51,7 @@ func main() {
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")
+	r.HandleFunc("/surveys", use(api.PostSurveyDetails, basicAuth)).Methods("POST")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.GetSurveyByReference, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors", use(api.AllClassifierTypeSelectors, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorByID, basicAuth)).Methods("GET")
