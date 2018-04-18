@@ -145,10 +145,15 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get survey ref - %v", err), http.StatusInternalServerError)
+		return
+	}
+
 	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
 
 	if err != nil {
-		http.Error(w, "Update survey details query failed", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Update survey details query failed - %v", err), http.StatusInternalServerError)
 		return
 	}
 
