@@ -93,7 +93,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey_surveypk_seq') $1, $2, $3, $4, $5)", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey_surveypk_seq'), $1, $2, $3, $4, $5)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", err), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", surveyRef), http.StatusConflict)
 		return
 	}
 }
