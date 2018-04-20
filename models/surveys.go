@@ -93,7 +93,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey_surveypk_seq'), $1, $2, $3, $4, $5)", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	surveyRef := putData.SurveyRef
 	legalBasis := putData.LegalBasis
 
-	surveyId, err := uuid.NewV4()
+	surveyId := uuid.NewV4()
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to generate a UUID for new survey - %v", err), http.StatusInternalServerError)

@@ -32,8 +32,12 @@ func init() {
 }
 
 func main() {
-	dataSource, port := configureEnvironment()
-	db := models.InitDB(dataSource)
+	dataSource, port, migrationSource := configureEnvironment()
+	db, err := models.InitDB(dataSource, migrationSource)
+
+	if err != nil {
+		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise database" error_message=%s`, err.Error()))
+	}
 
 	// Set up the signal handler to watch for SIGTERM and SIGINT signals so we
 	// can at least attempt to gracefully shut down before the PaaS/docker etc
@@ -106,9 +110,10 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func configureEnvironment() (dataSource, port string) {
+func configureEnvironment() (dataSource, port string, migrationSource string) {
 	dataSource = "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	port = "8080"
+	migrationSource = "file:///db-migrations"
 	appEnv, err := cfenv.Current()
 
 	if err != nil {
@@ -122,7 +127,11 @@ func configureEnvironment() (dataSource, port string) {
 			dataSource = v
 		}
 
-		return dataSource, port
+		if v := os.Getenv("MIGRATION_SOURCE"); len(v) > 0 {
+			migrationSource = v
+		}
+
+		return dataSource, port, migrationSource
 	}
 
 	ps := appEnv.Port
@@ -142,7 +151,7 @@ func configureEnvironment() (dataSource, port string) {
 		}
 	}
 
-	return dataSource, port
+	return dataSource, port, migrationSource
 }
 
 //LogError log out error messages
