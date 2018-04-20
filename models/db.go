@@ -76,7 +76,6 @@ func bootstrapSchema(db *sql.DB, migrationSource string) error {
 	}
 
 	return m.Up()
-	//return m.Steps(2)
 }
 
 func logError(message string, err error) {
