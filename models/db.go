@@ -62,7 +62,7 @@ func InitDB(dataSource string, migrationSource string) (*sql.DB, error) {
 }
 
 func bootstrapSchema(db *sql.DB, migrationSource string) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	driver, err := postgres.WithInstance(db, &postgres.Config{ MigrationsTable: "survey_schema_migrations" })
 
 	if err != nil {
 		return err
