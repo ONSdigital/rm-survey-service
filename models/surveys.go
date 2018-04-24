@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -24,10 +25,10 @@ type ClassifierTypeSelector struct {
 
 // Survey represents the details of a survey.
 type Survey struct {
-	ID        string `json:"id"`
-	ShortName string `json:"shortName"`
-	LongName  string `json:"longName"`
-	Reference string `json:"surveyRef"`
+	ID         string `json:"id"`
+	ShortName  string `json:"shortName"`
+	LongName   string `json:"longName"`
+	Reference  string `json:"surveyRef"`
 	LegalBasis string `json:"legalBasis"`
 }
 
@@ -40,6 +41,8 @@ type API struct {
 	GetSurveyIDStmt                   *sql.Stmt
 	GetClassifierTypeSelectorStmt     *sql.Stmt
 	GetClassifierTypeSelectorByIDStmt *sql.Stmt
+	GetSurveyRefStmt                  *sql.Stmt
+	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -79,6 +82,16 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	getSurveyRefStmt, err := createStmt("SELECT surveyref FROM survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	if err != nil {
+		return nil, err
+	}
+
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET shortname = $2, longname = $3 WHERE LOWER(surveyref) = LOWER($1)", db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &API{
 		AllSurveysStmt:                    allSurveyStmt,
 		GetSurveyStmt:                     getSurveyStmt,
@@ -87,7 +100,64 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetSurveyIDStmt:                   getSurveyIDStmt,
 		GetClassifierTypeSelectorStmt:     getClassifierTypeSelectorStmt,
 		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
+		GetSurveyRefStmt:                  getSurveyRefStmt,
+		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
 	}, nil
+}
+
+// PutSurveyDetails endpoint handler changes a survey short name using the survey reference
+func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyRef := vars["ref"]
+
+	body, err := ioutil.ReadAll(r.Body)
+
+	type Data struct {
+		SurveyID   string `json: "surveyId"`
+		SurveyRef  string `json: "surveyRef"`
+		ShortName  string `json: "shortName"`
+		LongName   string `json: "longName"`
+		LegalBasis string `json: "legalBasis"`
+	}
+	var putData Data
+	err = json.Unmarshal(body, &putData)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+	}
+
+	shortName := putData.ShortName
+	longName := putData.LongName
+
+	err = api.getSurveyRef(surveyRef)
+
+	if err == sql.ErrNoRows {
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get survey ref - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Update survey details query failed - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 //Info endpoint handler returns info like name, version, origin, commit, branch
@@ -416,6 +486,11 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 func (api *API) getSurveyID(surveyID string) error {
 	var id string
 	return api.GetSurveyIDStmt.QueryRow(surveyID).Scan(&id)
+}
+
+func (api *API) getSurveyRef(surveyRef string) error {
+	var surveyref string
+	return api.GetSurveyRefStmt.QueryRow(surveyRef).Scan(&surveyref)
 }
 
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
