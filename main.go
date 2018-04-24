@@ -52,6 +52,7 @@ func main() {
 	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
+	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")

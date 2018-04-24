@@ -50,7 +50,7 @@ type API struct {
 	GetSurveyRefStmt                  *sql.Stmt
 	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
 	CreateSurveyStmt                  *sql.Stmt
-	GetLegalBasisByRefStmt            *sql.Stmt
+	GetLegalBasesStmt                 *sql.Stmt
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -105,7 +105,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getLegalBasisByRef, err := createStmt("SELECT ref, longname FROM survey.legalbasis WHERE ref = $1", db)
+	getLegalBases, err := createStmt("SELECT ref, longname FROM survey.legalbasis", db)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetSurveyRefStmt:                  getSurveyRefStmt,
 		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
 		CreateSurveyStmt:                  createSurvey,
-		GetLegalBasisByRefStmt:            getLegalBasisByRef }, nil
+		GetLegalBasesStmt:                 getLegalBases}, nil
 }
 
 // PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
@@ -272,6 +272,46 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	data, err := json.Marshal(surveys)
 	if err != nil {
 		http.Error(w, "Failed to marshal survey summary JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// AllLegalBases returns details of all legal bases
+func (api *API) AllLegalBases(w http.ResponseWriter, r *http.Request) {
+	rows, err := api.GetLegalBasesStmt.Query()
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("AllLegalBases query failed - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+	legalBases := make([]*LegalBasis, 0)
+
+	for rows.Next() {
+		legalBasis := new(LegalBasis)
+		err = rows.Scan(&legalBasis.Reference, &legalBasis.LongName)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get legal bases from database - %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		legalBases = append(legalBases, legalBasis)
+	}
+
+	if len(legalBases) == 0 {
+		http.Error(w, "No legal bases found", http.StatusNoContent)
+		return
+	}
+
+	data, err := json.Marshal(legalBases)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to marshal survey summary JSON - %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -561,10 +601,6 @@ func (api *API) getSurveyID(surveyID string) error {
 func (api *API) getSurveyRef(surveyRef string) error {
 	var surveyref string
 	return api.GetSurveyRefStmt.QueryRow(surveyRef).Scan(&surveyref)
-}
-
-func (api *API) getLegalBasisByRef(legalBasisRef string) error {
-	return api.GetSurveyRefStmt.QueryRow(legalBasisRef).Scan(&legalBasisRef)
 }
 
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
