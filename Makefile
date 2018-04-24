@@ -38,7 +38,7 @@ build: clean
 
 # Run the tests.
 test:
-	go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+	go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /vendor/)
 
 # Remove the build directory tree.
 clean:
