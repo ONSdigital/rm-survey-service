@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -497,6 +498,49 @@ func TestClassifierTypeSelectorByIdInternalServerError(t *testing.T) {
 	})
 }
 
+func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
+	Convey("Survey Details PUT by Survey Reference success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		refRow := sqlmock.NewRows([]string{"surveyref"}).AddRow("456")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
+		mock.ExpectPrepare("UPDATE survey.survey SET shortname = .+, longname = .+ WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name"}`)
+		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456", bytes.NewBuffer(jsonStr))
+		So(err, ShouldBeNil)
+		api.PutSurveyDetails(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+	})
+}
+
+func TestPutSurveyDetailsBySurveyRefInternalServerError(t *testing.T) {
+	Convey("Survey Details PUT by Survey Reference success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("UPDATE survey.survey SET shortname = .+, longname = .+ WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name"}`)
+		r, err := http.NewRequest("PUT", "http://localhost:9090/surveys/ref/456", bytes.NewBuffer(jsonStr))
+		So(err, ShouldBeNil)
+		api.PutSurveyDetails(w, r)
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+}
+
 func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectBegin()
 	m.MatchExpectationsInOrder(false)
@@ -504,6 +548,8 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE id = ?")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey")
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
+	m.ExpectPrepare("UPDATE survey.survey SET shortname = .*, longname = .* WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk .*")
