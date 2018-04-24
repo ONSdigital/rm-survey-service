@@ -565,6 +565,78 @@ func TestCreateNewSurvey(t *testing.T) {
 	})
 }
 
+func TestCreateNewSurveyNonExistentLegalBasisRef(t *testing.T) {
+	Convey("Create new survey with non existent legal basis ref", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		rows := sqlmock.NewRows([]string{"surveyref"})
+		legalBasis := sqlmock.NewRows([]string{"ref","longname"})
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE ref = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"Statistics of Trade Act 1947"}`)
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys", bytes.NewBuffer(jsonStr))
+		So(err, ShouldBeNil)
+		api.PostSurveyDetails(w, r)
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
+	Convey("Create new survey with non existent legal basis ref", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		rows := sqlmock.NewRows([]string{"surveyref"})
+		legalBasis := sqlmock.NewRows([]string{"ref","longname"})
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947"}`)
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys", bytes.NewBuffer(jsonStr))
+		So(err, ShouldBeNil)
+		api.PostSurveyDetails(w, r)
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
+	Convey("Create new survey with non existent legal basis ref", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		rows := sqlmock.NewRows([]string{"surveyref"})
+		legalBasis := sqlmock.NewRows([]string{"ref","longname"})
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99"}`)
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys", bytes.NewBuffer(jsonStr))
+		So(err, ShouldBeNil)
+		api.PostSurveyDetails(w, r)
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
 func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectBegin()
 	m.MatchExpectationsInOrder(false)
