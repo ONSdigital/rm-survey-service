@@ -546,9 +546,11 @@ func TestCreateNewSurvey(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		rows := sqlmock.NewRows([]string{"surveyref"})
+		legalBasis := sqlmock.NewRows([]string{"ref","longname"}).AddRow("STA1947", "Statistics of Trade Act 1947")
 		prepareMockStmts(mock)
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
 		db.Begin()
 		defer db.Close()
 		api, err := NewAPI(db)
@@ -571,6 +573,10 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(shortName\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref")
+
+	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+")
+	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE ref = .+")
+
 	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey")
 	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("UPDATE survey.survey SET shortname = .*, longname = .* WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
