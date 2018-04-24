@@ -7,6 +7,8 @@ language: go
 go:
  - 1.8
 
+install: true
+
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
