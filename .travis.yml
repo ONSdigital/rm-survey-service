@@ -5,7 +5,9 @@ services:
 
 language: go
 go:
- - 1.9
+ - 1.8
+
+install: true
 
 go_import_path: github.com/ONSdigital/rm-survey-service
 
@@ -17,6 +19,7 @@ after_success:
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push sdcplatform/surveysvc;
     fi
+  - bash <(curl -s https://codecov.io/bash)
 
 notifications:
   slack:
