@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	validator2 "gopkg.in/go-playground/validator.v9"
+	"strings"
+	"unicode"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -26,9 +29,9 @@ type ClassifierTypeSelector struct {
 // Survey represents the details of a survey.
 type Survey struct {
 	ID         string `json:"id"`
-	ShortName  string `json:"shortName"`
-	LongName   string `json:"longName"`
-	Reference  string `json:"surveyRef"`
+	ShortName  string `json:"shortName" validate:"required,no-spaces,max=20"`
+	LongName   string `json:"longName" validate:"required,max=100"`
+	Reference  string `json:"surveyRef" validate:"required,numeric,max=20"`
 	LegalBasis string `json:"legalBasis"`
 	LegalBasisRef string `json:"legalBasisRef"`
 }
@@ -54,6 +57,7 @@ type API struct {
 	GetLegalBasesStmt                 *sql.Stmt
 	GetLegalBasisFromLongNameStmt     *sql.Stmt
 	GetLegalBasisFromRefStmt          *sql.Stmt
+	Validator                         *validator2.Validate
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -123,6 +127,8 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	validator := createValidator()
+
 	return &API{
 		AllSurveysStmt:                    allSurveyStmt,
 		GetSurveyStmt:                     getSurveyStmt,
@@ -136,8 +142,39 @@ func NewAPI(db *sql.DB) (*API, error) {
 		CreateSurveyStmt:                  createSurvey,
 		GetLegalBasesStmt:                 getLegalBases,
 		GetLegalBasisFromLongNameStmt:     getLegalBasisFromLongName,
-		GetLegalBasisFromRefStmt:          getLegalBasisFromRef }, nil
+		GetLegalBasisFromRefStmt:          getLegalBasisFromRef,
+		Validator:                         validator}, nil
 }
+
+func stripChars(str string, fn runevalidator) string {
+	return strings.Map(func (r rune) rune {
+		if fn(r) {
+			return -1
+		}
+
+		return r
+	}, str)
+}
+
+type runevalidator func(rune) bool
+
+// Could use validator:excludeall but would need to enumerate all space values.  This way we can leverage
+// unicode.IsSpace
+func validateNoSpaces(fl validator2.FieldLevel) bool {
+	str := fl.Field().String()
+	stripped := stripChars(str, unicode.IsSpace)
+
+	return str == stripped
+}
+
+func createValidator() *validator2.Validate {
+	validator := validator2.New()
+
+	validator.RegisterValidation("no-spaces", validateNoSpaces)
+
+	return validator
+}
+
 
 // PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +219,14 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	if err == sql.ErrNoRows {
 		// Reference is unique - this is good
+
+		err = api.Validator.Struct(postData)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Survey failed to validate - %v", err), http.StatusBadRequest)
+			return
+		}
+
 		_, err = api.CreateSurveyStmt.Exec(surveyID, postData.Reference, postData.ShortName, postData.LongName, legalBasis.Reference)
 
 		if err != nil {
@@ -654,3 +699,4 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }
+
