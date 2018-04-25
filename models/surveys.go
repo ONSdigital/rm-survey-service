@@ -33,7 +33,7 @@ type Survey struct {
 	LegalBasisRef string `json:"legalBasisRef"`
 }
 
-// Representation of legal basis - a short reference and a long name
+// LegalBasis - the legal basis for a survey consisting of a short reference and a long name
 type LegalBasis struct {
 	Reference  string `json:"ref"`
 	LongName   string `json:"longName"`
