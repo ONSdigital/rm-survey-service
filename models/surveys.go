@@ -33,6 +33,7 @@ type Survey struct {
 	LegalBasisRef string `json:"legalBasisRef"`
 }
 
+// Representation of legal basis - a short reference and a long name
 type LegalBasis struct {
 	Reference  string `json:"ref"`
 	LongName   string `json:"longName"`
@@ -142,17 +143,17 @@ func NewAPI(db *sql.DB) (*API, error) {
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
-	var putData Survey
-	err = json.Unmarshal(body, &putData)
+	var postData Survey
+	err = json.Unmarshal(body, &postData)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
 	}
 
-	shortName := putData.ShortName
-	longName := putData.LongName
-	surveyRef := putData.Reference
-	legalBasisLongName := putData.LegalBasis
-	legalBasisRef := putData.LegalBasisRef
+	shortName := postData.ShortName
+	longName := postData.LongName
+	surveyRef := postData.Reference
+	legalBasisLongName := postData.LegalBasis
+	legalBasisRef := postData.LegalBasisRef
 	var legalBasis LegalBasis;
 	var errorMessage string;
 
@@ -175,7 +176,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	surveyId := uuid.NewV4()
+	surveyID := uuid.NewV4()
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to generate a UUID for new survey - %v", err), http.StatusInternalServerError)
@@ -186,14 +187,28 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	if err == sql.ErrNoRows {
 		// Reference is unique - this is good
-		_, err = api.CreateSurveyStmt.Exec(surveyId, surveyRef, shortName, longName, legalBasis.Reference)
+		_, err = api.CreateSurveyStmt.Exec(surveyID, surveyRef, shortName, longName, legalBasis.Reference)
 
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		var result Survey
+		var js []byte
+
+		result.Reference = surveyRef
+		result.LongName = longName
+		result.ShortName = shortName
+		result.ID = surveyID.String()
+		result.LegalBasisRef = legalBasis.Reference
+		result.LegalBasis = legalBasis.LongName
+
+		js, err = json.Marshal(&result)
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(js)
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
