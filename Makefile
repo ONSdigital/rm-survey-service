@@ -37,8 +37,14 @@ build: clean
 	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/main -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" main.go
 
 # Run the tests.
+
+# This is the generic line to run all the tests bar those defined in vendor packages but the version
+# of go used in cf (1.8) doesn't support multiple targets for test profile so each package will
+# need to be explicitly enumerated for now (luckily there is only 1 ...)
+# go test -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v /vendor/)
+
 test:
-	go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /vendor/)
+	go test -race -coverprofile=coverage.txt -covermode=atomic github.com/ONSdigital/rm-survey-service/models
 
 # Remove the build directory tree.
 clean:
