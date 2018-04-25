@@ -149,20 +149,15 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
 	}
 
-	shortName := postData.ShortName
-	longName := postData.LongName
-	surveyRef := postData.Reference
-	legalBasisLongName := postData.LegalBasis
-	legalBasisRef := postData.LegalBasisRef
 	var legalBasis LegalBasis;
 	var errorMessage string;
 
-	if legalBasisRef != "" {
-		legalBasis, err = api.getLegalBasisFromRef(legalBasisRef)
-		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", legalBasisRef)
-	} else if legalBasisLongName != "" {
-		legalBasis, err = api.getLegalBasisFromLongName(legalBasisLongName)
-		errorMessage = fmt.Sprintf("Legal basis %v does not exist", legalBasisLongName)
+	if postData.LegalBasisRef != "" {
+		legalBasis, err = api.getLegalBasisFromRef(postData.LegalBasisRef)
+		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", postData.LegalBasisRef)
+	} else if postData.LegalBasis != "" {
+		legalBasis, err = api.getLegalBasisFromLongName(postData.LegalBasis)
+		errorMessage = fmt.Sprintf("Legal basis %v does not exist", postData.LegalBasis)
 	} else {
 		http.Error(w, "No legal basis specified for survey", http.StatusBadRequest)
 		return
@@ -183,28 +178,24 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.getSurveyRef(surveyRef)
+	err = api.getSurveyRef(postData.Reference)
 
 	if err == sql.ErrNoRows {
 		// Reference is unique - this is good
-		_, err = api.CreateSurveyStmt.Exec(surveyID, surveyRef, shortName, longName, legalBasis.Reference)
+		_, err = api.CreateSurveyStmt.Exec(surveyID, postData.Reference, postData.ShortName, postData.LongName, legalBasis.Reference)
 
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		var result Survey
 		var js []byte
 
-		result.Reference = surveyRef
-		result.LongName = longName
-		result.ShortName = shortName
-		result.ID = surveyID.String()
-		result.LegalBasisRef = legalBasis.Reference
-		result.LegalBasis = legalBasis.LongName
+		postData.ID = surveyID.String()
+		postData.LegalBasisRef = legalBasis.Reference
+		postData.LegalBasis = legalBasis.LongName
 
-		js, err = json.Marshal(&result)
+		js, err = json.Marshal(&postData)
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -213,7 +204,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", surveyRef), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", postData.Reference), http.StatusConflict)
 		return
 	}
 }
