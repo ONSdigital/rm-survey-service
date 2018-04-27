@@ -191,6 +191,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &postData)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+		return
 	}
 
 	var legalBasis LegalBasis;
