@@ -57,6 +57,7 @@ type API struct {
 	GetLegalBasesStmt                 *sql.Stmt
 	GetLegalBasisFromLongNameStmt     *sql.Stmt
 	GetLegalBasisFromRefStmt          *sql.Stmt
+	GetSurveyByShortnameStmt          *sql.Stmt
 	Validator                         *validator2.Validate
 }
 
@@ -127,6 +128,11 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	getSurveyByShortname, err := createStmt("SELECT surveyref FROM survey.survey WHERE shortname = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
 	validator := createValidator()
 
 	return &API{
@@ -143,6 +149,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetLegalBasesStmt:                 getLegalBases,
 		GetLegalBasisFromLongNameStmt:     getLegalBasisFromLongName,
 		GetLegalBasisFromRefStmt:          getLegalBasisFromRef,
+		GetSurveyByShortnameStmt:          getSurveyByShortname,
 		Validator:                         validator}, nil
 }
 
@@ -215,6 +222,13 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = api.getSurveyByShortname(postData.ShortName)
+
+	if (err != nil && err != sql.ErrNoRows) || err == nil {
+		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", postData.ShortName), http.StatusConflict)
+		return
+	}
+
 	err = api.getSurveyRef(postData.Reference)
 
 	if err == sql.ErrNoRows {
@@ -249,7 +263,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", postData.Reference), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
 		return
 	}
 }
@@ -673,6 +687,14 @@ func (api *API) getSurveyID(surveyID string) error {
 func (api *API) getSurveyRef(surveyRef string) error {
 	var surveyref string
 	return api.GetSurveyRefStmt.QueryRow(surveyRef).Scan(&surveyref)
+}
+
+// This function returns the survey ref for the survey with the given shortname
+func (api *API) getSurveyByShortname(shortname string) (string, error) {
+	var lShortname string
+	err := api.GetSurveyByShortnameStmt.QueryRow(shortname).Scan(&lShortname)
+
+	return lShortname, err
 }
 
 // This function returns the legal basis for a given legal basis longname
