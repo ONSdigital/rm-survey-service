@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
 	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
+	validator2 "gopkg.in/go-playground/validator.v9"
+	"strings"
+	"unicode"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -26,10 +29,17 @@ type ClassifierTypeSelector struct {
 // Survey represents the details of a survey.
 type Survey struct {
 	ID         string `json:"id"`
-	ShortName  string `json:"shortName"`
-	LongName   string `json:"longName"`
-	Reference  string `json:"surveyRef"`
+	ShortName  string `json:"shortName" validate:"required,no-spaces,max=20"`
+	LongName   string `json:"longName" validate:"required,max=100"`
+	Reference  string `json:"surveyRef" validate:"required,numeric,max=20"`
 	LegalBasis string `json:"legalBasis"`
+	LegalBasisRef string `json:"legalBasisRef"`
+}
+
+// LegalBasis - the legal basis for a survey consisting of a short reference and a long name
+type LegalBasis struct {
+	Reference  string `json:"ref"`
+	LongName   string `json:"longName"`
 }
 
 //API contains all the pre-prepared sql statments
@@ -43,26 +53,32 @@ type API struct {
 	GetClassifierTypeSelectorByIDStmt *sql.Stmt
 	GetSurveyRefStmt                  *sql.Stmt
 	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
+	CreateSurveyStmt                  *sql.Stmt
+	GetLegalBasesStmt                 *sql.Stmt
+	GetLegalBasisFromLongNameStmt     *sql.Stmt
+	GetLegalBasisFromRefStmt          *sql.Stmt
+	GetSurveyByShortnameStmt          *sql.Stmt
+	Validator                         *validator2.Validate
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis FROM survey.survey ORDER BY shortname ASC", db)
+	allSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE id = $1", db)
+	getSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(shortName) = LOWER($1)", db)
+ 	getSurveyByShortNameStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER(shortName) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceStmt, err := createStmt("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyByReferenceStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER(surveyref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +108,33 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5)", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getLegalBases, err := createStmt("SELECT ref, longname FROM survey.legalbasis", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getLegalBasisFromLongName, err := createStmt("SELECT ref, longname FROM survey.legalbasis WHERE longname = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getLegalBasisFromRef, err := createStmt("SELECT ref, longname FROM survey.legalbasis WHERE ref = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveyByShortname, err := createStmt("SELECT surveyref FROM survey.survey WHERE shortname = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
+	validator := createValidator()
+
 	return &API{
 		AllSurveysStmt:                    allSurveyStmt,
 		GetSurveyStmt:                     getSurveyStmt,
@@ -102,7 +145,128 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
 		GetSurveyRefStmt:                  getSurveyRefStmt,
 		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
-	}, nil
+		CreateSurveyStmt:                  createSurvey,
+		GetLegalBasesStmt:                 getLegalBases,
+		GetLegalBasisFromLongNameStmt:     getLegalBasisFromLongName,
+		GetLegalBasisFromRefStmt:          getLegalBasisFromRef,
+		GetSurveyByShortnameStmt:          getSurveyByShortname,
+		Validator:                         validator}, nil
+}
+
+func stripChars(str string, fn runevalidator) string {
+	return strings.Map(func (r rune) rune {
+		if fn(r) {
+			return -1
+		}
+
+		return r
+	}, str)
+}
+
+type runevalidator func(rune) bool
+
+// Could use validator:excludeall but would need to enumerate all space values.  This way we can leverage
+// unicode.IsSpace
+func validateNoSpaces(fl validator2.FieldLevel) bool {
+	str := fl.Field().String()
+	stripped := stripChars(str, unicode.IsSpace)
+
+	return str == stripped
+}
+
+func createValidator() *validator2.Validate {
+	validator := validator2.New()
+
+	validator.RegisterValidation("no-spaces", validateNoSpaces)
+
+	return validator
+}
+
+
+// PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
+func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+
+	var postData Survey
+	err = json.Unmarshal(body, &postData)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+		return
+	}
+
+	var legalBasis LegalBasis;
+	var errorMessage string;
+
+	if postData.LegalBasisRef != "" {
+		legalBasis, err = api.getLegalBasisFromRef(postData.LegalBasisRef)
+		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", postData.LegalBasisRef)
+	} else if postData.LegalBasis != "" {
+		legalBasis, err = api.getLegalBasisFromLongName(postData.LegalBasis)
+		errorMessage = fmt.Sprintf("Legal basis %v does not exist", postData.LegalBasis)
+	} else {
+		http.Error(w, "No legal basis specified for survey", http.StatusBadRequest)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		http.Error(w, errorMessage, http.StatusBadRequest)
+		return
+	} else if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting legal basis - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	surveyID := uuid.NewV4()
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate a UUID for new survey - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = api.getSurveyByShortname(postData.ShortName)
+
+	if (err != nil && err != sql.ErrNoRows) || err == nil {
+		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", postData.ShortName), http.StatusConflict)
+		return
+	}
+
+	err = api.getSurveyRef(postData.Reference)
+
+	if err == sql.ErrNoRows {
+		// Reference is unique - this is good
+
+		err = api.Validator.Struct(postData)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Survey failed to validate - %v", err), http.StatusBadRequest)
+			return
+		}
+
+		_, err = api.CreateSurveyStmt.Exec(surveyID, postData.Reference, postData.ShortName, postData.LongName, legalBasis.Reference)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		var js []byte
+
+		postData.ID = surveyID.String()
+		postData.LegalBasisRef = legalBasis.Reference
+		postData.LegalBasis = legalBasis.LongName
+
+		js, err = json.Marshal(&postData)
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(js)
+	} else if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
+		return
+	} else {
+		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
+		return
+	}
 }
 
 // PutSurveyDetails endpoint handler changes a survey short name using the survey reference
@@ -112,14 +276,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 
-	type Data struct {
-		SurveyID   string `json: "surveyId"`
-		SurveyRef  string `json: "surveyRef"`
-		ShortName  string `json: "shortName"`
-		LongName   string `json: "longName"`
-		LegalBasis string `json: "legalBasis"`
-	}
-	var putData Data
+	var putData Survey
 	err = json.Unmarshal(body, &putData)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
@@ -184,7 +341,7 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		survey := new(Survey)
-		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
+		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.LegalBasis)
 
 		if err != nil {
 			http.Error(w, "Failed to get surveys from database", http.StatusInternalServerError)
@@ -210,13 +367,53 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+// AllLegalBases returns details of all legal bases
+func (api *API) AllLegalBases(w http.ResponseWriter, r *http.Request) {
+	rows, err := api.GetLegalBasesStmt.Query()
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("AllLegalBases query failed - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+	legalBases := make([]*LegalBasis, 0)
+
+	for rows.Next() {
+		legalBasis := new(LegalBasis)
+		err = rows.Scan(&legalBasis.Reference, &legalBasis.LongName)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get legal bases from database - %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		legalBases = append(legalBases, legalBasis)
+	}
+
+	if len(legalBases) == 0 {
+		http.Error(w, "No legal bases found", http.StatusNoContent)
+		return
+	}
+
+	data, err := json.Marshal(legalBases)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to marshal survey summary JSON - %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
 // GetSurvey returns the details of the survey identified by the string surveyID.
 func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
 	survey := new(Survey)
 	surveyRow := api.GetSurveyStmt.QueryRow(id)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -255,7 +452,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	id := vars["shortName"]
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -295,7 +492,7 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	id := vars["ref"]
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasis)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -493,6 +690,30 @@ func (api *API) getSurveyRef(surveyRef string) error {
 	return api.GetSurveyRefStmt.QueryRow(surveyRef).Scan(&surveyref)
 }
 
+// This function returns the survey ref for the survey with the given shortname
+func (api *API) getSurveyByShortname(shortname string) (string, error) {
+	var lShortname string
+	err := api.GetSurveyByShortnameStmt.QueryRow(shortname).Scan(&lShortname)
+
+	return lShortname, err
+}
+
+// This function returns the legal basis for a given legal basis longname
+func (api *API) getLegalBasisFromLongName(longName string) (LegalBasis, error) {
+	var legalBasis LegalBasis;
+	err := api.GetLegalBasisFromLongNameStmt.QueryRow(longName).Scan(&legalBasis.Reference, &legalBasis.LongName)
+
+	return legalBasis, err
+}
+
+// This function returns the legal basis for a given legal basis ref
+func (api *API) getLegalBasisFromRef(ref string) (LegalBasis, error) {
+	var legalBasis LegalBasis;
+	err := api.GetLegalBasisFromRefStmt.QueryRow(ref).Scan(&legalBasis.Reference, &legalBasis.LongName)
+
+	return legalBasis, err
+}
+
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
@@ -501,3 +722,4 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }
+

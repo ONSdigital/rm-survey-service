@@ -32,8 +32,12 @@ func init() {
 }
 
 func main() {
-	dataSource, port := configureEnvironment()
-	db := models.InitDB(dataSource)
+	dataSource, port, migrationSource := configureEnvironment()
+	db, err := models.InitDB(dataSource, migrationSource)
+
+	if err != nil {
+		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise database" error_message=%s`, err.Error()))
+	}
 
 	// Set up the signal handler to watch for SIGTERM and SIGINT signals so we
 	// can at least attempt to gracefully shut down before the PaaS/docker etc
@@ -48,9 +52,11 @@ func main() {
 	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
+	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")
+	r.HandleFunc("/surveys", use(api.PostSurveyDetails, basicAuth)).Methods("POST")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.GetSurveyByReference, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors", use(api.AllClassifierTypeSelectors, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorByID, basicAuth)).Methods("GET")
@@ -105,9 +111,10 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func configureEnvironment() (dataSource, port string) {
+func configureEnvironment() (dataSource, port string, migrationSource string) {
 	dataSource = "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	port = "8080"
+	migrationSource = "file:///db-migrations"
 	appEnv, err := cfenv.Current()
 
 	if err != nil {
@@ -121,7 +128,11 @@ func configureEnvironment() (dataSource, port string) {
 			dataSource = v
 		}
 
-		return dataSource, port
+		if v := os.Getenv("MIGRATION_SOURCE"); len(v) > 0 {
+			migrationSource = v
+		}
+
+		return dataSource, port, migrationSource
 	}
 
 	ps := appEnv.Port
@@ -141,7 +152,7 @@ func configureEnvironment() (dataSource, port string) {
 		}
 	}
 
-	return dataSource, port
+	return dataSource, port, migrationSource
 }
 
 //LogError log out error messages
