@@ -82,6 +82,7 @@ INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, c
 INSERT INTO survey.survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (15, '0fc6fa22-8938-43b6-81c5-f1ccca5a5494', 'OFATS', 'Outward Foreign Affiliates Statistics Survey', '225', 'Statistics of Trade Act 1947');
 INSERT INTO survey.classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (29, 'f8bb2184-e63a-11e7-80c1-9a214cf093ae', 15, 'COLLECTION_INSTRUMENT');
 INSERT INTO survey.classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (30, 'f8bb2044-e63a-11e7-80c1-9a214cf093ae', 15, 'COMMUNICATION_TEMPLATE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (48, 29, 'FORM_TYPE');
 INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (40, 30, 'LEGAL_BASIS');
 INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (41, 30, 'REGION');
 INSERT INTO survey.survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (16, 'a81f8a72-47e1-4fcf-a88b-0c175829e02b', 'GovERD', 'Government Research and Development Survey', '500', 'GovERD');
@@ -92,3 +93,9 @@ INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, c
 INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (44, 21, 'FORM_TYPE');
 INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (45, 5, 'FORM_TYPE');
 INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (46, 7, 'FORM_TYPE');
+INSERT INTO survey.survey (surveypk, id, shortname, longname, surveyref, legalbasis) VALUES (17, '0b1f8376-28e9-4884-bea5-acf9d709464e', 'MBS', 'Monthly Business Survey', '009', 'Statistics of Trade Act 1947');
+INSERT INTO survey.classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (33, 'fd804303-c2c3-4aa9-be65-b6e2cadd522d', 17, 'COLLECTION_INSTRUMENT');
+INSERT INTO survey.classifiertypeselector (classifiertypeselectorpk, id, surveyfk, classifiertypeselector) VALUES (34, '99b94e56-bb0d-409c-afa9-27f53f8b2025', 17, 'COMMUNICATION_TEMPLATE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (49, 33, 'FORM_TYPE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (50, 34, 'LEGAL_BASIS');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (51, 34, 'REGION');
