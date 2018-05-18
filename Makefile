@@ -1,5 +1,5 @@
 # Service version.
-VERSION = 10.47.2
+VERSION = 10.48.0
 
 # Cross-compilation values.
 ARCH=amd64
