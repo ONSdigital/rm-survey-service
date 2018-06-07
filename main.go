@@ -32,8 +32,8 @@ func init() {
 }
 
 func main() {
-	dataSource, port, migrationSource := configureEnvironment()
-	db, err := models.InitDB(dataSource, migrationSource)
+	dataSource, port, migrationSource, maxIdleConn, connMaxLifetime := configureEnvironment()
+	db, err := models.InitDB(dataSource, migrationSource, maxIdleConn, connMaxLifetime)
 
 	if err != nil {
 		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise database" error_message=%s`, err.Error()))
@@ -111,13 +111,29 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func configureEnvironment() (dataSource, port string, migrationSource string) {
+func configureEnvironment() (dataSource, port string, migrationSource string, maxIdleConn int, connMaxLifetime int) {
 	dataSource = "postgres://postgres:password@localhost/postgres?sslmode=disable"
 	port = "8080"
+	maxIdleConn = 2
+	connMaxLifetime = 0
 	migrationSource = "file:///db-migrations"
-    if v := os.Getenv("MIGRATION_SOURCE"); len(v) > 0 {
-        migrationSource = v
-    }
+	if v := os.Getenv("MIGRATION_SOURCE"); len(v) > 0 {
+		migrationSource = v
+	}
+
+	if lifetime, err := strconv.Atoi(os.Getenv("CONN_MAX_LIFETIME")); err == nil {
+		connMaxLifetime = lifetime
+	} else if v := os.Getenv("CONN_MAX_LIFETIME"); len(v) < 0 {
+		message := "Expecting a number for CONN_MAX_LIFETIME got " + v
+		LogError(message, nil)
+	}
+
+	if size, err := strconv.Atoi(os.Getenv("MAX_IDLE_CONN")); err == nil {
+		maxIdleConn = size
+	} else if v := os.Getenv("MAX_IDLE_CONN"); len(v) < 0 {
+		message := "Expecting a number for MAX_IDLE_CONN got " + v
+		LogError(message, nil)
+	}
 
 	appEnv, err := cfenv.Current()
 
@@ -132,7 +148,7 @@ func configureEnvironment() (dataSource, port string, migrationSource string) {
 			dataSource = v
 		}
 
-		return dataSource, port, migrationSource
+		return dataSource, port, migrationSource, maxIdleConn, connMaxLifetime
 	}
 
 	ps := appEnv.Port
@@ -152,7 +168,7 @@ func configureEnvironment() (dataSource, port string, migrationSource string) {
 		}
 	}
 
-	return dataSource, port, migrationSource
+	return dataSource, port, migrationSource, maxIdleConn, connMaxLifetime
 }
 
 //LogError log out error messages
