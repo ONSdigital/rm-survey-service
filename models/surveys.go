@@ -44,7 +44,7 @@ type LegalBasis struct {
 	LongName  string `json:"longName"`
 }
 
-//API contains all the pre-prepared sql statment
+//API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                    *sql.Stmt
 	GetSurveyStmt                     *sql.Stmt
