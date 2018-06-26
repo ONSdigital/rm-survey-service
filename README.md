@@ -41,6 +41,8 @@ The following environment variables may be overridden:
 | PORT                   | HTTP listener port                           | :8080                                                           |
 | security_user_name     | HTTP basic authentication user name          | N/A                                                             |
 | security_user_password | HTTP basic authentication password           | N/A                                                             |
+| CONN_MAX_LIFETIME      | Max lifetime of connection in pool in seconds| 0, so there is no time limit                                    |
+| MAX_IDLE_CONN          | Max idle connections to have in pool         | 2                                                               |
 
 ### Docker Image and PostgreSQL
 To start Docker containers for both PostgreSQL and the Survey service, run:

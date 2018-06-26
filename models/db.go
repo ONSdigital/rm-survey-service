@@ -5,10 +5,10 @@ import (
 	"time"
 
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
-	"go.uber.org/zap"
-	_ "github.com/mattes/migrate/source/file"
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database/postgres"
+	_ "github.com/mattes/migrate/source/file"
+	"go.uber.org/zap"
 )
 
 const serviceName = "surveysvc"
@@ -23,7 +23,7 @@ func init() {
 }
 
 // InitDB opens dataSource and bootstraps the database schema if it doesn't already exist.
-func InitDB(dataSource string, migrationSource string) (*sql.DB, error) {
+func InitDB(dataSource string, migrationSource string, maxIdleConn int, connMaxLifetime int) (*sql.DB, error) {
 	const DriverName = "postgres"
 	var err error
 	db, err = sql.Open(DriverName, dataSource)
@@ -33,9 +33,31 @@ func InitDB(dataSource string, migrationSource string) (*sql.DB, error) {
 		return nil, err
 	}
 
+	db.SetMaxIdleConns(maxIdleConn)
+	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
+
+	err = testDBConnection(db)
+
+	if err != nil {
+		logError("Error pinging data source", err)
+		return nil, err
+	}
+
+	err = bootstrapSchema(db, migrationSource)
+
+	if err == migrate.ErrNoChange {
+		logInfo("Database schema unchanged")
+		err = nil
+	}
+
+	return db, err
+}
+
+func testDBConnection(db *sql.DB) error {
 	// Keep attempting to ping the database, increasing the time between each attempt.
 	// See https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c
 	maxAttempts := 20
+	var err error
 
 	for attempts := 1; attempts <= maxAttempts; attempts++ {
 		err = db.Ping()
@@ -47,22 +69,11 @@ func InitDB(dataSource string, migrationSource string) (*sql.DB, error) {
 		time.Sleep(time.Duration(attempts) * time.Second)
 	}
 
-	if err != nil {
-		logError("Error pinging data source", err)
-		return nil, err
-	}
-	err = bootstrapSchema(db, migrationSource)
-
-	if err == migrate.ErrNoChange {
-		logInfo("Database schema unchanged")
-		err = nil
-	}
-
-	return db, err
+	return err
 }
 
 func bootstrapSchema(db *sql.DB, migrationSource string) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{ MigrationsTable: "survey_schema_migrations" })
+	driver, err := postgres.WithInstance(db, &postgres.Config{MigrationsTable: "survey_schema_migrations"})
 
 	if err != nil {
 		return err
