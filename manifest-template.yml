@@ -12,5 +12,6 @@ applications:
     GOPACKAGENAME: github.com/ONSdigital/rm-survey-service
     security_user_name: REPLACE_BA_USERNAME
     security_user_password: REPLACE_BA_PASSWORD
+    MIGRATION_SOURCE: REPLACE_MIGRATION_SOURCE
   services:
     - DATABASE
