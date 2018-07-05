@@ -56,6 +56,7 @@ type API struct {
 	GetSurveyRefStmt                  *sql.Stmt
 	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
 	CreateSurveyStmt                  *sql.Stmt
+	CreateSurveyClassifier            *sql.Stmt
 	GetLegalBasesStmt                 *sql.Stmt
 	GetLegalBasisFromLongNameStmt     *sql.Stmt
 	GetLegalBasisFromRefStmt          *sql.Stmt
@@ -135,6 +136,11 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	createSurveyClassifier, err := createStmt(sqlStatement, db) //TODO SQL statement
+	if err != nil {
+		return nil, err
+	}
+
 	validator := createValidator()
 
 	return &API{
@@ -148,6 +154,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetSurveyRefStmt:                  getSurveyRefStmt,
 		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
 		CreateSurveyStmt:                  createSurvey,
+		CreateSurveyClassifier:            createSurveyClassifier,
 		GetLegalBasesStmt:                 getLegalBases,
 		GetLegalBasisFromLongNameStmt:     getLegalBasisFromLongName,
 		GetLegalBasisFromRefStmt:          getLegalBasisFromRef,
@@ -274,6 +281,11 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
 		return
 	}
+}
+
+// PostSurveyClassifiers endpont handler - creates a new survey classifier
+func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
+	// TODO create survey classifiers
 }
 
 // PutSurveyDetails endpoint handler changes a survey short name using the survey reference
