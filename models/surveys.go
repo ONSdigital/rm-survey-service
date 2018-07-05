@@ -139,7 +139,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 )", db) //TODO SQL statement
+	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifiertypeselectorpk as id", db) //TODO SQL statement
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +369,8 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 
 		classifierTypeSelectorID := uuid.NewV4()
 		classifierTypeSelector.ID = classifierTypeSelectorID.String()
-		typeSelectorResult, err := txCreateSurveyClassifierTypeSelectorStmt.Exec(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name)
+		var typeSelectorPK int
+		err = txCreateSurveyClassifierTypeSelectorStmt.QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).Scan(&typeSelectorPK)
 
 		if err != nil {
 			tx.Rollback()
@@ -379,7 +380,6 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, classifierType := range classifierTypeSelector.ClassifierTypes {
-			typeSelectorPK, err := typeSelectorResult.LastInsertId()
 			if err != nil {
 				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 				return
