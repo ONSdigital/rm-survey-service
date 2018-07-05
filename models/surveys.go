@@ -347,7 +347,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 
 	for _, classifierTypeSelector := range postData {
 
-		typeSelectorRows, err := api.GetClassifierTypeSelectorByIDStmt.Query(surveyID)
+		typeSelectorRows, err := api.GetClassifierTypeSelectorStmt.Query(surveyID)
 		if err != nil {
 			log.Fatal(err)
 			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
