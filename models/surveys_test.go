@@ -892,5 +892,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype \\) VALUES \\( .+\\)")
 	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis")
 	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE shortname = .+")
-
+	m.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+\\) RETURNING classifiertypeselectorpk as id")
+	m.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+\\)")
+	m.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+")
 }
