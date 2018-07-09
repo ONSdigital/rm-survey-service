@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	validator2 "gopkg.in/go-playground/validator.v9"
-	"log"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -304,7 +303,6 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
-	//err := api.getSurveyID(surveyID)
 	var surveyPK int
 	err := api.GetSurveyPKByID.QueryRow(surveyID).Scan(&surveyPK)
 
@@ -328,6 +326,10 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	var postData []ClassifierTypeSelector
 	err = json.Unmarshal(body, &postData)
@@ -344,12 +346,15 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
+	txGetClassifierTypeSelectorStmt := tx.Stmt(api.GetClassifierTypeSelectorStmt)
 
-	for _, classifierTypeSelector := range postData {
+	createdClassifiers := make([]ClassifierTypeSelector, len(postData))
 
-		typeSelectorRows, err := api.GetClassifierTypeSelectorStmt.Query(surveyID)
+	for classifierIndex, classifierTypeSelector := range postData {
+
+		typeSelectorRows, err := txGetClassifierTypeSelectorStmt.Query(surveyID)
 		if err != nil {
-			log.Fatal(err)
+			logError("Error fetching classifier type selectors", err)
 			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -359,43 +364,52 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 			var typeSelectorID uuid.UUID
 			err := typeSelectorRows.Scan(&typeSelectorID, &rowName)
 			if err != nil {
+				logError("Error reading ID and or name of classifier type selector", err)
 				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			if classifierTypeSelector.Name == rowName {
 				http.Error(w, "Type selector with name '"+rowName+"' already exists for this survey with ID '"+typeSelectorID.String()+"'", http.StatusConflict)
+				return
 			}
 		}
 
 		classifierTypeSelectorID := uuid.NewV4()
-		classifierTypeSelector.ID = classifierTypeSelectorID.String()
 		var typeSelectorPK int
-		err = txCreateSurveyClassifierTypeSelectorStmt.QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).Scan(&typeSelectorPK)
+		err = txCreateSurveyClassifierTypeSelectorStmt.
+			QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).
+			Scan(&typeSelectorPK)
 
 		if err != nil {
 			tx.Rollback()
-			log.Fatal(err)
+			logError("Error fetching type selector primary key", err)
 			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		for _, classifierType := range classifierTypeSelector.ClassifierTypes {
-			if err != nil {
-				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
-				return
-			}
 			_, err = txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
 			if err != nil {
 				tx.Rollback()
-				log.Fatal(err)
-				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+				logError("Error inserting classifier types", err)
+				http.Error(w, "Error creating classifier type for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
-		tx.Commit()
-
+		createdClassifiers[classifierIndex] = classifierTypeSelector
+		createdClassifiers[classifierIndex].ID = classifierTypeSelectorID.String()
+	}
+	if err := tx.Commit(); err != nil {
+		logError("Error committing transaction for posting survey classifier", err)
+		http.Error(w, "Error creating classifier type for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(createdClassifiers); err != nil {
+		logError("Error encoding response to 'post survey classifiers'", err)
+	}
 }
 
 // PutSurveyDetails endpoint handler changes a survey short name using the survey reference
