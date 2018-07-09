@@ -871,6 +871,29 @@ func TestCreateNewSurveyDupilcateShortName(t *testing.T) {
 	})
 }
 
+func TestCreateNewSurveyClassifiers(t *testing.T) {
+	Convey("Create new survey classifiers", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		rows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+\\) RETURNING classifiertypeselectorpk as id").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		var data = []byte(`{"name": "test", "classifierTypes": ["TEST1"]}`)
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/cb8accda-6118-4d3b-85a3-149e28960c54/classifiers", bytes.NewBuffer(data))
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+		So(w.Code, ShouldEqual, http.StatusCreated)
+	})
+}
+
 func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectBegin()
 	m.MatchExpectationsInOrder(false)
