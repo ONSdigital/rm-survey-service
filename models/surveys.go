@@ -330,7 +330,6 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	var postData []ClassifierTypeSelector
 	err = json.Unmarshal(body, &postData)
 	if err != nil {

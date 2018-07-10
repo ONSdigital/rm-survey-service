@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -886,8 +886,9 @@ func TestCreateNewSurveyClassifiers(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer api.Close()
 		w := httptest.NewRecorder()
-		var data = []byte(`{"name": "test", "classifierTypes": ["TEST1"]}`)
-		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/cb8accda-6118-4d3b-85a3-149e28960c54/classifiers", bytes.NewBuffer(data))
+		var data = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(data))
+		r.Header.Set("Content-Type", "application/json")
 		So(err, ShouldBeNil)
 		api.PostSurveyClassifiers(w, r)
 		So(w.Code, ShouldEqual, http.StatusCreated)
