@@ -119,6 +119,8 @@ An `HTTP 404 Not Found` status code is returned if the survey or classifier type
 ## Post Survey Classifiers
 * `POST /surveys/<survey_id>/classifiers`
 
+The payload should be a list of classifiers, with a classifier type selector name and a list of classifier types as strings.
+
 ### Example JSON payload
 ```json
 [
@@ -140,3 +142,5 @@ An `HTTP 404 Not Found` status code is returned if the survey or classifier type
 ```
 
 An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
+
+An `HTTP 409 Conflict` status code is returned if a classifier type selector already exists for any of the names in the payload.

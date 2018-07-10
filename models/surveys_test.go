@@ -10,6 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/satori/go.uuid"
 )
 
 func TestInfoEndpoint(t *testing.T) {
@@ -873,25 +874,139 @@ func TestCreateNewSurveyDupilcateShortName(t *testing.T) {
 
 func TestCreateNewSurveyClassifiers(t *testing.T) {
 	Convey("Create new survey classifiers", t, func() {
+
+		// Given
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
-		rows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		emptyClassifierTypeSelectorRows := sqlmock.NewRows([]string{"id", "name"})
+		classifierTypeSelectorPKRows := sqlmock.NewRows([]string{"id"}).AddRow("1000")
 		prepareMockStmts(mock)
-		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+\\) RETURNING classifiertypeselectorpk as id").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
-		db.Begin()
-		defer db.Close()
+		mock.ExpectBegin()
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorPKRows)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(emptyClassifierTypeSelectorRows)
+		mock.ExpectCommit()
+		var postData = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
+
+		// When
 		api, err := NewAPI(db)
 		So(err, ShouldBeNil)
 		defer api.Close()
 		w := httptest.NewRecorder()
-		var data = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
-		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(data))
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
 		r.Header.Set("Content-Type", "application/json")
 		So(err, ShouldBeNil)
 		api.PostSurveyClassifiers(w, r)
+
+		// Then
 		So(w.Code, ShouldEqual, http.StatusCreated)
+	})
+}
+
+func TestCreateNewSurveyMultipleClassifiers(t *testing.T) {
+	Convey("Create multiple new survey classifiers", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		emptyClassifierTypeSelectorRows := sqlmock.NewRows([]string{"id", "name"})
+		firstClassifierTypeSelectorRow := sqlmock.NewRows([]string{"id", "name"}).AddRow(uuid.NewV4().String(), "test1")
+		classifierTypeSelectorPKRow1 := sqlmock.NewRows([]string{"id"}).AddRow("1000")
+		classifierTypeSelectorPKRow2 := sqlmock.NewRows([]string{"id"}).AddRow("1001")
+		prepareMockStmts(mock)
+		mock.ExpectBegin()
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+
+		// First classifier database interactions
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(emptyClassifierTypeSelectorRows)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorPKRow1)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+
+		// Second classifier database interactions
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(firstClassifierTypeSelectorRow)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorPKRow2)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+		var postData = []byte(`[{"name": "test1", "classifierTypes": ["TEST1"]},
+							{"name": "test2", "classifierTypes": ["TEST2"]}]`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusCreated)
+	})
+}
+
+func TestCreateNewSurveyClassifiersSurveyNotFound(t *testing.T) {
+	Convey("Create new classifiers survey not found", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"})
+		emptyClassifierTypeSelectorRows := sqlmock.NewRows([]string{"id", "name"})
+		classifierTypeSelectorPKRows := sqlmock.NewRows([]string{"id"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorPKRows)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(emptyClassifierTypeSelectorRows)
+		var postData = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusNotFound)
+	})
+}
+
+func TestCreateNewSurveyClassifiersAlreadyExistsConflict(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		classifierTypeSelectorRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(uuid.NewV4().String(), "test")
+		classifierTypeSelectorPKRows := sqlmock.NewRows([]string{"id"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectBegin()
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorPKRows)
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(classifierTypeSelectorRows)
+		mock.ExpectRollback()
+		var postData = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusConflict)
 	})
 }
 

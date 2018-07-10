@@ -64,6 +64,7 @@ type API struct {
 	GetSurveyByShortnameStmt               *sql.Stmt
 	GetSurveyPKByID                        *sql.Stmt
 	Validator                              *validator2.Validate
+	DB                                     *sql.DB
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -173,7 +174,9 @@ func NewAPI(db *sql.DB) (*API, error) {
 		GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
 		GetSurveyByShortnameStmt:               getSurveyByShortname,
 		GetSurveyPKByID:                        getSurveyPKByID,
-		Validator:                              validator}, nil
+		Validator:                              validator,
+		DB:                                     db},
+		nil
 }
 
 func stripChars(str string, fn runevalidator) string {
@@ -299,10 +302,10 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 // PostSurveyClassifiers endpont handler - creates a new survey classifier
 func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
-	// TODO create survey classifiers
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
+	// Check survey exists and get it's PK
 	var surveyPK int
 	err := api.GetSurveyPKByID.QueryRow(surveyID).Scan(&surveyPK)
 
@@ -337,42 +340,50 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := db.Begin()
+	// Start database transaction
+	tx, err := api.DB.Begin()
 	if err != nil {
 		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Prepare statements in transaction
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
 	txGetClassifierTypeSelectorStmt := tx.Stmt(api.GetClassifierTypeSelectorStmt)
 
+	// Initialise response object
 	createdClassifiers := make([]ClassifierTypeSelector, len(postData))
 
 	for classifierIndex, classifierTypeSelector := range postData {
 
 		typeSelectorRows, err := txGetClassifierTypeSelectorStmt.Query(surveyID)
 		if err != nil {
+			tx.Rollback()
 			logError("Error fetching classifier type selectors", err)
 			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// Check classifier type selector with this name does not already exist for this survey
 		for typeSelectorRows.Next() {
 			var rowName string
 			var typeSelectorID uuid.UUID
 			err := typeSelectorRows.Scan(&typeSelectorID, &rowName)
 			if err != nil {
+				tx.Rollback()
 				logError("Error reading ID and or name of classifier type selector", err)
 				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			if classifierTypeSelector.Name == rowName {
+				tx.Rollback()
 				http.Error(w, "Type selector with name '"+rowName+"' already exists for this survey with ID '"+typeSelectorID.String()+"'", http.StatusConflict)
 				return
 			}
 		}
 
+		// Insert classifier type selector and retrieve it's PK
 		classifierTypeSelectorID := uuid.NewV4()
 		var typeSelectorPK int
 		err = txCreateSurveyClassifierTypeSelectorStmt.
@@ -386,6 +397,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Insert classifier types
 		for _, classifierType := range classifierTypeSelector.ClassifierTypes {
 			_, err = txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
 			if err != nil {
@@ -395,6 +407,8 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+
+		// Add inserted classifier to response object
 		createdClassifiers[classifierIndex] = classifierTypeSelector
 		createdClassifiers[classifierIndex].ID = classifierTypeSelectorID.String()
 	}
