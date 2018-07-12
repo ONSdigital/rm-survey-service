@@ -139,12 +139,12 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifiertypeselectorpk as id", db) //TODO SQL statement
+	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifiertypeselectorpk as id", db)
 	if err != nil {
 		return nil, err
 	}
 
-	createSurveyClassifierTypeStmt, err := createStmt("INSERT INTO survey.classifiertype ( classifiertypepk, classifiertypeselectorfk, classifiertype ) VALUES ( nextval('survey.classifiertype_classifiertypepk_seq'), $1, $2 )", db) //TODO SQL statement
+	createSurveyClassifierTypeStmt, err := createStmt("INSERT INTO survey.classifiertype ( classifiertypepk, classifiertypeselectorfk, classifiertype ) VALUES ( nextval('survey.classifiertype_classifiertypepk_seq'), $1, $2 )", db)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		re := NewRESTError("404", "Survey not found")
 		data, err := json.Marshal(re)
 		if err != nil {
-			http.Error(w, "Error marshalling NewRestError JSON", http.StatusInternalServerError)
+			logErrorAndRespond500(w, "Error marshalling NewRestError JSON", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -324,13 +324,13 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		logErrorAndRespond500(w, "Error retrieving survey by survey ID", err)
 		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		logErrorAndRespond500(w, "Error creating classifier type selector for survey", err)
 		return
 	}
 	var postData []ClassifierTypeSelector
@@ -343,7 +343,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	// Start database transaction
 	tx, err := api.DB.Begin()
 	if err != nil {
-		http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		logErrorAndRespond500(w, "Error creating database transaction", err)
 		return
 	}
 
@@ -359,9 +359,8 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 
 		typeSelectorRows, err := txGetClassifierTypeSelectorStmt.Query(surveyID)
 		if err != nil {
-			tx.Rollback()
-			logError("Error fetching classifier type selectors", err)
-			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+			RollBack(tx)
+			logErrorAndRespond500(w, "Error fetching classifier type selectors", err)
 			return
 		}
 
@@ -371,13 +370,12 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 			var typeSelectorID uuid.UUID
 			err := typeSelectorRows.Scan(&typeSelectorID, &rowName)
 			if err != nil {
-				tx.Rollback()
-				logError("Error reading ID and or name of classifier type selector", err)
-				http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+				RollBack(tx)
+				logErrorAndRespond500(w, "Error reading ID and or name of classifier type selector", err)
 				return
 			}
 			if classifierTypeSelector.Name == rowName {
-				tx.Rollback()
+				RollBack(tx)
 				http.Error(w, "Type selector with name '"+rowName+"' already exists for this survey with ID '"+typeSelectorID.String()+"'", http.StatusConflict)
 				return
 			}
@@ -391,9 +389,8 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 			Scan(&typeSelectorPK)
 
 		if err != nil {
-			tx.Rollback()
-			logError("Error fetching type selector primary key", err)
-			http.Error(w, "Error creating classifier type selector for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+			RollBack(tx)
+			logErrorAndRespond500(w, "Error fetching type selector primary key", err)
 			return
 		}
 
@@ -401,9 +398,8 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		for _, classifierType := range classifierTypeSelector.ClassifierTypes {
 			_, err = txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
 			if err != nil {
-				tx.Rollback()
-				logError("Error inserting classifier types", err)
-				http.Error(w, "Error creating classifier type for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+				RollBack(tx)
+				logErrorAndRespond500(w, "Error inserting classifier types", err)
 				return
 			}
 		}
@@ -413,8 +409,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		createdClassifiers[classifierIndex].ID = classifierTypeSelectorID.String()
 	}
 	if err := tx.Commit(); err != nil {
-		logError("Error committing transaction for posting survey classifier", err)
-		http.Error(w, "Error creating classifier type for survey '"+surveyID+"' - "+err.Error(), http.StatusInternalServerError)
+		logErrorAndRespond500(w, "Error committing transaction for posting survey classifier", err)
 		return
 	}
 
@@ -661,7 +656,6 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(data)
-
 		return
 	}
 
@@ -877,4 +871,16 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 //Close closes all db connections on the api struct
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
+}
+
+func RollBack(tx *sql.Tx) {
+	err := tx.Rollback()
+	if err != nil {
+		logError("Error rolling back database transaction", err)
+	}
+}
+
+func logErrorAndRespond500(w http.ResponseWriter, logMessage string, err error) {
+	logError(logMessage, err)
+	http.Error(w, "Internal Error - "+err.Error(), http.StatusInternalServerError)
 }

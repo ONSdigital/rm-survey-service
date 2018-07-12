@@ -981,6 +981,8 @@ func TestCreateNewSurveyClassifiersSurveyNotFound(t *testing.T) {
 
 func TestCreateNewSurveyClassifiersAlreadyExistsConflict(t *testing.T) {
 	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")

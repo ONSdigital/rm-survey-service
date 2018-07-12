@@ -46,7 +46,7 @@ func TestAPI_PostSurveyClassifiers(t *testing.T) {
 		}
 		classifiers := []ClassifierTypeSelector{classifier}
 
-		// Create HTTP request to post the classifer as JSON
+		// Create HTTP request to post the classifier as JSON
 		postData, err := json.Marshal(classifiers)
 		So(err, ShouldBeNil)
 		request, err := http.NewRequest("POST", "http://localhost:9090/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiers", bytes.NewReader(postData))
