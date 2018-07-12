@@ -12,7 +12,7 @@ install: true
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
-  - make build test docker
+  - make build integration-test
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
