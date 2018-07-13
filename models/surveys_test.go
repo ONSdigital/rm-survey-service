@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestInfoEndpoint(t *testing.T) {
@@ -1009,6 +1009,36 @@ func TestCreateNewSurveyClassifiersAlreadyExistsConflict(t *testing.T) {
 
 		// Then
 		So(w.Code, ShouldEqual, http.StatusConflict)
+	})
+}
+
+func TestCreateNewSurveyClassifiers500Error(t *testing.T) {
+	Convey("Create new survey classifier returns 500", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		mock.ExpectBegin()
+		mock.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+, .+, .+, .+ \\) RETURNING classifiertypeselectorpk as id").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("INSERT INTO survey.classifiertype \\( classifiertypepk, classifiertypeselectorfk, classifiertype \\) VALUES \\( .+, .+, .+ \\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = .+ ORDER BY classifiertypeselector ASC").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectRollback()
+		var postData = []byte(`[{"name": "test", "classifierTypes": ["TEST1"]}]`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 }
 
