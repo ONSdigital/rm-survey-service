@@ -307,26 +307,53 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Insert a list of classifier types into the database given type selector primary key using transaction tx
+func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) (error) {
+	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
+	for _, classifierType := range classifierTypes {
+		_, err := txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
+		if err != nil {
+			rollBack(tx)
+			return err
+		}
+	}
+	return nil
+}
+
+// Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
+func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int,tx *sql.Tx) (int, uuid.UUID, error) {
+	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
+	classifierTypeSelectorID := uuid.NewV4()
+	var typeSelectorPK int
+	err := txCreateSurveyClassifierTypeSelectorStmt.
+		QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).
+		Scan(&typeSelectorPK)
+	if err != nil {
+		rollBack(tx)
+	}
+	return typeSelectorPK, classifierTypeSelectorID, err
+
+}
+
+// Return a boolean true if a classifier type selector exists for the given survey ID and name
+func (api *API) classifierTypeSelectorExists(name string, surveyID string) (bool, error) {
+	var classifierMatchCount int
+	err := api.CountMatchingClassifierTypeSelectors.
+		QueryRow(surveyID, name).
+		Scan(&classifierMatchCount)
+	return classifierMatchCount > 0, err
+}
+
 // PostSurveyClassifiers endpoint handler - creates a new survey classifier
 func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
 	// Check survey exists and get it's PK
-	var surveyPK int
-	err := api.GetSurveyPKByID.QueryRow(surveyID).Scan(&surveyPK)
+	surveyPK, err := api.getSurveyPKByID(surveyID)
 
 	if err == sql.ErrNoRows {
-		re := NewRESTError("404", "Survey not found")
-		data, err := json.Marshal(re)
-		if err != nil {
-			logErrorAndRespond500(w, "Error marshalling NewRestError JSON", err)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(data)
-
+		write404Response(w, "Survey not found for ID '"+surveyID+"'")
 		return
 	}
 
@@ -335,6 +362,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Read and unmarshal request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		logErrorAndRespond500(w, "Error creating classifier type selector for survey", err)
@@ -347,6 +375,17 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if classifier type selector already exists
+	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(postData.Name, surveyID)
+	if err != nil {
+		logErrorAndRespond500(w, "Error counting existing classifier type selectors", err)
+		return
+	}
+	if classifierTypeSelectorAlreadyExists {
+		http.Error(w, "Type selector with name '"+postData.Name+"' already exists for this survey with ID '"+surveyID+"'", http.StatusConflict)
+		return
+	}
+
 	// Start database transaction
 	tx, err := api.DB.Begin()
 	if err != nil {
@@ -354,47 +393,18 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepare statements in transaction
-	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
-	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
-	txGetMatchingClassifierTypeSelectorsStmt := tx.Stmt(api.CountMatchingClassifierTypeSelectors)
-
-	var classifierMatchCount int
-	err = txGetMatchingClassifierTypeSelectorsStmt.
-		QueryRow(surveyID, postData.Name).
-		Scan(&classifierMatchCount)
-	if err != nil && err != sql.ErrNoRows {
-		RollBack(tx)
-		logErrorAndRespond500(w, "Error fetching classifier type selectors", err)
-		return
-	}
-	if classifierMatchCount > 0 {
-		RollBack(tx)
-		http.Error(w, "Type selector with name '"+postData.Name+"' already exists for this survey with ID '"+surveyID+"'", http.StatusConflict)
-		return
-	}
-
 	// Insert classifier type selector and retrieve it's PK
-	classifierTypeSelectorID := uuid.NewV4()
-	var typeSelectorPK int
-	err = txCreateSurveyClassifierTypeSelectorStmt.
-		QueryRow(classifierTypeSelectorID, surveyPK, postData.Name).
-		Scan(&typeSelectorPK)
-
+	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(postData, surveyPK, tx)
 	if err != nil {
-		RollBack(tx)
 		logErrorAndRespond500(w, "Error fetching type selector primary key", err)
 		return
 	}
 
 	// Insert classifier types
-	for _, classifierType := range postData.ClassifierTypes {
-		_, err = txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
-		if err != nil {
-			RollBack(tx)
-			logErrorAndRespond500(w, "Error inserting classifier types", err)
-			return
-		}
+	err = api.insertClassifierTypes(postData.ClassifierTypes, typeSelectorPK, tx)
+	if err != nil {
+		logErrorAndRespond500(w, "Error inserting classifier types", err)
+		return
 	}
 
 	// Add inserted classifier to response object
@@ -856,6 +866,14 @@ func (api *API) getLegalBasisFromRef(ref string) (LegalBasis, error) {
 	return legalBasis, err
 }
 
+// Get a survey primary key by UUID string
+func (api *API) getSurveyPKByID(surveyID string) (int, error) {
+	var surveyPK int
+	err := api.GetSurveyPKByID.QueryRow(surveyID).Scan(&surveyPK)
+	return surveyPK, err
+
+}
+
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
@@ -865,14 +883,29 @@ func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }
 
-func RollBack(tx *sql.Tx) {
+// Roll back a given transaction and log any errors which occur
+func rollBack(tx *sql.Tx) {
 	err := tx.Rollback()
 	if err != nil {
 		logError("Error rolling back database transaction", err)
 	}
 }
 
+// Log and message and an error and send a 500 HTTP response
 func logErrorAndRespond500(w http.ResponseWriter, logMessage string, err error) {
 	logError(logMessage, err)
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+}
+
+// Writes a 404 error response with a message
+func write404Response(w http.ResponseWriter, message string) {
+	response := NewRESTError("404", message)
+	data, err := json.Marshal(response)
+	if err != nil {
+		logErrorAndRespond500(w, "Error marshalling NewRestError JSON", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write(data)
 }
