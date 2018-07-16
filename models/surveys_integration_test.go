@@ -3,14 +3,13 @@
 package models
 
 import (
-	"testing"
-	. "github.com/smartystreets/goconvey/convey"
 	"bytes"
-	"net/http"
 	"encoding/base64"
 	"encoding/json"
+	. "github.com/smartystreets/goconvey/convey"
+	"net/http"
+	"testing"
 )
-
 
 func createBasicAuth(username, password string) string {
 	auth := username + ":" + password
@@ -44,14 +43,14 @@ func TestAPI_PostSurveyClassifiers(t *testing.T) {
 			Name:            "TEST_SELECTOR_TYPE1",
 			ClassifierTypes: []string{"TEST1", "TEST2"},
 		}
-		classifiers := []ClassifierTypeSelector{classifier}
 
 		// Create HTTP request to post the classifier as JSON
-		postData, err := json.Marshal(classifiers)
+		postData, err := json.Marshal(classifier)
 		So(err, ShouldBeNil)
 		request, err := http.NewRequest("POST", "http://localhost:9090/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiers", bytes.NewReader(postData))
 		So(err, ShouldBeNil)
-		request.Header.Add("Authorization", createBasicAuth("admin", "secret"))
+		apiAuth := createBasicAuth("admin", "secret")
+		request.Header.Add("Authorization", apiAuth)
 		request.Header.Add("Content-Type", "application/json")
 
 		// Post the classifier and assert success 201 is the response status
@@ -61,14 +60,14 @@ func TestAPI_PostSurveyClassifiers(t *testing.T) {
 		So(response.StatusCode, ShouldEqual, http.StatusCreated)
 
 		// Decode and parse the response body to get the ID
-		var setupResponseClassifiers []ClassifierTypeSelector
+		var setupResponseClassifier ClassifierTypeSelector
 		defer response.Body.Close()
-		json.NewDecoder(response.Body).Decode(&setupResponseClassifiers)
+		json.NewDecoder(response.Body).Decode(&setupResponseClassifier)
 
 		// Use the ID to get the classifier we posted by a GET request
-		getClassifier, err := http.NewRequest("GET", "http://localhost:9090/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors/" + setupResponseClassifiers[0].ID, nil)
+		getClassifier, err := http.NewRequest("GET", "http://localhost:9090/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors/"+setupResponseClassifier.ID, nil)
 		So(err, ShouldBeNil)
-		getClassifier.Header.Add("Authorization", createBasicAuth("admin", "secret"))
+		getClassifier.Header.Add("Authorization", apiAuth)
 		getResponseClassifiers, err := client.Do(getClassifier)
 		So(err, ShouldBeNil)
 		So(getResponseClassifiers.StatusCode, ShouldEqual, http.StatusOK)

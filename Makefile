@@ -47,6 +47,8 @@ test:
 	go test -race -coverprofile=coverage.txt -covermode=atomic github.com/ONSdigital/rm-survey-service/models
 
 # Run integration and unit tests with the service running in docker.
+# Builds a docker image, starts it up with a postgres container, waits for a successful response from the survey service
+# /info endpoint, then runs unit tests and integration tests against the services in docker.
 integration-test: docker
 	docker-compose -f compose-integration-tests.yml down
 	docker-compose -f compose-integration-tests.yml up -d
