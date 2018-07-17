@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	validator2 "gopkg.in/go-playground/validator.v9"
+	"strconv"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -353,19 +354,19 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	surveyPK, err := api.getSurveyPKByID(surveyID)
 
 	if err == sql.ErrNoRows {
-		write404Response(w, "Survey not found for ID '"+surveyID+"'")
+		writeRestErrorResponse(w, "Survey not found for ID '"+surveyID+"'", http.StatusNotFound)
 		return
 	}
 
 	if err != nil {
-		logErrorAndRespond500(w, "Error retrieving survey by survey ID", err)
+		logErrorAndRespond(w, "Error retrieving survey by survey ID", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Read and unmarshal request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		logErrorAndRespond500(w, "Error creating classifier type selector for survey", err)
+		logErrorAndRespond(w, "Error creating classifier type selector for survey", http.StatusInternalServerError, err)
 		return
 	}
 	var postData ClassifierTypeSelector
@@ -383,7 +384,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	// Check if classifier type selector already exists
 	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(postData.Name, surveyID)
 	if err != nil {
-		logErrorAndRespond500(w, "Error counting existing classifier type selectors", err)
+		logErrorAndRespond(w, "Error counting existing classifier type selectors", http.StatusInternalServerError, err)
 		return
 	}
 	if classifierTypeSelectorAlreadyExists {
@@ -394,21 +395,21 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	// Start database transaction
 	tx, err := api.DB.Begin()
 	if err != nil {
-		logErrorAndRespond500(w, "Error creating database transaction", err)
+		logErrorAndRespond(w, "Error creating database transaction", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Insert classifier type selector and retrieve it's PK
 	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(postData, surveyPK, tx)
 	if err != nil {
-		logErrorAndRespond500(w, "Error fetching type selector primary key", err)
+		logErrorAndRespond(w, "Error fetching type selector primary key", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Insert classifier types
 	err = api.insertClassifierTypes(postData.ClassifierTypes, typeSelectorPK, tx)
 	if err != nil {
-		logErrorAndRespond500(w, "Error inserting classifier types", err)
+		logErrorAndRespond(w, "Error inserting classifier types", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -416,7 +417,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	createdClassifier := postData
 	createdClassifier.ID = classifierTypeSelectorID.String()
 	if err := tx.Commit(); err != nil {
-		logErrorAndRespond500(w, "Error committing transaction for posting survey classifier", err)
+		logErrorAndRespond(w, "Error committing transaction for posting survey classifier", http.StatusInternalServerError, err)
 		return
 	}
 
