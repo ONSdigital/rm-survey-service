@@ -896,18 +896,18 @@ func rollBack(tx *sql.Tx) {
 	}
 }
 
-// Log and message and an error and send a 500 HTTP response
-func logErrorAndRespond500(w http.ResponseWriter, logMessage string, err error) {
+// Log and message and an error and send an HTTP response
+func logErrorAndRespond(w http.ResponseWriter, logMessage string, status int, err error) {
 	logError(logMessage, err)
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	http.Error(w, "Internal Server Error", status)
 }
 
-// Writes a 404 error response with a message
-func write404Response(w http.ResponseWriter, message string) {
-	response := NewRESTError("404", message)
+// Writes a NewRESTError and sends an HTTP response
+func writeRestErrorResponse(w http.ResponseWriter, message string, status int) {
+	response := NewRESTError(strconv.Itoa(status), message)
 	data, err := json.Marshal(response)
 	if err != nil {
-		logErrorAndRespond500(w, "Error marshalling NewRestError JSON", err)
+		logErrorAndRespond(w, "Error marshalling NewRestError JSON", http.StatusInternalServerError, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
