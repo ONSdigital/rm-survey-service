@@ -23,8 +23,8 @@ type ClassifierTypeSelectorSummary struct {
 // ClassifierTypeSelector represents the detail of a classifier type selector.
 type ClassifierTypeSelector struct {
 	ID              string   `json:"id"`
-	Name            string   `json:"name" validate:"required"`
-	ClassifierTypes []string `json:"classifierTypes"`
+	Name            string   `json:"name" validate:"required,min=1,max=50,no-spaces"`
+	ClassifierTypes []string `json:"classifierTypes" validate:"required,min=1,dive,min=1,max=50,no-spaces"`
 }
 
 // Survey represents the details of a survey.
@@ -372,6 +372,11 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &postData)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+		return
+	}
+	err = api.Validator.Struct(postData)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 

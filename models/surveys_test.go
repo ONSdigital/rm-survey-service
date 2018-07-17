@@ -960,6 +960,188 @@ func TestCreateNewSurveyClassifiersAlreadyExistsConflict(t *testing.T) {
 	})
 }
 
+func TestCreateNewSurveyClassifiersNoName(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"classifierTypes": ["TEST"]}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersEmptyName(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": "", "classifierTypes": ["TEST1"]}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersWhitespaceName(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": " ", "classifierTypes": ["TEST1"]}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersNoClassifierTypes(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": "test"}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersEmptyClassifierTypes(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": "test",  "classifierTypes": []}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersWhitespaceClassifierTypes(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": "test",  "classifierTypes": [" "]}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestCreateNewSurveyClassifiersEmptyStringClassifierTypes(t *testing.T) {
+	Convey("Create new survey classifier already exists", t, func() {
+
+		// Given
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		surveyPKRows := sqlmock.NewRows([]string{"surveypk"}).AddRow("1000")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveypk FROM survey.survey WHERE id = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(surveyPKRows)
+		var postData = []byte(`{"name": "test",  "classifierTypes": [""]}`)
+
+		// When
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("POST", "http://localhost:9090/surveys/test-survey-id/classifiers", bytes.NewBuffer(postData))
+		r.Header.Set("Content-Type", "application/json")
+		So(err, ShouldBeNil)
+		api.PostSurveyClassifiers(w, r)
+
+		// Then
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
 func TestCreateNewSurveyClassifiers500Error(t *testing.T) {
 	Convey("Create new survey classifier returns 500", t, func() {
 
