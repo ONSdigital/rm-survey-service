@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	validator2 "gopkg.in/go-playground/validator.v9"
+	"strconv"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -23,8 +24,8 @@ type ClassifierTypeSelectorSummary struct {
 // ClassifierTypeSelector represents the detail of a classifier type selector.
 type ClassifierTypeSelector struct {
 	ID              string   `json:"id"`
-	Name            string   `json:"name"`
-	ClassifierTypes []string `json:"classifierTypes"`
+	Name            string   `json:"name" validate:"required,min=1,max=50,no-spaces"`
+	ClassifierTypes []string `json:"classifierTypes" validate:"required,min=1,dive,min=1,max=50,no-spaces"`
 }
 
 // Survey represents the details of a survey.
@@ -46,21 +47,26 @@ type LegalBasis struct {
 
 //API contains all the pre-prepared sql statements
 type API struct {
-	AllSurveysStmt                    *sql.Stmt
-	GetSurveyStmt                     *sql.Stmt
-	GetSurveyByShortNameStmt          *sql.Stmt
-	GetSurveyByReferenceStmt          *sql.Stmt
-	GetSurveyIDStmt                   *sql.Stmt
-	GetClassifierTypeSelectorStmt     *sql.Stmt
-	GetClassifierTypeSelectorByIDStmt *sql.Stmt
-	GetSurveyRefStmt                  *sql.Stmt
-	PutSurveyDetailsBySurveyRefStmt   *sql.Stmt
-	CreateSurveyStmt                  *sql.Stmt
-	GetLegalBasesStmt                 *sql.Stmt
-	GetLegalBasisFromLongNameStmt     *sql.Stmt
-	GetLegalBasisFromRefStmt          *sql.Stmt
-	GetSurveyByShortnameStmt          *sql.Stmt
-	Validator                         *validator2.Validate
+	AllSurveysStmt                         *sql.Stmt
+	GetSurveyStmt                          *sql.Stmt
+	GetSurveyByShortNameStmt               *sql.Stmt
+	GetSurveyByReferenceStmt               *sql.Stmt
+	GetSurveyIDStmt                        *sql.Stmt
+	GetClassifierTypeSelectorStmt          *sql.Stmt
+	GetClassifierTypeSelectorByIDStmt      *sql.Stmt
+	GetSurveyRefStmt                       *sql.Stmt
+	PutSurveyDetailsBySurveyRefStmt        *sql.Stmt
+	CreateSurveyStmt                       *sql.Stmt
+	CreateSurveyClassifierTypeSelectorStmt *sql.Stmt
+	CreateSurveyClassifierTypeStmt         *sql.Stmt
+	GetLegalBasesStmt                      *sql.Stmt
+	GetLegalBasisFromLongNameStmt          *sql.Stmt
+	GetLegalBasisFromRefStmt               *sql.Stmt
+	GetSurveyByShortnameStmt               *sql.Stmt
+	GetSurveyPKByID                        *sql.Stmt
+	CountMatchingClassifierTypeSelectors   *sql.Stmt
+	Validator                              *validator2.Validate
+	DB                                     *sql.DB
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -135,24 +141,50 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifiertypeselectorpk as id", db)
+	if err != nil {
+		return nil, err
+	}
+
+	createSurveyClassifierTypeStmt, err := createStmt("INSERT INTO survey.classifiertype ( classifiertypepk, classifiertypeselectorfk, classifiertype ) VALUES ( nextval('survey.classifiertype_classifiertypepk_seq'), $1, $2 )", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveyPKByID, err := createStmt("SELECT surveypk FROM survey.survey WHERE id = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
+	countMatchingClassifierTypeSelectorStmt, err := createStmt("SELECT COUNT(classifiertypeselector.id) FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 AND classifiertypeselector.classifiertypeselector = $2", db)
+	if err != nil {
+		return nil, err
+	}
+
 	validator := createValidator()
 
 	return &API{
-		AllSurveysStmt:                    allSurveyStmt,
-		GetSurveyStmt:                     getSurveyStmt,
-		GetSurveyByShortNameStmt:          getSurveyByShortNameStmt,
-		GetSurveyByReferenceStmt:          getSurveyByReferenceStmt,
-		GetSurveyIDStmt:                   getSurveyIDStmt,
-		GetClassifierTypeSelectorStmt:     getClassifierTypeSelectorStmt,
-		GetClassifierTypeSelectorByIDStmt: getClassifierTypeSelectorByIDStmt,
-		GetSurveyRefStmt:                  getSurveyRefStmt,
-		PutSurveyDetailsBySurveyRefStmt:   putSurveyDetailsBySurveyRefStmt,
-		CreateSurveyStmt:                  createSurvey,
-		GetLegalBasesStmt:                 getLegalBases,
-		GetLegalBasisFromLongNameStmt:     getLegalBasisFromLongName,
-		GetLegalBasisFromRefStmt:          getLegalBasisFromRef,
-		GetSurveyByShortnameStmt:          getSurveyByShortname,
-		Validator:                         validator}, nil
+		AllSurveysStmt:                         allSurveyStmt,
+		GetSurveyStmt:                          getSurveyStmt,
+		GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
+		GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
+		GetSurveyIDStmt:                        getSurveyIDStmt,
+		GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
+		GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
+		GetSurveyRefStmt:                       getSurveyRefStmt,
+		PutSurveyDetailsBySurveyRefStmt:        putSurveyDetailsBySurveyRefStmt,
+		CreateSurveyStmt:                       createSurvey,
+		CreateSurveyClassifierTypeSelectorStmt: createSurveyClassifierTypeSelectorStmt,
+		CreateSurveyClassifierTypeStmt:         createSurveyClassifierTypeStmt,
+		GetLegalBasesStmt:                      getLegalBases,
+		GetLegalBasisFromLongNameStmt:          getLegalBasisFromLongName,
+		GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
+		GetSurveyByShortnameStmt:               getSurveyByShortname,
+		GetSurveyPKByID:                        getSurveyPKByID,
+		CountMatchingClassifierTypeSelectors:   countMatchingClassifierTypeSelectorStmt,
+		Validator:                              validator,
+		DB:                                     db},
+		nil
 }
 
 func stripChars(str string, fn runevalidator) string {
@@ -273,6 +305,126 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
 		return
+	}
+}
+
+// Insert a list of classifier types into the database given type selector primary key using transaction tx
+func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) (error) {
+	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
+	for _, classifierType := range classifierTypes {
+		_, err := txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
+		if err != nil {
+			rollBack(tx)
+			return err
+		}
+	}
+	return nil
+}
+
+// Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
+func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int,tx *sql.Tx) (int, uuid.UUID, error) {
+	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
+	classifierTypeSelectorID := uuid.NewV4()
+	var typeSelectorPK int
+	err := txCreateSurveyClassifierTypeSelectorStmt.
+		QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).
+		Scan(&typeSelectorPK)
+	if err != nil {
+		rollBack(tx)
+	}
+	return typeSelectorPK, classifierTypeSelectorID, err
+
+}
+
+// Return a boolean true if a classifier type selector exists for the given survey ID and name
+func (api *API) classifierTypeSelectorExists(name string, surveyID string) (bool, error) {
+	var classifierMatchCount int
+	err := api.CountMatchingClassifierTypeSelectors.
+		QueryRow(surveyID, name).
+		Scan(&classifierMatchCount)
+	return classifierMatchCount > 0, err
+}
+
+// PostSurveyClassifiers endpoint handler - creates a new survey classifier
+func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyID := vars["surveyId"]
+
+	// Check survey exists and get it's PK
+	surveyPK, err := api.getSurveyPKByID(surveyID)
+
+	if err == sql.ErrNoRows {
+		writeRestErrorResponse(w, "Survey not found for ID '"+surveyID+"'", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		logErrorAndRespond(w, "Error retrieving survey by survey ID", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Read and unmarshal request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logErrorAndRespond(w, "Error creating classifier type selector for survey", http.StatusInternalServerError, err)
+		return
+	}
+	var postData ClassifierTypeSelector
+	err = json.Unmarshal(body, &postData)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+		return
+	}
+	err = api.Validator.Struct(postData)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Check if classifier type selector already exists
+	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(postData.Name, surveyID)
+	if err != nil {
+		logErrorAndRespond(w, "Error counting existing classifier type selectors", http.StatusInternalServerError, err)
+		return
+	}
+	if classifierTypeSelectorAlreadyExists {
+		http.Error(w, "Type selector with name '"+postData.Name+"' already exists for this survey with ID '"+surveyID+"'", http.StatusConflict)
+		return
+	}
+
+	// Start database transaction
+	tx, err := api.DB.Begin()
+	if err != nil {
+		logErrorAndRespond(w, "Error creating database transaction", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Insert classifier type selector and retrieve it's PK
+	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(postData, surveyPK, tx)
+	if err != nil {
+		logErrorAndRespond(w, "Error fetching type selector primary key", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Insert classifier types
+	err = api.insertClassifierTypes(postData.ClassifierTypes, typeSelectorPK, tx)
+	if err != nil {
+		logErrorAndRespond(w, "Error inserting classifier types", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Add inserted classifier to response object
+	createdClassifier := postData
+	createdClassifier.ID = classifierTypeSelectorID.String()
+	if err := tx.Commit(); err != nil {
+		logErrorAndRespond(w, "Error committing transaction for posting survey classifier", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(createdClassifier); err != nil {
+		logError("Error encoding response to 'post survey classifiers'", err)
 	}
 }
 
@@ -512,7 +664,6 @@ func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(data)
-
 		return
 	}
 
@@ -604,7 +755,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 }
 
 // GetClassifierTypeSelectorByID returns the details of the classifier type selector for the survey identified by the string surveyID and
-// the classifier type selector identified by the str	ing classifierTypeSelectorID.
+// the classifier type selector identified by the string classifierTypeSelectorID.
 func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
@@ -721,6 +872,14 @@ func (api *API) getLegalBasisFromRef(ref string) (LegalBasis, error) {
 	return legalBasis, err
 }
 
+// Get a survey primary key by UUID string
+func (api *API) getSurveyPKByID(surveyID string) (int, error) {
+	var surveyPK int
+	err := api.GetSurveyPKByID.QueryRow(surveyID).Scan(&surveyPK)
+	return surveyPK, err
+
+}
+
 func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
@@ -728,4 +887,31 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 //Close closes all db connections on the api struct
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
+}
+
+// Roll back a given transaction and log any errors which occur
+func rollBack(tx *sql.Tx) {
+	err := tx.Rollback()
+	if err != nil {
+		logError("Error rolling back database transaction", err)
+	}
+}
+
+// Log and message and an error and send an HTTP response
+func logErrorAndRespond(w http.ResponseWriter, logMessage string, status int, err error) {
+	logError(logMessage, err)
+	http.Error(w, "Internal Server Error", status)
+}
+
+// Writes a NewRESTError and sends an HTTP response
+func writeRestErrorResponse(w http.ResponseWriter, message string, status int) {
+	response := NewRESTError(strconv.Itoa(status), message)
+	data, err := json.Marshal(response)
+	if err != nil {
+		logErrorAndRespond(w, "Error marshalling NewRestError JSON", http.StatusInternalServerError, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write(data)
 }

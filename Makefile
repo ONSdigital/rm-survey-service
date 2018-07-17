@@ -46,6 +46,18 @@ build: clean
 test:
 	go test -race -coverprofile=coverage.txt -covermode=atomic github.com/ONSdigital/rm-survey-service/models
 
+# Run integration and unit tests with the service running in docker.
+# Builds a docker image, starts it up with a postgres container, waits for a successful response from the survey service
+# /info endpoint, then runs unit tests and integration tests against the services in docker.
+integration-test: docker
+	docker-compose -f compose-integration-tests.yml down
+	docker-compose -f compose-integration-tests.yml up -d
+	./wait_for_startup_integration_tests.sh ||\
+	(docker-compose -f compose-integration-tests.yml down && exit 1)
+	go test --tags=integration -race -coverprofile=coverage.txt -covermode=atomic github.com/ONSdigital/rm-survey-service/models ||\
+	(docker-compose -f compose-integration-tests.yml down && exit 1)
+	docker-compose -f compose-integration-tests.yml down
+
 # Remove the build directory tree.
 clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;

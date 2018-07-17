@@ -58,13 +58,18 @@ docker-compose down
 ```
 
 ## Testing
-To follow once I've worked out how to write unit tests in Go :-)
-
-Run the tests using:
+Run the unit tests using:
 
 ```
 make test
 ```
+
+To run the integration tests using `make` run:
+```bash
+make integration-test
+```
+
+This will build a docker image from source and run the container then run all tests including integration tests.
 
 ## Deployment
 To deploy to Cloud Foundry, run one of the targets below depending on the Cloud Foundry space you wish to push to:
