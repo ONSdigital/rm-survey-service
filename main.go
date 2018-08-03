@@ -16,7 +16,10 @@ import (
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-)
+	"syscall"
+	"os/signal"
+	"context"
+	)
 
 const (
 	realm       = "sdc"
@@ -38,10 +41,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise database" error_message=%s`, err.Error()))
 	}
-
-	// Set up the signal handler to watch for SIGTERM and SIGINT signals so we
-	// can at least attempt to gracefully shut down before the PaaS/docker etc
-	// running us unceremoneously kills us with a SIGKILL.
 
 	api, err := models.NewAPI(db)
 	if err != nil {
@@ -69,6 +68,8 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		Handler:      handlers.CompressHandler(r),
 	}
+
+	go handleShutdownSignals(srv, 5*time.Second)
 	log.Fatalf(`event="Stopped" error="%v"`, srv.ListenAndServe())
 }
 
@@ -170,6 +171,31 @@ func configureEnvironment() (dataSource, port string, migrationSource string, ma
 	}
 
 	return dataSource, port, migrationSource, maxIdleConn, connMaxLifetime
+}
+
+func handleShutdownSignals(server *http.Server, timeout time.Duration) {
+	defer os.Exit(0)
+
+	stopSignals := make(chan os.Signal, 1)
+	signal.Notify(stopSignals, syscall.SIGINT, syscall.SIGTERM)
+	stopSignal := <-stopSignals
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	logger.Info(fmt.Sprintf("Recieved signal: '%s'", stopSignal.String()),
+		zap.String("service", serviceName),
+		zap.String("event", "Handling OS shutdown signal"),
+		zap.String("created", time.Now().UTC().Format(timeFormat)))
+
+	if err := server.Shutdown(ctx); err != nil {
+		LogError("Error while shutting down server", err)
+	} else {
+		logger.Info("HTTP Server shut down successfully",
+			zap.String("service", serviceName),
+			zap.String("event", "Handling OS shutdown signal"),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
+	}
 }
 
 //LogError log out error messages
