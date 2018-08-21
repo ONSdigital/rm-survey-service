@@ -49,8 +49,8 @@
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
-  version = "v1.6.0"
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
   name = "github.com/jtolds/gls"
@@ -84,6 +84,21 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "06020f85339e21b2478f756a78e295255ffa4d6a"
+
+[[projects]]
+  name = "github.com/openzipkin/zipkin-go"
+  packages = [
+    ".",
+    "idgenerator",
+    "middleware/http",
+    "model",
+    "propagation",
+    "propagation/b3",
+    "reporter",
+    "reporter/http"
+  ]
+  revision = "d455a5674050831c1e187644faa4046d653433c2"
+  version = "v0.1.1"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -137,6 +152,18 @@
   version = "v1.7.1"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "922f4815f713f213882e8ef45e0d315b164d705c"
+
+[[projects]]
+  name = "google.golang.org/grpc"
+  packages = ["metadata"]
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
+
+[[projects]]
   name = "gopkg.in/go-playground/validator.v9"
   packages = ["."]
   revision = "14984d91328f9612b58443cbdf4a077d4fd71091"
@@ -145,6 +172,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "71b11d71ffceb94be2fd6618664004a746fc1435ef2b0b4fdd103f528b1e5799"
+  inputs-digest = "308ac9ba68d1a6be31802bbd641dce61ef7ce50faad087c7656696884560fc3c"
   solver-name = "gps-cdcl"
   solver-version = 1

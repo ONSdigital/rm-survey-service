@@ -19,7 +19,12 @@ import (
 	"syscall"
 	"os/signal"
 	"context"
-	)
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
+
+	zipkinhttp "github.com/openzipkin/zipkin-go/middleware/http"
+	reporterhttp "github.com/openzipkin/zipkin-go/reporter/http"
+)
 
 const (
 	realm       = "sdc"
@@ -49,6 +54,16 @@ func main() {
 
 	// Webserver - strictslash set to true to match trailing slashes to routes
 	r := mux.NewRouter().StrictSlash(true)
+
+	intPort, _ := strconv.Atoi(port)
+	tracer, err := newTracer(serviceName, intPort)
+	if tracer != nil {
+		r.Use(zipkinhttp.NewServerMiddleware(
+			tracer,
+			zipkinhttp.SpanName("request")),
+		)
+	}
+
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
 	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
@@ -111,6 +126,49 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 
 		h.ServeHTTP(w, r)
 	}
+}
+
+func newTracer(serviceName string, port int) (*zipkin.Tracer, error) {
+	zipkinDisableEnv := os.Getenv("ZIPKIN_DISABLE")
+	disable, err := strconv.ParseBool(zipkinDisableEnv)
+
+	if err != nil {
+		LogError(fmt.Sprintf("ZIPKIN_DISABLE %s is not an boolean", zipkinDisableEnv), err)
+	}
+	
+	if disable == true {
+		return nil, nil
+	}
+
+	// The reporter sends traces to zipkin server
+	reporter := reporterhttp.NewReporter(os.Getenv("ZIPKIN_DSN"))
+
+	// Local endpoint represent the local service information
+	localEndpoint := &model.Endpoint{ServiceName: serviceName, Port: uint16(port)}
+
+	// Sampler tells you which traces are going to be sampled or not. In this case we will record 100% (1.00) of traces.
+	sampleRateEnv := os.Getenv("ZIPKIN_SAMPLE_RATE")
+	sampleRate, err := strconv.ParseFloat(sampleRateEnv, 64)
+	if err != nil && sampleRateEnv != "" {
+		LogError(fmt.Sprintf("ZIPKIN_SAMPLE_RATE %s is not an float between 1 and 0", sampleRateEnv), err)
+		return nil, err
+	}
+
+	sampler, err := zipkin.NewCountingSampler(sampleRate)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := zipkin.NewTracer(
+		reporter,
+		zipkin.WithSampler(sampler),
+		zipkin.WithLocalEndpoint(localEndpoint),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, err
 }
 
 func configureEnvironment() (dataSource, port string, migrationSource string, maxIdleConn int, connMaxLifetime int) {
