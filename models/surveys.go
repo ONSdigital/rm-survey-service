@@ -33,7 +33,7 @@ type Survey struct {
 	ID            string `json:"id"`
 	ShortName     string `json:"shortName" validate:"required,no-spaces,max=20"`
 	LongName      string `json:"longName" validate:"required,max=100"`
-	Reference     string `json:"surveyRef" validate:"required,numeric,max=20"`
+	Reference     string `json:"surveyRef" validate:"required,max=20"`
 	LegalBasis    string `json:"legalBasis"`
 	SurveyType    string `json:"surveyType"`
 	LegalBasisRef string `json:"legalBasisRef"`
