@@ -48,6 +48,7 @@ type LegalBasis struct {
 //API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                         *sql.Stmt
+	GetSurveysBySurveyTypeStmt			   *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
@@ -72,6 +73,11 @@ type API struct {
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
 	allSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType = $1 ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +171,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 
 	return &API{
 		AllSurveysStmt:                         allSurveyStmt,
+		GetSurveysBySurveyTypeStmt:				getSurveysBySurveyTypeStmt,
 		GetSurveyStmt:                          getSurveyStmt,
 		GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
 		GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
@@ -486,13 +493,40 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AllSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
-	rows, err := api.AllSurveysStmt.Query()
+	api.GetSurveys(w, r, "")
+}
 
-	if err != nil {
-		http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
-		return
+func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyType := vars["surveyType"]
+
+	// Mux package does not pass survey type during tests
+	if surveyType == "" {
+		surveyType = "Business"
+	}
+	api.GetSurveys(w, r, surveyType )
+}
+
+// GetSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
+// optional: surveyType if supplied then the list only returns surveys which match that surveyType
+// valid surveyTypes are 'Business', 'Social' or 'Census'
+func (api *API) GetSurveys(w http.ResponseWriter, r *http.Request, surveyType string) {
+	var rows *sql.Rows
+	var err error
+
+	if surveyType == "" {
+		rows, err = api.AllSurveysStmt.Query()
+		if err != nil {
+			http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
+			return
+		}
+	} else{
+		rows, err = api.GetSurveysBySurveyTypeStmt.Query(surveyType)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("AllSurveys query for surveyType %s failed", surveyType), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	defer rows.Close()
@@ -609,7 +643,10 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["shortName"]
+
+
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
+
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)
 
@@ -649,6 +686,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["ref"]
+
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)
