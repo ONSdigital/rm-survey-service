@@ -493,10 +493,12 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//AllSurveys handler returns a list of all surveys
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	api.GetSurveys(w, r, "")
 }
 
+//SurveysByType handler returns a list of all surveys of a particular type e.g Business or Social
 func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyType := vars["surveyType"]
