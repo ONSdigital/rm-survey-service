@@ -517,7 +517,7 @@ func (api *API) GetSurveys(w http.ResponseWriter, r *http.Request, surveyType st
 	var rows *sql.Rows
 	var err error
 
-	if surveyType == "" {
+	if len(surveyType) == 0 {
 		rows, err = api.AllSurveysStmt.Query()
 		if err != nil {
 			http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
