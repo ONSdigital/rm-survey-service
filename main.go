@@ -12,14 +12,14 @@ import (
 
 	"go.uber.org/zap"
 
+	"context"
 	"github.com/ONSdigital/rm-survey-service/models"
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"syscall"
 	"os/signal"
-	"context"
-	)
+	"syscall"
+)
 
 const (
 	realm       = "sdc"

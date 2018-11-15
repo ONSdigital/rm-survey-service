@@ -3,16 +3,16 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"unicode"
-
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	validator2 "gopkg.in/go-playground/validator.v9"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -48,7 +48,7 @@ type LegalBasis struct {
 //API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                         *sql.Stmt
-	GetSurveysBySurveyTypeStmt			   *sql.Stmt
+	GetSurveysBySurveyTypeStmt             *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
@@ -170,27 +170,27 @@ func NewAPI(db *sql.DB) (*API, error) {
 	validator := createValidator()
 
 	return &API{
-		AllSurveysStmt:                         allSurveyStmt,
-		GetSurveysBySurveyTypeStmt:				getSurveysBySurveyTypeStmt,
-		GetSurveyStmt:                          getSurveyStmt,
-		GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
-		GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
-		GetSurveyIDStmt:                        getSurveyIDStmt,
-		GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
-		GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
-		GetSurveyRefStmt:                       getSurveyRefStmt,
-		PutSurveyDetailsBySurveyRefStmt:        putSurveyDetailsBySurveyRefStmt,
-		CreateSurveyStmt:                       createSurvey,
-		CreateSurveyClassifierTypeSelectorStmt: createSurveyClassifierTypeSelectorStmt,
-		CreateSurveyClassifierTypeStmt:         createSurveyClassifierTypeStmt,
-		GetLegalBasesStmt:                      getLegalBases,
-		GetLegalBasisFromLongNameStmt:          getLegalBasisFromLongName,
-		GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
-		GetSurveyByShortnameStmt:               getSurveyByShortname,
-		GetSurveyPKByID:                        getSurveyPKByID,
-		CountMatchingClassifierTypeSelectors:   countMatchingClassifierTypeSelectorStmt,
-		Validator:                              validator,
-		DB:                                     db},
+			AllSurveysStmt:                         allSurveyStmt,
+			GetSurveysBySurveyTypeStmt:             getSurveysBySurveyTypeStmt,
+			GetSurveyStmt:                          getSurveyStmt,
+			GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
+			GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
+			GetSurveyIDStmt:                        getSurveyIDStmt,
+			GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
+			GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
+			GetSurveyRefStmt:                       getSurveyRefStmt,
+			PutSurveyDetailsBySurveyRefStmt:        putSurveyDetailsBySurveyRefStmt,
+			CreateSurveyStmt:                       createSurvey,
+			CreateSurveyClassifierTypeSelectorStmt: createSurveyClassifierTypeSelectorStmt,
+			CreateSurveyClassifierTypeStmt:         createSurveyClassifierTypeStmt,
+			GetLegalBasesStmt:                      getLegalBases,
+			GetLegalBasisFromLongNameStmt:          getLegalBasisFromLongName,
+			GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
+			GetSurveyByShortnameStmt:               getSurveyByShortname,
+			GetSurveyPKByID:                        getSurveyPKByID,
+			CountMatchingClassifierTypeSelectors:   countMatchingClassifierTypeSelectorStmt,
+			Validator:                              validator,
+			DB:                                     db},
 		nil
 }
 
@@ -316,7 +316,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 // Insert a list of classifier types into the database given type selector primary key using transaction tx
-func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) (error) {
+func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) error {
 	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
 	for _, classifierType := range classifierTypes {
 		_, err := txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
@@ -329,7 +329,7 @@ func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK i
 }
 
 // Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
-func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int,tx *sql.Tx) (int, uuid.UUID, error) {
+func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	classifierTypeSelectorID := uuid.NewV4()
 	var typeSelectorPK int
@@ -493,44 +493,46 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//AllSurveys handler returns a list of all surveys
+// AllSurveys returns a list of all known surveys
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
-	api.GetSurveys(w, r, "")
-}
-
-//SurveysByType handler returns a list of all surveys of a particular type e.g Business or Social
-func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	surveyType := vars["surveyType"]
-
-	// Mux package does not pass survey type during tests
-	if surveyType == "" {
-		surveyType = "Business"
+	var rows *sql.Rows
+	var err error
+	rows, err = api.AllSurveysStmt.Query()
+	if err != nil {
+		logError("Get all surveys returned error", err)
+		http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
+		return
 	}
-	api.GetSurveys(w, r, surveyType )
+	parseSurveys(rows, w)
 }
 
-// GetSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
-// optional: surveyType if supplied then the list only returns surveys which match that surveyType
-// valid surveyTypes are 'Business', 'Social' or 'Census'
-func (api *API) GetSurveys(w http.ResponseWriter, r *http.Request, surveyType string) {
+// SurveysByType returns surveys of a particular type
+func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
 	var rows *sql.Rows
 	var err error
 
-	if len(surveyType) == 0 {
-		rows, err = api.AllSurveysStmt.Query()
-		if err != nil {
-			http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
-			return
-		}
-	} else{
-		rows, err = api.GetSurveysBySurveyTypeStmt.Query(surveyType)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("AllSurveys query for surveyType %s failed", surveyType), http.StatusInternalServerError)
-			return
-		}
+	urlSplit := strings.Split(r.URL.String(), "/")
+	surveyType := urlSplit[len(urlSplit)-1]
+
+	// Valid types are enumerated in DB
+	if surveyType != "Business" && surveyType != "Social" && surveyType != "Census" {
+		logError("Invalid surveyType in SurveysByType", fmt.Errorf("surveyType:%s", surveyType))
+		http.Error(w, "Failed to retrieve surveys", http.StatusBadRequest)
+		return
 	}
 
+	rows, err = api.GetSurveysBySurveyTypeStmt.Query(surveyType)
+	if err != nil {
+		logError("Get surveys by type returned error", err)
+		http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
+		return
+	}
+	parseSurveys(rows, w)
+}
+
+// parseSurveys extracts and returns survey data
+func parseSurveys(rows *sql.Rows, w http.ResponseWriter) {
+	var err error
 	defer rows.Close()
 	surveys := make([]*Survey, 0)
 
@@ -539,6 +541,7 @@ func (api *API) GetSurveys(w http.ResponseWriter, r *http.Request, surveyType st
 		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)
 
 		if err != nil {
+			logError("Failed to get surveys from database", err)
 			http.Error(w, "Failed to get surveys from database", http.StatusInternalServerError)
 			return
 		}
@@ -547,12 +550,14 @@ func (api *API) GetSurveys(w http.ResponseWriter, r *http.Request, surveyType st
 	}
 
 	if len(surveys) == 0 {
+		logError("No surveys found", errors.New("no content"))
 		http.Error(w, "No surveys found", http.StatusNoContent)
 		return
 	}
 
 	data, err := json.Marshal(surveys)
 	if err != nil {
+		logError("Failed to marshal survey summary JSON", err)
 		http.Error(w, "Failed to marshal survey summary JSON", http.StatusInternalServerError)
 		return
 	}
@@ -645,7 +650,6 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["shortName"]
-
 
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 
