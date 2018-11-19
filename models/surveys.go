@@ -510,27 +510,29 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
 	var rows *sql.Rows
 	var err error
+	var surveyMap = map[string]string{
+		"business": "Business",
+		"social":   "Social",
+		"census":   "Census",
+	}
+	vars := mux.Vars(r)
+	surveyType := strings.ToLower(vars["surveyType"])
 
-	urlSplit := strings.Split(r.URL.String(), "/")
-	surveyType := urlSplit[len(urlSplit)-1]
+	if mappedSurveyType, ok := surveyMap[surveyType]; ok {
 
-	// Valid types are enumerated in DB
-	if surveyType != "Business" && surveyType != "Social" && surveyType != "Census" {
-		logError("Invalid surveyType in SurveysByType", fmt.Errorf("surveyType:%s", surveyType))
-		http.Error(w, "Failed to retrieve surveys", http.StatusBadRequest)
+		rows, err = api.GetSurveysBySurveyTypeStmt.Query(mappedSurveyType)
+		if err != nil {
+			logError("Get surveys by type returned error", err)
+			http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
+			return
+		}
+		parseSurveys(rows, w)
 		return
 	}
-
-	rows, err = api.GetSurveysBySurveyTypeStmt.Query(surveyType)
-	if err != nil {
-		logError("Get surveys by type returned error", err)
-		http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
-		return
-	}
-	parseSurveys(rows, w)
+	logError("Invalid surveyType in SurveysByType", fmt.Errorf("surveyType:%s", surveyType))
+	http.Error(w, "Failed to retrieve surveys", http.StatusBadRequest)
 }
 
-// parseSurveys extracts and returns survey data
 func parseSurveys(rows *sql.Rows, w http.ResponseWriter) {
 	var err error
 	defer rows.Close()

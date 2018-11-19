@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
 	"net/http/httptest"
@@ -109,6 +110,34 @@ func TestSurveyListBySurveyTypeReturnsJson(t *testing.T) {
 		defer api.Close()
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/surveytype/Business", nil)
+		r = mux.SetURLVars(r, map[string]string{"surveyType": "Business"})
+		So(err, ShouldBeNil)
+
+		api.SurveysByType(w, r)
+		So(w.Code, ShouldEqual, http.StatusOK)
+		expected := []Survey{{ID: "testid", SurveyType: "Business"}}
+		res := []Survey{}
+		json.Unmarshal(w.Body.Bytes(), &res)
+		So(res[0].ID, ShouldEqual, expected[0].ID)
+		So(res[0].SurveyType, ShouldEqual, expected[0].SurveyType)
+	})
+}
+
+func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
+	Convey("Surveys list restricted by survey type of wrong case returns an array of surveys", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow("testid", "test-shortname", "test-longname", "test-reference", "test-legalbasis-ref", "Business", "test-legalbasis-longname")
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+		api, err := NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/surveytype/BuSiNeSS", nil)
+		r = mux.SetURLVars(r, map[string]string{"surveyType": "BuSiNeSS"})
 		So(err, ShouldBeNil)
 		api.SurveysByType(w, r)
 		So(w.Code, ShouldEqual, http.StatusOK)
@@ -134,6 +163,7 @@ func TestSurveyListBySurveyTypeReturnsErrorForUnknownType(t *testing.T) {
 		defer api.Close()
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("GET", "http://localhost:9090/surveys/surveytype/SomeUnknownType", nil)
+		r = mux.SetURLVars(r, map[string]string{"surveyType": "SomeUnknownType"})
 		So(err, ShouldBeNil)
 		api.SurveysByType(w, r)
 		So(w.Code, ShouldEqual, http.StatusBadRequest)
