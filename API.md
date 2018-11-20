@@ -39,6 +39,9 @@ i.e
     * GET /surveys/surveytype/Social
     * GET /surveys/surveytype/Census
     
+Note: Although the endpoint is case insensitive for Type, Pascal case matches the database enumeration 
+and so is preferred. i.e Business preferred over business or BUSINESS
+    
 ### Example JSON Response    
 ```json
 [{

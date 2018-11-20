@@ -8,7 +8,7 @@ applications:
   buildpack: binary_buildpack
   command: ./build/linux-amd64/bin/main
   env:
-    GOVERSION: go1.8
+    GOVERSION: go1.11
     GOPACKAGENAME: github.com/ONSdigital/rm-survey-service
   services:
     - rm-pg-db
