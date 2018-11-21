@@ -33,11 +33,7 @@ This page documents the Survey service API endpoints. Apart from the Service Inf
 An `HTTP 204 No Content` status code is returned if there are no known surveys.
 
 ## List Surveys by Survey Type
-* 'GET /surveys/surveytype/<type>'  Where type is one of Business,Social or Census
-i.e
-    * GET /surveys/surveytype/Business
-    * GET /surveys/surveytype/Social
-    * GET /surveys/surveytype/Census
+*   'GET /surveys/surveytype/<type>'  Returns a list of surveys of a specific type. Type is one of Business,Social or Census
     
 Note: Although the endpoint is case insensitive for Type, Pascal case matches the database enumeration 
 and so is preferred. i.e Business preferred over business or BUSINESS
