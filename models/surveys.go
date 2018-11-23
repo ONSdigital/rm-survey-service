@@ -3,16 +3,16 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"unicode"
-
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	validator2 "gopkg.in/go-playground/validator.v9"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -48,6 +48,7 @@ type LegalBasis struct {
 //API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                         *sql.Stmt
+	GetSurveysBySurveyTypeStmt             *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
@@ -72,6 +73,11 @@ type API struct {
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
 	allSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC", db)
+	if err != nil {
+		return nil, err
+	}
+
+	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType = $1 ORDER BY shortname ASC", db)
 	if err != nil {
 		return nil, err
 	}
@@ -164,26 +170,27 @@ func NewAPI(db *sql.DB) (*API, error) {
 	validator := createValidator()
 
 	return &API{
-		AllSurveysStmt:                         allSurveyStmt,
-		GetSurveyStmt:                          getSurveyStmt,
-		GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
-		GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
-		GetSurveyIDStmt:                        getSurveyIDStmt,
-		GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
-		GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
-		GetSurveyRefStmt:                       getSurveyRefStmt,
-		PutSurveyDetailsBySurveyRefStmt:        putSurveyDetailsBySurveyRefStmt,
-		CreateSurveyStmt:                       createSurvey,
-		CreateSurveyClassifierTypeSelectorStmt: createSurveyClassifierTypeSelectorStmt,
-		CreateSurveyClassifierTypeStmt:         createSurveyClassifierTypeStmt,
-		GetLegalBasesStmt:                      getLegalBases,
-		GetLegalBasisFromLongNameStmt:          getLegalBasisFromLongName,
-		GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
-		GetSurveyByShortnameStmt:               getSurveyByShortname,
-		GetSurveyPKByID:                        getSurveyPKByID,
-		CountMatchingClassifierTypeSelectors:   countMatchingClassifierTypeSelectorStmt,
-		Validator:                              validator,
-		DB:                                     db},
+			AllSurveysStmt:                         allSurveyStmt,
+			GetSurveysBySurveyTypeStmt:             getSurveysBySurveyTypeStmt,
+			GetSurveyStmt:                          getSurveyStmt,
+			GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
+			GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
+			GetSurveyIDStmt:                        getSurveyIDStmt,
+			GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
+			GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
+			GetSurveyRefStmt:                       getSurveyRefStmt,
+			PutSurveyDetailsBySurveyRefStmt:        putSurveyDetailsBySurveyRefStmt,
+			CreateSurveyStmt:                       createSurvey,
+			CreateSurveyClassifierTypeSelectorStmt: createSurveyClassifierTypeSelectorStmt,
+			CreateSurveyClassifierTypeStmt:         createSurveyClassifierTypeStmt,
+			GetLegalBasesStmt:                      getLegalBases,
+			GetLegalBasisFromLongNameStmt:          getLegalBasisFromLongName,
+			GetLegalBasisFromRefStmt:               getLegalBasisFromRef,
+			GetSurveyByShortnameStmt:               getSurveyByShortname,
+			GetSurveyPKByID:                        getSurveyPKByID,
+			CountMatchingClassifierTypeSelectors:   countMatchingClassifierTypeSelectorStmt,
+			Validator:                              validator,
+			DB:                                     db},
 		nil
 }
 
@@ -309,7 +316,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 // Insert a list of classifier types into the database given type selector primary key using transaction tx
-func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) (error) {
+func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK int, tx *sql.Tx) error {
 	txCreateSurveyClassifierTypeStmt := tx.Stmt(api.CreateSurveyClassifierTypeStmt)
 	for _, classifierType := range classifierTypes {
 		_, err := txCreateSurveyClassifierTypeStmt.Exec(typeSelectorPK, classifierType)
@@ -322,7 +329,7 @@ func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK i
 }
 
 // Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
-func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int,tx *sql.Tx) (int, uuid.UUID, error) {
+func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	classifierTypeSelectorID := uuid.NewV4()
 	var typeSelectorPK int
@@ -486,15 +493,48 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AllSurveys returns summaries of all known surveys. The surveys are returned in ascending short name order.
+// AllSurveys returns a list of all known surveys
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
-	rows, err := api.AllSurveysStmt.Query()
-
+	var rows *sql.Rows
+	var err error
+	rows, err = api.AllSurveysStmt.Query()
 	if err != nil {
-		http.Error(w, "AllSurveys query failed", http.StatusInternalServerError)
+		logError("Get all surveys returned error", err)
+		http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
 		return
 	}
+	parseSurveys(rows, w)
+}
 
+// SurveysByType returns surveys of a particular type
+func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
+	var rows *sql.Rows
+	var err error
+	var surveyMap = map[string]string{
+		"business": "Business",
+		"social":   "Social",
+		"census":   "Census",
+	}
+	vars := mux.Vars(r)
+	surveyType := strings.ToLower(vars["surveyType"])
+
+	if mappedSurveyType, ok := surveyMap[surveyType]; ok {
+
+		rows, err = api.GetSurveysBySurveyTypeStmt.Query(mappedSurveyType)
+		if err != nil {
+			logError("Get surveys by type returned error", err)
+			http.Error(w, "Failed to retrieve surveys", http.StatusInternalServerError)
+			return
+		}
+		parseSurveys(rows, w)
+		return
+	}
+	logError("Invalid surveyType in SurveysByType", fmt.Errorf("surveyType:%s", surveyType))
+	http.Error(w, "Failed to retrieve surveys", http.StatusBadRequest)
+}
+
+func parseSurveys(rows *sql.Rows, w http.ResponseWriter) {
+	var err error
 	defer rows.Close()
 	surveys := make([]*Survey, 0)
 
@@ -503,6 +543,7 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 		err = rows.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)
 
 		if err != nil {
+			logError("Failed to get surveys from database", err)
 			http.Error(w, "Failed to get surveys from database", http.StatusInternalServerError)
 			return
 		}
@@ -511,12 +552,14 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(surveys) == 0 {
+		logError("No surveys found", errors.New("no content"))
 		http.Error(w, "No surveys found", http.StatusNoContent)
 		return
 	}
 
 	data, err := json.Marshal(surveys)
 	if err != nil {
+		logError("Failed to marshal survey summary JSON", err)
 		http.Error(w, "Failed to marshal survey summary JSON", http.StatusInternalServerError)
 		return
 	}
@@ -609,7 +652,9 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["shortName"]
+
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
+
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)
 
@@ -649,6 +694,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["ref"]
+
 	surveyRow := api.GetSurveyByReferenceStmt.QueryRow(id)
 	survey := new(Survey)
 	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.LegalBasis)

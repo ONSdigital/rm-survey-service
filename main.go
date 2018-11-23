@@ -12,14 +12,14 @@ import (
 
 	"go.uber.org/zap"
 
+	"context"
 	"github.com/ONSdigital/rm-survey-service/models"
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"syscall"
 	"os/signal"
-	"context"
-	)
+	"syscall"
+)
 
 const (
 	realm       = "sdc"
@@ -51,6 +51,7 @@ func main() {
 	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/surveytype/{surveyType}", use(api.SurveysByType, basicAuth)).Methods("GET")
 	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")

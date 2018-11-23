@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -1016,7 +1017,7 @@ func TestCrossStructLteFieldValidation(t *testing.T) {
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "", "", "", "", "ltecsfield")
 
-	// this test is for the WARNING about unforseen validation issues.
+	// this test is for the WARNING about unforeseen validation issues.
 	errs = validate.VarWithValue(test, now, "ltecsfield")
 	NotEqual(t, errs, nil)
 	Equal(t, len(errs.(ValidationErrors)), 6)
@@ -1113,7 +1114,7 @@ func TestCrossStructLtFieldValidation(t *testing.T) {
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "", "", "", "", "ltcsfield")
 
-	// this test is for the WARNING about unforseen validation issues.
+	// this test is for the WARNING about unforeseen validation issues.
 	errs = validate.VarWithValue(test, now, "ltcsfield")
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "Test.CreatedAt", "Test.CreatedAt", "CreatedAt", "CreatedAt", "ltcsfield")
@@ -1221,7 +1222,7 @@ func TestCrossStructGteFieldValidation(t *testing.T) {
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "", "", "", "", "gtecsfield")
 
-	// this test is for the WARNING about unforseen validation issues.
+	// this test is for the WARNING about unforeseen validation issues.
 	errs = validate.VarWithValue(test, now, "gtecsfield")
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "Test.CreatedAt", "Test.CreatedAt", "CreatedAt", "CreatedAt", "gtecsfield")
@@ -1317,7 +1318,7 @@ func TestCrossStructGtFieldValidation(t *testing.T) {
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "", "", "", "", "gtcsfield")
 
-	// this test is for the WARNING about unforseen validation issues.
+	// this test is for the WARNING about unforeseen validation issues.
 	errs = validate.VarWithValue(test, now, "gtcsfield")
 	NotEqual(t, errs, nil)
 	AssertError(t, errs, "Test.CreatedAt", "Test.CreatedAt", "CreatedAt", "CreatedAt", "gtcsfield")
@@ -4432,8 +4433,8 @@ func TestBase64URLValidation(t *testing.T) {
 		if tc.success {
 			Equal(t, err, nil)
 			// make sure encoded value is decoded back to the expected value
-			d, err := base64.URLEncoding.DecodeString(tc.encoded)
-			Equal(t, err, nil)
+			d, innerErr := base64.URLEncoding.DecodeString(tc.encoded)
+			Equal(t, innerErr, nil)
 			Equal(t, tc.decoded, string(d))
 		} else {
 			NotEqual(t, err, nil)
@@ -4444,6 +4445,39 @@ func TestBase64URLValidation(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestFileValidation(t *testing.T) {
+	validate := New()
+
+	tests := []struct {
+		title    string
+		param    string
+		expected bool
+	}{
+		{"empty path", "", false},
+		{"regular file", filepath.Join("testdata", "a.go"), true},
+		{"missing file", filepath.Join("testdata", "no.go"), false},
+		{"directory, not a file", "testdata", false},
+	}
+
+	for _, test := range tests {
+		errs := validate.Var(test.param, "file")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Test: '%s' failed Error: %s", test.title, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Test: '%s' failed Error: %s", test.title, errs)
+			}
+		}
+	}
+
+	PanicMatches(t, func() {
+		validate.Var(6, "file")
+	}, "Bad field type int")
 }
 
 func TestEthereumAddressValidation(t *testing.T) {
@@ -6118,6 +6152,11 @@ func TestEmail(t *testing.T) {
 	errs = validate.Var(s, "email")
 	Equal(t, errs, nil)
 
+	s = "mail@domain_with_underscores.org"
+	errs = validate.Var(s, "email")
+	NotEqual(t, errs, nil)
+	AssertError(t, errs, "", "", "", "", "email")
+
 	s = ""
 	errs = validate.Var(s, "email")
 	NotEqual(t, errs, nil)
@@ -6236,8 +6275,7 @@ func TestNumber(t *testing.T) {
 
 	i := 1
 	errs = validate.Var(i, "number")
-	NotEqual(t, errs, nil)
-	AssertError(t, errs, "", "", "", "", "number")
+	Equal(t, errs, nil)
 }
 
 func TestNumeric(t *testing.T) {
@@ -6280,8 +6318,7 @@ func TestNumeric(t *testing.T) {
 
 	i := 1
 	errs = validate.Var(i, "numeric")
-	NotEqual(t, errs, nil)
-	AssertError(t, errs, "", "", "", "", "numeric")
+	Equal(t, errs, nil)
 }
 
 func TestAlphaNumeric(t *testing.T) {
@@ -6838,8 +6875,8 @@ func TestTranslations(t *testing.T) {
 
 		}, func(ut ut.Translator, fe FieldError) string {
 
-			t, err := ut.T(fe.Tag(), fe.Field())
-			if err != nil {
+			t, transErr := ut.T(fe.Tag(), fe.Field())
+			if transErr != nil {
 				fmt.Printf("warning: error translating FieldError: %#v", fe.(*fieldError))
 				return fe.(*fieldError).Error()
 			}
@@ -7696,6 +7733,18 @@ func TestUniqueValidation(t *testing.T) {
 		param    interface{}
 		expected bool
 	}{
+		// Arrays
+		{[2]string{"a", "b"}, true},
+		{[2]int{1, 2}, true},
+		{[2]float64{1, 2}, true},
+		{[2]interface{}{"a", "b"}, true},
+		{[2]interface{}{"a", 1}, true},
+		{[2]float64{1, 1}, false},
+		{[2]int{1, 1}, false},
+		{[2]string{"a", "a"}, false},
+		{[2]interface{}{"a", "a"}, false},
+		{[4]interface{}{"a", 1, "b", 1}, false},
+		// Slices
 		{[]string{"a", "b"}, true},
 		{[]int{1, 2}, true},
 		{[]float64{1, 2}, true},
@@ -7706,6 +7755,17 @@ func TestUniqueValidation(t *testing.T) {
 		{[]string{"a", "a"}, false},
 		{[]interface{}{"a", "a"}, false},
 		{[]interface{}{"a", 1, "b", 1}, false},
+		// Maps
+		{map[string]string{"one": "a", "two": "b"}, true},
+		{map[string]int{"one": 1, "two": 2}, true},
+		{map[string]float64{"one": 1, "two": 2}, true},
+		{map[string]interface{}{"one": "a", "two": "b"}, true},
+		{map[string]interface{}{"one": "a", "two": 1}, true},
+		{map[string]float64{"one": 1, "two": 1}, false},
+		{map[string]int{"one": 1, "two": 1}, false},
+		{map[string]string{"one": "a", "two": "a"}, false},
+		{map[string]interface{}{"one": "a", "two": "a"}, false},
+		{map[string]interface{}{"one": "a", "two": 1, "three": "b", "four": 1}, false},
 	}
 
 	validate := New()
@@ -7730,6 +7790,129 @@ func TestUniqueValidation(t *testing.T) {
 		}
 	}
 	PanicMatches(t, func() { validate.Var(1.0, "unique") }, "Bad field type float64")
+}
+
+func TestHTMLValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"<html>", true},
+		{"<script>", true},
+		{"<stillworks>", true},
+		{"</html", false},
+		{"</script>", true},
+		{"<//script>", false},
+		{"<123nonsense>", false},
+		{"test", false},
+		{"&example", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "html")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "html" {
+					t.Fatalf("Index: %d html failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
+}
+
+func TestHTMLEncodedValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"&#x3c;", true},
+		{"&#xaf;", true},
+		{"&#x00;", true},
+		{"&#xf0;", true},
+		{"&#x3c", true},
+		{"&#xaf", true},
+		{"&#x00", true},
+		{"&#xf0", true},
+		{"&#ab", true},
+		{"&lt;", true},
+		{"&gt;", true},
+		{"&quot;", true},
+		{"&amp;", true},
+		{"#x0a", false},
+		{"&x00", false},
+		{"&#x1z", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "html_encoded")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html_encoded failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html_enocded failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "html_encoded" {
+					t.Fatalf("Index: %d html_encoded failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
+}
+
+func TestURLEncodedValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"%20", true},
+		{"%af", true},
+		{"%ff", true},
+		{"<%az", false},
+		{"%test%", false},
+		{"a%b", false},
+		{"1%2", false},
+		{"%%a%%", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "url_encoded")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d url_encoded failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d url_enocded failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "url_encoded" {
+					t.Fatalf("Index: %d url_encoded failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
 }
 
 func TestKeys(t *testing.T) {
@@ -7812,7 +7995,7 @@ func TestKeys(t *testing.T) {
 	// test bad tag definitions
 
 	PanicMatches(t, func() { validate.Var(map[string]string{"key": "val"}, "endkeys,dive,eq=val") }, "'endkeys' tag encountered without a corresponding 'keys' tag")
-	PanicMatches(t, func() { validate.Var(1, "keys,eq=1,endkeys") }, "'keys' tag must be immediately preceeded by the 'dive' tag")
+	PanicMatches(t, func() { validate.Var(1, "keys,eq=1,endkeys") }, "'keys' tag must be immediately preceded by the 'dive' tag")
 
 	// test custom tag name
 	validate = New()
@@ -7965,4 +8148,17 @@ func TestKeyOrs(t *testing.T) {
 
 	AssertDeepError(t, errs, "Test2.Test1[badtestkey]", "Test2.Test1[badtestkey]", "Test1[badtestkey]", "Test1[badtestkey]", "okkey", "eq=testkey|eq=testkeyok")
 	AssertDeepError(t, errs, "Test2.Test1[badtestkey]", "Test2.Test1[badtestkey]", "Test1[badtestkey]", "Test1[badtestkey]", "eq", "eq")
+}
+
+func TestStructLevelValidationsPointerPassing(t *testing.T) {
+	v1 := New()
+	v1.RegisterStructValidation(StructValidationTestStruct, &TestStruct{})
+
+	tst := &TestStruct{
+		String: "good value",
+	}
+
+	errs := v1.Struct(tst)
+	NotEqual(t, errs, nil)
+	AssertError(t, errs, "TestStruct.StringVal", "TestStruct.String", "StringVal", "String", "badvalueteststruct")
 }
