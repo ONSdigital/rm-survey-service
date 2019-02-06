@@ -15,18 +15,12 @@ script:
   - make build integration-test
 
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-    docker push sdcplatform/surveysvc;
-    fi
-  - bash <(curl -s https://codecov.io/bash)
-
-notifications:
-  slack:
-    rooms:
-      secure: Ad/3Zc8vRu5qbwPAo7z1AfTIO4tLm6lsFSVk+YMUwrZdbnc0I7s2IMC904S7nQbgZcU6R4ZTUFrkkwCqp3M0e+fCUNKJIoecIqlKB5sjB5NbslVwNqOImpEBvdSousELhu6Q4QVbolWcUOEHNkT+3Bdtl2s/NsNbCNL50dzhFTo6TRwBFXxh+LEXY1c6Ub9sCuIY5XW75O3GDVj3eir+trURW9UHnIVHV522PSU35Mp6dAZiA7NFZbdqoj7N/R9IpNUUtj4PvtREuekb7ZGXwFA6a++eOJItAfH6mw+F14RzntbHJOo8E+5PXwZtz3ydJDVcmd/dKzWt3nJxCIEu8LytHgAqe8bDGcW8VX+cROqgVSdrGjsxFCTvV4EZgPwOnIeXUkXm5vRwPoXNMZGTJKGk4/D1NT9rWJFmgm3O+qKH7YJ3KVlMES5XjqdgKkYCMdA/i0jszq5Jsrw55t/WwqoZI4BywR4e0457bS2uSKW+dQRLI1lQ6iGP0wBN00c9slO4UYFXXJX4+JWXhuPhev80Ah8X2r43uZdNj4l2SkMlMzSyh3llq0wq8QMDBSOBi/G1SjMXOsIsXnRyx6Zh45He79SeosXktUUjfg4Qhaw1esqScHkAoaiJ7QmAw/h+ZyUuabeigro1A+EiCZevzqRZrlsR4SujoYrODwovBBg=
-    on_failure: always
-    on_success: never
+- if ([ "$TRAVIS_BRANCH" == "rm-census" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]) || ([ "$TRAVIS_BRANCH" == "automate-census-docker-build" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]); then
+  docker build -t "${DOCKER_GCP_LOCATION}"/surveysvc .;
+  docker login -u "${DOCKER_GCP_USERNAME}" -p "${DOCKER_GCP_PASSWORD}" "${DOCKER_GCP_REGISTRY}";
+  docker push "${DOCKER_GCP_LOCATION}"/surveysvc;
+  fi
+- bash <(curl -s https://codecov.io/bash)
 
 branches:
     only:
