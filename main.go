@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/mux"
 	"os/signal"
 	"syscall"
-	"context"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 
