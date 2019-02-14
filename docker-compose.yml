@@ -10,7 +10,7 @@ database:
 
 survey:
   container_name: surveysvc
-  image: sdcplatform/surveysvc
+  image: eu.gcr.io/census-rm-ci/rm/census-rm-surveysvc
   ports:
    - "8080:8080"
   links:
