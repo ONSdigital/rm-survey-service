@@ -5,8 +5,8 @@ RUN apt-get update\
      && rm -rf /var/lib/apt/lists/*
 EXPOSE 8080
 
-RUN groupadd -g 995 surveysvc && \
-    useradd -r -u 995 -g surveysvc surveysvc
+RUN groupadd --gid 995 surveysvc && \
+    useradd --create-home --system --uid 995 --gid surveysvc surveysvc
 USER surveysvc
 
 COPY build/linux-amd64/bin/main /usr/local/bin/
