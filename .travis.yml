@@ -21,7 +21,7 @@ after_success:
   docker login -u "${DOCKER_GCP_USERNAME}" -p "${DOCKER_GCP_PASSWORD}" "${DOCKER_GCP_REGISTRY}";
   docker push "$DESTINATION_IMAGE_NAME";
   fi
-
+  
 - bash <(curl -s https://codecov.io/bash)
 
 env:
@@ -31,3 +31,4 @@ env:
 branches:
     only:
         - rm-census
+        
