@@ -12,8 +12,8 @@ install: true
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
-  - go get ${gobuild_args} ./...
-  - make build integration-test
+  - env GO111MODULE=on go get ${gobuild_args} ./...
+  - env GO111MODULE=on make build integration-test
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
