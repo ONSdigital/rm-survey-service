@@ -5,7 +5,7 @@ services:
 
 language: go
 go:
- - 1.11
+ - 1.12
 
 install: true
 
