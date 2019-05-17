@@ -12,6 +12,7 @@ install: true
 go_import_path: github.com/ONSdigital/rm-survey-service
 
 script:
+  - go get ${gobuild_args} ./...
   - make build integration-test
 
 after_success:
