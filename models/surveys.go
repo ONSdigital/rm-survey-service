@@ -305,7 +305,6 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		// classifiers. There are always the following classifiers required:
 		// - COLLECTION_INSTRUMENT  - [ FORM_TYPE ]
 		// - COMMUNICATION_TEMPLATE - [ LEGAL_BASIS, REGION ]
-		// FIXME tidy and actually do something with the returned identifiers! (and errors)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not return newly inserted survey id - unable to create classifiers - %v", err), http.StatusInternalServerError)
 			return
@@ -428,7 +427,6 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	createdClassifier := postData
 	createdClassifier.ID = classifierID
 
-	// FIXME 	Seems unidiomatic way to return the generated ID
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(createdClassifier); err != nil {
