@@ -6,6 +6,6 @@ applications:
   instances: 1
   memory: 256M
   buildpack: binary_buildpack
-  command: ./main
+  command: ./build/linux-amd64/bin/main
   services:
     - rm-pg-db

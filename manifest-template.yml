@@ -6,7 +6,7 @@ applications:
   instances: INSTANCES
   memory: 256M
   buildpack: binary_buildpack
-  command: ./main
+  command: ./build/linux-amd64/bin/main
   env:
     security_user_name: REPLACE_BA_USERNAME
     security_user_password: REPLACE_BA_PASSWORD
