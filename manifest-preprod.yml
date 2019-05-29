@@ -6,9 +6,6 @@ applications:
   instances: 2
   memory: 256M
   buildpack: binary_buildpack
-  command: ./build/linux-amd64/bin/main
-  env:
-    GOVERSION: go1.11
-    GOPACKAGENAME: github.com/ONSdigital/rm-survey-service
+  command: ./main
   services:
     - rm-survey-db

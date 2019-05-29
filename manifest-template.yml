@@ -6,10 +6,8 @@ applications:
   instances: INSTANCES
   memory: 256M
   buildpack: binary_buildpack
-  command: ./build/linux-amd64/bin/main
+  command: ./main
   env:
-    GOVERSION: go1.11
-    GOPACKAGENAME: github.com/ONSdigital/rm-survey-service
     security_user_name: REPLACE_BA_USERNAME
     security_user_password: REPLACE_BA_PASSWORD
     MIGRATION_SOURCE: REPLACE_MIGRATION_SOURCE
