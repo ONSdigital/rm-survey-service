@@ -152,3 +152,41 @@ The payload should be a classifier object, with a classifier type selector `name
 An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
 
 An `HTTP 409 Conflict` status code is returned if a classifier type selector already exists for any of the names in the payload.
+
+## Post New Survey
+* `POST /surveys` will create a new survey.
+
+The payload should be a byte array, with a `ShortName`, a `LongName`, a `SurveyRef`, a `LegalBasis`, and a `SurveyType`.
+
+### Example JSON payload
+```json
+{
+    "ShortName": "test-short-name", 
+    "LongName":"test-long-name",
+    "SurveyRef":"99",
+    "LegalBasis":"Statistics of Trade Act 1947",
+    "SurveyType":"Social"
+}
+```
+
+An `HTTP 400 Bad Request` status code is returned if the payload has missing values and is incomplete.
+
+## Put Survey Details on Reference
+* `PUT /surveys/ref/456` will put details about a survey at a specific reference number, in this case 456.
+
+The payload should be a byte array, containing any combination of a `ShortName`, a `LongName`, a `SurveyRef`, a `LegalBasis`, and a `SurveyType`.
+
+### Example JSON payload
+```json
+{
+    "ShortName": "test-short-name", 
+    "LongName":"test-long-name"
+}
+```
+
+An `HTTP 500 Internal Server Error` status code is returned if the PUT request was unsuccessful.
+
+## Get Legal Bases
+* `GET /legal-bases` returns a list of legal bases (?).
+
+NOTE: Although this endpoint is defined, there exists no code for it anywhere. As such, it is redundant.
