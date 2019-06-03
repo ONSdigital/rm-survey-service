@@ -35,13 +35,14 @@ type ClassifierTypeSelector struct {
 
 // Survey represents the details of a survey.
 type Survey struct {
-	ID            string `json:"id"`
-	ShortName     string `json:"shortName" validate:"required,no-spaces,max=20"`
-	LongName      string `json:"longName" validate:"required,max=100"`
-	Reference     string `json:"surveyRef" validate:"required,max=20"`
-	LegalBasis    string `json:"legalBasis"`
-	SurveyType    string `json:"surveyType"`
-	LegalBasisRef string `json:"legalBasisRef"`
+	ID            string                   `json:"id"`
+	ShortName     string                   `json:"shortName" validate:"required,no-spaces,max=20"`
+	LongName      string                   `json:"longName" validate:"required,max=100"`
+	Reference     string                   `json:"surveyRef" validate:"required,max=20"`
+	LegalBasis    string                   `json:"legalBasis"`
+	SurveyType    string                   `json:"surveyType"`
+	LegalBasisRef string                   `json:"legalBasisRef"`
+	Classifiers   []ClassifierTypeSelector `json:"classifiers,omitempty"`
 }
 
 // LegalBasis - the legal basis for a survey consisting of a short reference and a long name
@@ -232,8 +233,8 @@ func createValidator() *validator2.Validate {
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
-	var postData Survey
-	err = json.Unmarshal(body, &postData)
+	var survey Survey
+	err = json.Unmarshal(body, &survey)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
 		return
@@ -242,19 +243,19 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	var legalBasis LegalBasis
 	var errorMessage string
 
-	if postData.LegalBasisRef != "" {
-		legalBasis, err = api.getLegalBasisFromRef(postData.LegalBasisRef)
-		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", postData.LegalBasisRef)
-	} else if postData.LegalBasis != "" {
-		legalBasis, err = api.getLegalBasisFromLongName(postData.LegalBasis)
-		errorMessage = fmt.Sprintf("Legal basis %v does not exist", postData.LegalBasis)
+	if survey.LegalBasisRef != "" {
+		legalBasis, err = api.getLegalBasisFromRef(survey.LegalBasisRef)
+		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", survey.LegalBasisRef)
+	} else if survey.LegalBasis != "" {
+		legalBasis, err = api.getLegalBasisFromLongName(survey.LegalBasis)
+		errorMessage = fmt.Sprintf("Legal basis %v does not exist", survey.LegalBasis)
 	} else {
 		http.Error(w, "No legal basis specified for survey", http.StatusBadRequest)
 		return
 	}
 
 	validSurveyTypes := map[string]bool{"Census": true, "Business": true, "Social": true}
-	if _, ok := validSurveyTypes[postData.SurveyType]; !ok {
+	if _, ok := validSurveyTypes[survey.SurveyType]; !ok {
 		http.Error(w, "Survey type must be one of [Census, Business, Social]", http.StatusBadRequest)
 		return
 	}
@@ -272,17 +273,17 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	surveyID := uuid.NewV4()
 	// Check whether the survey shortname already exists in the database, returning
 	// an error if it does
-	_, err = api.getSurveyByShortname(postData.ShortName)
+	_, err = api.getSurveyByShortname(survey.ShortName)
 	if (err != nil && err != sql.ErrNoRows) || err == nil {
-		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", postData.ShortName), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", survey.ShortName), http.StatusConflict)
 		return
 	}
 
 	// If the reference is unique then we can go ahead and create the survey and
 	// it's classifiers
-	if err = api.getSurveyRef(postData.Reference); err == sql.ErrNoRows {
+	if err = api.getSurveyRef(survey.Reference); err == sql.ErrNoRows {
 
-		if err := api.Validator.Struct(postData); err != nil {
+		if err := api.Validator.Struct(survey); err != nil {
 			http.Error(w, fmt.Sprintf("Survey failed to validate - %v", err), http.StatusBadRequest)
 			return
 		}
@@ -290,47 +291,37 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		surveyPK := 0
 		err := api.CreateSurveyStmt.QueryRow(
 			surveyID,
-			postData.Reference,
-			postData.ShortName,
-			postData.LongName,
+			survey.Reference,
+			survey.ShortName,
+			survey.LongName,
 			legalBasis.Reference,
-			postData.SurveyType,
+			survey.SurveyType,
 		).Scan(&surveyPK)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		// If the survey has been correctly created then we need to generate its
-		// classifiers. There are always the following classifiers required:
-		// - COLLECTION_INSTRUMENT  - [ FORM_TYPE ]
-		// - COMMUNICATION_TEMPLATE - [ LEGAL_BASIS, REGION ]
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Could not return newly inserted survey id - unable to create classifiers - %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		classifiers := map[string][]string{
-			"COLLECTION_INSTRUMENT":  []string{"FORM_TYPE"},
-			"COMMUNICATION_TEMPLATE": []string{"LEGAL_BASIS", "REGION"},
-		}
-		for c, t := range classifiers {
-			// TODO would be useful to return the generated classifier IDs to the caller
-			_, err := api.createClassifiers(int(surveyPK), surveyID.String(), c, t)
-			if err != nil {
-				logErrorAndRespond(w, "Failed to insert classifier '"+c+"'", http.StatusInternalServerError, err)
-				return
+		// If the main survey record has been correctly created then, if a set of
+		// classifiers have been supplied, we want to create them.
+		if survey.Classifiers != nil {
+			for _, c := range survey.Classifiers {
+				_, err := api.createClassifiers(int(surveyPK), surveyID.String(), c.Name, c.ClassifierTypes)
+				if err != nil {
+					logErrorAndRespond(w, "Failed to insert classifier '"+c.Name+"'", http.StatusInternalServerError, err)
+					return
+				}
 			}
 		}
 
 		// Update the data passed in with the generated values so we can return them
 		// to the caller
-		postData.ID = surveyID.String()
-		postData.LegalBasisRef = legalBasis.Reference
-		postData.LegalBasis = legalBasis.LongName
+		survey.ID = surveyID.String()
+		survey.LegalBasisRef = legalBasis.Reference
+		survey.LegalBasis = legalBasis.LongName
 
 		var js []byte
-		js, err = json.Marshal(&postData)
+		js, err = json.Marshal(&survey)
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -339,7 +330,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", survey.Reference), http.StatusConflict)
 		return
 	}
 }
