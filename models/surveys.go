@@ -6,6 +6,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	validator2 "gopkg.in/go-playground/validator.v9"
 )
 
@@ -322,6 +324,14 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 		var js []byte
 		js, err = json.Marshal(&survey)
+
+		logger.Info("New survey created",
+			zap.String("service", serviceName),
+			zap.String("event", "created survey"),
+			zap.String("survey_id", survey.ID),
+			zap.String("survey_name", survey.LongName),
+			zap.String("survey_type", survey.SurveyType),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
