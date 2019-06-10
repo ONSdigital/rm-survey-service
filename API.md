@@ -156,16 +156,21 @@ An `HTTP 409 Conflict` status code is returned if a classifier type selector alr
 ## Post New Survey
 * `POST /surveys` will create a new survey.
 
-The payload should be a byte array, with a `ShortName`, a `LongName`, a `SurveyRef`, a `LegalBasis`, and a `SurveyType`.
+The payload should be a JSON document, with an `ID`, a `ShortName`, a `LongName`, a `Reference`, a `LegalBasis`, a `SurveyType` as strings, and `Classifiers` as a list.
 
 ### Example JSON payload
 ```json
 {
+    "ID": "efa868fb-fb80-44c7-9f33-d6800a17c4da",
     "ShortName": "test-short-name", 
-    "LongName":"test-long-name",
-    "SurveyRef":"99",
-    "LegalBasis":"Statistics of Trade Act 1947",
-    "SurveyType":"Social"
+    "LongName": "test-long-name",
+    "Reference": "456",
+    "LegalBasis": "Statistics of Trade Act 1947",
+    "SurveyType": "Social",
+    "LegalBasisRef": "STA1947",
+    "Classifiers": [
+      "LEGAL_BASIS"
+    ]
 }
 ```
 
@@ -174,19 +179,36 @@ An `HTTP 400 Bad Request` status code is returned if the payload has missing val
 ## Put Survey Details on Reference
 * `PUT /surveys/ref/456` will put details about a survey at a specific reference number, in this case 456.
 
-The payload should be a byte array, containing any combination of a `ShortName`, a `LongName`, a `SurveyRef`, a `LegalBasis`, and a `SurveyType`.
+The payload should be a JSON document, with an `ID`, a `ShortName`, a `LongName`, a `Reference`, a `LegalBasis`, a `SurveyType` as strings, and `Classifiers` as a list.
 
 ### Example JSON payload
 ```json
 {
+    "ID": "efa868fb-fb80-44c7-9f33-d6800a17c4da",
     "ShortName": "test-short-name", 
-    "LongName":"test-long-name"
+    "LongName": "test-long-name",
+    "Reference": "456",
+    "LegalBasis": "Statistics of Trade Act 1947",
+    "SurveyType": "Social",
+    "LegalBasisRef": "STA1947",
+    "Classifiers": [
+      "LEGAL_BASIS"
+    ]
 }
 ```
 
 An `HTTP 500 Internal Server Error` status code is returned if the PUT request was unsuccessful.
 
 ## Get Legal Bases
-* `GET /legal-bases` returns a list of legal bases (?).
+* `GET /legal-bases` returns a list of legal bases.
 
-NOTE: Although this endpoint is defined, there exists no code for it anywhere. As such, it is redundant.
+### Example JSON payload
+```json
+[
+    {"ref":"GovERD","longName":"GovERD"},
+    {"ref":"STA1947","longName":"Statistics of Trade Act 1947"},
+    {"ref":"STA1947_BEIS","longName":"Statistics of Trade Act 1947 - BEIS"},
+    {"ref":"Vol","longName":"Voluntary Not Stated"},
+    {"ref":"Vol_BEIS","longName":"Voluntary - BEIS"}
+]
+```
