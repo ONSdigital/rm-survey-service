@@ -156,7 +156,7 @@ An `HTTP 409 Conflict` status code is returned if a classifier type selector alr
 ## Post New Survey
 * `POST /surveys` will create a new survey.
 
-The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers,omitempty` as a list.
+The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers` as a list.
 
 ### Example JSON payload
 ```json
@@ -168,7 +168,7 @@ The payload should be a JSON document, with an `id`, a `shortName`, a `longName`
     "legalBasis": "Statistics of Trade Act 1947",
     "surveyType": "Social",
     "legalBasisRef": "STA1947",
-    "classifiers,omitempty": [
+    "classifiers": [
       "LEGAL_BASIS"
     ]
 }
@@ -179,7 +179,7 @@ An `HTTP 400 Bad Request` status code is returned if the payload has missing val
 ## Put Survey Details on Reference
 * `PUT /surveys/ref/456` will put details about a survey at a specific reference number, in this case 456.
 
-The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers,omitempty` as a list.
+The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers` as a list.
 
 ### Example JSON payload
 ```json
@@ -191,7 +191,7 @@ The payload should be a JSON document, with an `id`, a `shortName`, a `longName`
     "legalBasis": "Statistics of Trade Act 1947",
     "surveyType": "Social",
     "legalBasisRef": "STA1947",
-    "classifiers,omitempty": [
+    "classifiers": [
       "LEGAL_BASIS"
     ]
 }
