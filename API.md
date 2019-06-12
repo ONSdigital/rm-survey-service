@@ -152,3 +152,63 @@ The payload should be a classifier object, with a classifier type selector `name
 An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
 
 An `HTTP 409 Conflict` status code is returned if a classifier type selector already exists for any of the names in the payload.
+
+## Post New Survey
+* `POST /surveys` will create a new survey.
+
+The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers` as a list.
+
+### Example JSON payload
+```json
+{
+    "id": "efa868fb-fb80-44c7-9f33-d6800a17c4da",
+    "shortName": "test-short-name", 
+    "longName": "test-long-name",
+    "surveyRef": "456",
+    "legalBasis": "Statistics of Trade Act 1947",
+    "surveyType": "Social",
+    "legalBasisRef": "STA1947",
+    "classifiers": [
+      "LEGAL_BASIS"
+    ]
+}
+```
+
+An `HTTP 400 Bad Request` status code is returned if the payload has missing values and is incomplete.
+
+## Put Survey Details on Reference
+* `PUT /surveys/ref/456` will put details about a survey at a specific reference number, in this case 456.
+
+The payload should be a JSON document, with an `id`, a `shortName`, a `longName`, a `surveyRef`, a `legalBasis`, a `surveyType`, and a `legalBasisRef` as strings, and `classifiers` as a list.
+
+### Example JSON payload
+```json
+{
+    "id": "efa868fb-fb80-44c7-9f33-d6800a17c4da",
+    "shortName": "test-short-name", 
+    "longName": "test-long-name",
+    "surveyRef": "456",
+    "legalBasis": "Statistics of Trade Act 1947",
+    "surveyType": "Social",
+    "legalBasisRef": "STA1947",
+    "classifiers": [
+      "LEGAL_BASIS"
+    ]
+}
+```
+
+An `HTTP 500 Internal Server Error` status code is returned if the PUT request was unsuccessful.
+
+## Get Legal Bases
+* `GET /legal-bases` returns a list of legal bases.
+
+### Example JSON payload
+```json
+[
+    {"ref":"GovERD","longName":"GovERD"},
+    {"ref":"STA1947","longName":"Statistics of Trade Act 1947"},
+    {"ref":"STA1947_BEIS","longName":"Statistics of Trade Act 1947 - BEIS"},
+    {"ref":"Vol","longName":"Voluntary Not Stated"},
+    {"ref":"Vol_BEIS","longName":"Voluntary - BEIS"}
+]
+```
