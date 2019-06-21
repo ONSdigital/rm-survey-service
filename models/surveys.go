@@ -1,18 +1,25 @@
 package models
 
+// TODO All transactions should have rollbacks in the case of errors
+// TODO Fix the multiple types of returning errors to the client (should be using the correct RFC response)
+
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
+	"time"
+
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
-	validator2 "gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
+	validator2 "gopkg.in/go-playground/validator.v9"
 )
 
 // ClassifierTypeSelectorSummary represents a summary of a classifier type selector.
@@ -30,13 +37,14 @@ type ClassifierTypeSelector struct {
 
 // Survey represents the details of a survey.
 type Survey struct {
-	ID            string `json:"id"`
-	ShortName     string `json:"shortName" validate:"required,no-spaces,max=20"`
-	LongName      string `json:"longName" validate:"required,max=100"`
-	Reference     string `json:"surveyRef" validate:"required,max=20"`
-	LegalBasis    string `json:"legalBasis"`
-	SurveyType    string `json:"surveyType"`
-	LegalBasisRef string `json:"legalBasisRef"`
+	ID            string                   `json:"id"`
+	ShortName     string                   `json:"shortName" validate:"required,no-spaces,max=20"`
+	LongName      string                   `json:"longName" validate:"required,max=100"`
+	Reference     string                   `json:"surveyRef" validate:"required,max=20"`
+	LegalBasis    string                   `json:"legalBasis"`
+	SurveyType    string                   `json:"surveyType"`
+	LegalBasisRef string                   `json:"legalBasisRef"`
+	Classifiers   []ClassifierTypeSelector `json:"classifiers,omitempty"`
 }
 
 // LegalBasis - the legal basis for a survey consisting of a short reference and a long name
@@ -122,7 +130,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6)", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6) RETURNING surveypk", db)
 	if err != nil {
 		return nil, err
 	}
@@ -227,8 +235,8 @@ func createValidator() *validator2.Validate {
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
-	var postData Survey
-	err = json.Unmarshal(body, &postData)
+	var survey Survey
+	err = json.Unmarshal(body, &survey)
 	if err != nil {
 		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
 		return
@@ -237,19 +245,19 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	var legalBasis LegalBasis
 	var errorMessage string
 
-	if postData.LegalBasisRef != "" {
-		legalBasis, err = api.getLegalBasisFromRef(postData.LegalBasisRef)
-		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", postData.LegalBasisRef)
-	} else if postData.LegalBasis != "" {
-		legalBasis, err = api.getLegalBasisFromLongName(postData.LegalBasis)
-		errorMessage = fmt.Sprintf("Legal basis %v does not exist", postData.LegalBasis)
+	if survey.LegalBasisRef != "" {
+		legalBasis, err = api.getLegalBasisFromRef(survey.LegalBasisRef)
+		errorMessage = fmt.Sprintf("Legal basis with reference %v does not exist", survey.LegalBasisRef)
+	} else if survey.LegalBasis != "" {
+		legalBasis, err = api.getLegalBasisFromLongName(survey.LegalBasis)
+		errorMessage = fmt.Sprintf("Legal basis %v does not exist", survey.LegalBasis)
 	} else {
 		http.Error(w, "No legal basis specified for survey", http.StatusBadRequest)
 		return
 	}
 
 	validSurveyTypes := map[string]bool{"Census": true, "Business": true, "Social": true}
-	if _, ok := validSurveyTypes[postData.SurveyType]; !ok {
+	if _, ok := validSurveyTypes[survey.SurveyType]; !ok {
 		http.Error(w, "Survey type must be one of [Census, Business, Social]", http.StatusBadRequest)
 		return
 	}
@@ -262,46 +270,68 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate a UUID to uniquely identify the new survey
+	// TODO replace with Google uuid generator?
 	surveyID := uuid.NewV4()
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to generate a UUID for new survey - %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = api.getSurveyByShortname(postData.ShortName)
-
+	// Check whether the survey shortname already exists in the database, returning
+	// an error if it does
+	_, err = api.getSurveyByShortname(survey.ShortName)
 	if (err != nil && err != sql.ErrNoRows) || err == nil {
-		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", postData.ShortName), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("The survey with Abbreviation %v already exists", survey.ShortName), http.StatusConflict)
 		return
 	}
 
-	err = api.getSurveyRef(postData.Reference)
+	// If the reference is unique then we can go ahead and create the survey and
+	// it's classifiers
+	if err = api.getSurveyRef(survey.Reference); err == sql.ErrNoRows {
 
-	if err == sql.ErrNoRows {
-		// Reference is unique - this is good
-
-		err = api.Validator.Struct(postData)
-
-		if err != nil {
+		if err := api.Validator.Struct(survey); err != nil {
 			http.Error(w, fmt.Sprintf("Survey failed to validate - %v", err), http.StatusBadRequest)
 			return
 		}
 
-		_, err = api.CreateSurveyStmt.Exec(surveyID, postData.Reference, postData.ShortName, postData.LongName, legalBasis.Reference, postData.SurveyType)
-
+		surveyPK := 0
+		err := api.CreateSurveyStmt.QueryRow(
+			surveyID,
+			survey.Reference,
+			survey.ShortName,
+			survey.LongName,
+			legalBasis.Reference,
+			survey.SurveyType,
+		).Scan(&surveyPK)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
 			return
 		}
 
+		// If the main survey record has been correctly created then, if a set of
+		// classifiers have been supplied, we want to create them.
+		if survey.Classifiers != nil {
+			for _, c := range survey.Classifiers {
+				_, err := api.createClassifiers(int(surveyPK), surveyID.String(), c.Name, c.ClassifierTypes)
+				if err != nil {
+					logErrorAndRespond(w, "Failed to insert classifier '"+c.Name+"'", http.StatusInternalServerError, err)
+					return
+				}
+			}
+		}
+
+		// Update the data passed in with the generated values so we can return them
+		// to the caller
+		survey.ID = surveyID.String()
+		survey.LegalBasisRef = legalBasis.Reference
+		survey.LegalBasis = legalBasis.LongName
+
 		var js []byte
+		js, err = json.Marshal(&survey)
 
-		postData.ID = surveyID.String()
-		postData.LegalBasisRef = legalBasis.Reference
-		postData.LegalBasis = legalBasis.LongName
-
-		js, err = json.Marshal(&postData)
+		logger.Info("New survey created",
+			zap.String("service", serviceName),
+			zap.String("event", "created survey"),
+			zap.String("survey_id", survey.ID),
+			zap.String("survey_name", survey.LongName),
+			zap.String("survey_type", survey.SurveyType),
+			zap.String("created", time.Now().UTC().Format(timeFormat)))
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -310,7 +340,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", postData.Reference), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", survey.Reference), http.StatusConflict)
 		return
 	}
 }
@@ -329,12 +359,12 @@ func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK i
 }
 
 // Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
-func (api *API) insertClassifierTypeSelector(classifierTypeSelector ClassifierTypeSelector, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
+func (api *API) insertClassifierTypeSelector(name string, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	classifierTypeSelectorID := uuid.NewV4()
 	var typeSelectorPK int
 	err := txCreateSurveyClassifierTypeSelectorStmt.
-		QueryRow(classifierTypeSelectorID, surveyPK, classifierTypeSelector.Name).
+		QueryRow(classifierTypeSelectorID, surveyPK, name).
 		Scan(&typeSelectorPK)
 	if err != nil {
 		rollBack(tx)
@@ -388,51 +418,60 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if classifier type selector already exists
-	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(postData.Name, surveyID)
+	classifierID, err := api.createClassifiers(surveyPK, surveyID, postData.Name, postData.ClassifierTypes)
 	if err != nil {
-		logErrorAndRespond(w, "Error counting existing classifier type selectors", http.StatusInternalServerError, err)
-		return
-	}
-	if classifierTypeSelectorAlreadyExists {
-		http.Error(w, "Type selector with name '"+postData.Name+"' already exists for this survey with ID '"+surveyID+"'", http.StatusConflict)
-		return
-	}
-
-	// Start database transaction
-	tx, err := api.DB.Begin()
-	if err != nil {
-		logErrorAndRespond(w, "Error creating database transaction", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Insert classifier type selector and retrieve it's PK
-	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(postData, surveyPK, tx)
-	if err != nil {
-		logErrorAndRespond(w, "Error fetching type selector primary key", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Insert classifier types
-	err = api.insertClassifierTypes(postData.ClassifierTypes, typeSelectorPK, tx)
-	if err != nil {
-		logErrorAndRespond(w, "Error inserting classifier types", http.StatusInternalServerError, err)
+		logErrorAndRespond(w, "Failed to create classifiers", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Add inserted classifier to response object
 	createdClassifier := postData
-	createdClassifier.ID = classifierTypeSelectorID.String()
-	if err := tx.Commit(); err != nil {
-		logErrorAndRespond(w, "Error committing transaction for posting survey classifier", http.StatusInternalServerError, err)
-		return
-	}
+	createdClassifier.ID = classifierID
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(createdClassifier); err != nil {
 		logError("Error encoding response to 'post survey classifiers'", err)
 	}
+}
+
+func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []string) (string, error) {
+
+	// Check if classifier type selector already exists
+	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(name, surveyID)
+	if err != nil {
+		return "", errors.Wrap(err, "Error counting existing classifier type selectors")
+	}
+	if classifierTypeSelectorAlreadyExists {
+		return "", errors.New(fmt.Sprintf("Type selector with name '%s' already exists for this survey with ID '%s'", name, surveyID))
+	}
+
+	// Start database transaction
+	tx, err := api.DB.Begin()
+	if err != nil {
+		return "", errors.Wrap(err, "Error creating database transaction")
+	}
+
+	// Insert classifier type selector and retrieve its primary key so that we can
+	// use that to associate the classifier types
+	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(name, surveyPK, tx)
+	if err != nil {
+		tx.Rollback()
+		return "", errors.Wrap(err, "Error fetching type selector primary key")
+	}
+
+	// Insert classifier types
+	err = api.insertClassifierTypes(types, typeSelectorPK, tx)
+	if err != nil {
+		tx.Rollback()
+		return "", errors.Wrap(err, "Error inserting classifier types")
+	}
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return "", errors.Wrap(err, "Error committing transaction for posting survey classifier")
+	}
+
+	return classifierTypeSelectorID.String(), nil
 }
 
 // PutSurveyDetails endpoint handler changes a survey short name using the survey reference
