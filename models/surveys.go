@@ -929,6 +929,12 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	isValid = IsValidUUID(classifierTypeSelectorID)
+	if isValid == false {
+		http.Error(w, "'"+classifierTypeSelectorID+"' is not a valid UUID", http.StatusBadRequest)
+		return
+	}
+
 	err := api.getSurveyID(surveyID)
 
 	if err == sql.ErrNoRows {

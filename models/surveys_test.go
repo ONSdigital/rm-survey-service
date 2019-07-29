@@ -811,7 +811,7 @@ func TestClassifierTypeSelectorByIdReturnsJSON(t *testing.T) {
 	})
 }
 
-func TestClassifierTypeSelectorByIdInvalidUuid(t *testing.T) {
+func TestClassifierTypeSelectorByIdSurveyIdIsInvalidUuid(t *testing.T) {
 	Convey("ClassifierType GET by ID will return a 400 when supplied with an invalid uuid in the survey_id", t, func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
@@ -835,6 +835,44 @@ func TestClassifierTypeSelectorByIdInvalidUuid(t *testing.T) {
 		ts := httptest.NewServer(router)
 		defer ts.Close()
 		url := ts.URL + "/surveys/not-a-uuid/classifiertypeselectors/" + classifierID
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("GET", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+
+		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
+		body, err := ioutil.ReadAll(resp.Body)
+		So(string(body), ShouldStartWith, "'not-a-uuid' is not a valid UUID")
+	})
+}
+
+func TestClassifierTypeSelectorByIdClassifierIdIsInvalidUuid(t *testing.T) {
+	Convey("ClassifierType GET by ID will return a 400 when supplied with an invalid uuid in the survey_id", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		idRow := sqlmock.NewRows([]string{"id"}).AddRow("id").AddRow("id")
+		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector", "classifiertype"}).AddRow(surveyID, "test-name", classifierID)
+		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(idRow)
+		mock.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = .* ORDER BY classifiertype ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/" + surveyID + "/classifiertypeselectors/not-a-uuid"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
 		r, err := http.NewRequest("GET", url, nil)
@@ -893,7 +931,7 @@ func TestClassifierTypeSelectorByIdNoClassifierTypesReturns404(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		idRow := sqlmock.NewRows([]string{"id"}).AddRow("test-id")
+		idRow := sqlmock.NewRows([]string{"id"}).AddRow(surveyID)
 		rows := sqlmock.NewRows([]string{"id", "classifiertypeselector", "classifiertype"})
 		mock.ExpectPrepare("SELECT id FROM survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(idRow)
 		mock.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = .* ORDER BY classifiertype ASC").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
@@ -911,7 +949,7 @@ func TestClassifierTypeSelectorByIdNoClassifierTypesReturns404(t *testing.T) {
 
 		ts := httptest.NewServer(router)
 		defer ts.Close()
-		url := ts.URL + "/surveys/" + surveyID + "/classifiertypeselectors/test-selector"
+		url := ts.URL + "/surveys/" + surveyID + "/classifiertypeselectors/" + classifierID
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
 		r, err := http.NewRequest("GET", url, nil)
