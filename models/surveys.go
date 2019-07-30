@@ -453,8 +453,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
-	isValid := IsValidUUID(surveyID)
-	if isValid == false {
+	if !IsValidUUID(surveyID) {
 		http.Error(w, "'"+surveyID+"' is not a valid UUID", http.StatusBadRequest)
 		return
 	}
@@ -923,14 +922,12 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
 
-	isValid := IsValidUUID(surveyID)
-	if isValid == false {
+	if !IsValidUUID(surveyID) {
 		http.Error(w, "'"+surveyID+"' is not a valid UUID", http.StatusBadRequest)
 		return
 	}
 
-	isValid = IsValidUUID(classifierTypeSelectorID)
-	if isValid == false {
+	if !IsValidUUID(classifierTypeSelectorID) {
 		http.Error(w, "'"+classifierTypeSelectorID+"' is not a valid UUID", http.StatusBadRequest)
 		return
 	}
