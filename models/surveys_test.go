@@ -845,7 +845,7 @@ func TestClassifierTypeSelectorByIdSurveyIdIsInvalidUuid(t *testing.T) {
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
 		body, err := ioutil.ReadAll(resp.Body)
-		So(string(body), ShouldStartWith, "'not-a-uuid' is not a valid UUID")
+		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for surveyId is not a valid UUID")
 	})
 }
 
@@ -883,7 +883,7 @@ func TestClassifierTypeSelectorByIdClassifierIdIsInvalidUuid(t *testing.T) {
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
 		body, err := ioutil.ReadAll(resp.Body)
-		So(string(body), ShouldStartWith, "'not-a-uuid' is not a valid UUID")
+		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for classifierTypeSelectorId is not a valid UUID")
 	})
 }
 
@@ -1713,7 +1713,7 @@ func TestCreateNewSurveyClassifiersInvalidUuid(t *testing.T) {
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
 		body, err := ioutil.ReadAll(resp.Body)
-		So(string(body), ShouldStartWith, "'not-a-uuid' is not a valid UUID")
+		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for surveyId is not a valid UUID")
 	})
 }
 

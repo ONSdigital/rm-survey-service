@@ -269,12 +269,6 @@ func stripChars(str string, fn runevalidator) string {
 	}, str)
 }
 
-// IsValidUUID validate whether a string is a valid UUID
-func IsValidUUID(u string) bool {
-	_, err := uuid.FromString(u)
-	return err == nil
-}
-
 type runevalidator func(rune) bool
 
 // Could use validator:excludeall but would need to enumerate all space values.  This way we can leverage
@@ -451,12 +445,20 @@ func (api *API) classifierTypeSelectorExists(name string, surveyID string) (bool
 // PostSurveyClassifiers endpoint handler - creates a new survey classifier
 func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	surveyID := vars["surveyId"]
+	for _, u := range []string{"surveyId"} {
+		val, ok := vars[u]
+		if !ok {
+			http.Error(w, "Missing value for "+u, http.StatusBadRequest)
+			return
+		}
 
-	if !IsValidUUID(surveyID) {
-		http.Error(w, "'"+surveyID+"' is not a valid UUID", http.StatusBadRequest)
-		return
+		if _, err := uuid.FromString(val); err != nil {
+			http.Error(w, "The value ("+val+") used for "+u+" is not a valid UUID", http.StatusBadRequest)
+			return
+		}
 	}
+
+	surveyID := vars["surveyId"]
 
 	// Check survey exists and get it's PK
 	surveyPK, err := api.getSurveyPKByID(surveyID)
@@ -919,18 +921,19 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 // the classifier type selector identified by the string classifierTypeSelectorID.
 func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	for _, u := range []string{"classifierTypeSelectorId", "surveyId"} {
+		val, ok := vars[u]
+		if !ok {
+			http.Error(w, "Missing value for "+u, http.StatusBadRequest)
+		}
+
+		if _, err := uuid.FromString(val); err != nil {
+			http.Error(w, "The value ("+val+") used for "+u+" is not a valid UUID", http.StatusBadRequest)
+			return
+		}
+	}
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
-
-	if !IsValidUUID(surveyID) {
-		http.Error(w, "'"+surveyID+"' is not a valid UUID", http.StatusBadRequest)
-		return
-	}
-
-	if !IsValidUUID(classifierTypeSelectorID) {
-		http.Error(w, "'"+classifierTypeSelectorID+"' is not a valid UUID", http.StatusBadRequest)
-		return
-	}
 
 	err := api.getSurveyID(surveyID)
 
