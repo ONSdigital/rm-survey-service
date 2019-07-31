@@ -513,7 +513,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []string) (string, error) {
-
+	logger.Info("Creating classifiers", zap.String("surveyID", surveyID))
 	// Check if classifier type selector already exists
 	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(name, surveyID)
 	if err != nil {
@@ -547,7 +547,7 @@ func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []s
 		tx.Rollback()
 		return "", errors.Wrap(err, "Error committing transaction for posting survey classifier")
 	}
-
+	logger.Info("Finished creating classifiers", zap.String("surveyID", surveyID))
 	return classifierTypeSelectorID.String(), nil
 }
 
