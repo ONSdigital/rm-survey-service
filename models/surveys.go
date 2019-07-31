@@ -420,17 +420,21 @@ func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK i
 }
 
 // Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
-func (api *API) insertClassifierTypeSelector(name string, surveyPK int, classifierTypeSelectorID uuid.UUID, tx *sql.Tx) (int, error) {
+func (api *API) insertClassifierTypeSelector(name string, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
 	var typeSelectorPK int
-	err := txCreateSurveyClassifierTypeSelectorStmt.
+	classifierTypeSelectorID, err := uuid.NewV4()
+	if err != nil {
+		tx.Rollback()
+		return typeSelectorPK, uuid.Nil, errors.New("Error generating random uuid")
+	}
+	err = txCreateSurveyClassifierTypeSelectorStmt.
 		QueryRow(classifierTypeSelectorID, surveyPK, name).
 		Scan(&typeSelectorPK)
 	if err != nil {
 		rollBack(tx)
 	}
-	return typeSelectorPK, err
-
+	return typeSelectorPK, classifierTypeSelectorID, err
 }
 
 // Return a boolean true if a classifier type selector exists for the given survey ID and name
@@ -527,12 +531,7 @@ func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []s
 
 	// Insert classifier type selector and retrieve its primary key so that we can
 	// use that to associate the classifier types
-	classifierTypeSelectorID, err := uuid.NewV4()
-	if err != nil {
-		tx.Rollback()
-		return "", errors.Wrap(err, "Error generating random uuid")
-	}
-	typeSelectorPK, err := api.insertClassifierTypeSelector(name, surveyPK, classifierTypeSelectorID, tx)
+	typeSelectorPK, classifierTypeSelectorID, err := api.insertClassifierTypeSelector(name, surveyPK, tx)
 	if err != nil {
 		tx.Rollback()
 		return "", errors.Wrap(err, "Error fetching type selector primary key")
