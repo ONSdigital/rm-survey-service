@@ -5,7 +5,9 @@ package models
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
+	"os"
 	"time"
 
 	"fmt"
@@ -15,9 +17,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	validator2 "gopkg.in/go-playground/validator.v9"
 )
@@ -76,6 +78,61 @@ type API struct {
 	CountMatchingClassifierTypeSelectors   *sql.Stmt
 	Validator                              *validator2.Validate
 	DB                                     *sql.DB
+}
+
+func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {
+	for _, m := range middleware {
+		h = m(h)
+	}
+	return h
+}
+
+func basicAuth(h http.HandlerFunc) http.HandlerFunc {
+	// Taken from https://gist.github.com/elithrar/9146306
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+
+		s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+		if len(s) != 2 {
+			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			return
+		}
+
+		b, err := base64.StdEncoding.DecodeString(s[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		pair := strings.SplitN(string(b), ":", 2)
+		if len(pair) != 2 {
+			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			return
+		}
+
+		if pair[0] != os.Getenv("security_user_name") || pair[1] != os.Getenv("security_user_password") {
+			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	}
+}
+
+// SetUpRoutes balh
+func SetUpRoutes(r *mux.Router, api *API) {
+	r.HandleFunc("/info", api.Info).Methods("GET")
+	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/surveytype/{surveyType}", use(api.SurveysByType, basicAuth)).Methods("GET")
+	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")
+	r.HandleFunc("/surveys", use(api.PostSurveyDetails, basicAuth)).Methods("POST")
+	r.HandleFunc("/surveys/ref/{ref}", use(api.GetSurveyByReference, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors", use(api.AllClassifierTypeSelectors, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}/classifiertypeselectors/{classifierTypeSelectorId}", use(api.GetClassifierTypeSelectorByID, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}/classifiers", use(api.PostSurveyClassifiers, basicAuth)).Methods("POST")
 }
 
 //NewAPI returns an API struct populated with all the created SQL statements
@@ -272,7 +329,11 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	// Generate a UUID to uniquely identify the new survey
 	// TODO replace with Google uuid generator?
-	surveyID := uuid.NewV4()
+	surveyID, err := uuid.NewV4()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating random uuid"), http.StatusInternalServerError)
+		return
+	}
 	// Check whether the survey shortname already exists in the database, returning
 	// an error if it does
 	_, err = api.getSurveyByShortname(survey.ShortName)
@@ -340,7 +401,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to validate survey ref - %v", err), http.StatusInternalServerError)
 		return
 	} else {
-		http.Error(w, fmt.Sprintf("Survey with ID %v already exists", survey.Reference), http.StatusConflict)
+		http.Error(w, fmt.Sprintf("Survey with reference %v already exists", survey.Reference), http.StatusConflict)
 		return
 	}
 }
@@ -361,16 +422,19 @@ func (api *API) insertClassifierTypes(classifierTypes []string, typeSelectorPK i
 // Insert a classifier type selector into the database given survey primary key using transaction tx, return the PK and UUID
 func (api *API) insertClassifierTypeSelector(name string, surveyPK int, tx *sql.Tx) (int, uuid.UUID, error) {
 	txCreateSurveyClassifierTypeSelectorStmt := tx.Stmt(api.CreateSurveyClassifierTypeSelectorStmt)
-	classifierTypeSelectorID := uuid.NewV4()
 	var typeSelectorPK int
-	err := txCreateSurveyClassifierTypeSelectorStmt.
+	classifierTypeSelectorID, err := uuid.NewV4()
+	if err != nil {
+		tx.Rollback()
+		return typeSelectorPK, uuid.Nil, errors.New("Error generating random uuid")
+	}
+	err = txCreateSurveyClassifierTypeSelectorStmt.
 		QueryRow(classifierTypeSelectorID, surveyPK, name).
 		Scan(&typeSelectorPK)
 	if err != nil {
 		rollBack(tx)
 	}
 	return typeSelectorPK, classifierTypeSelectorID, err
-
 }
 
 // Return a boolean true if a classifier type selector exists for the given survey ID and name
@@ -385,6 +449,19 @@ func (api *API) classifierTypeSelectorExists(name string, surveyID string) (bool
 // PostSurveyClassifiers endpoint handler - creates a new survey classifier
 func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	for _, u := range []string{"surveyId"} {
+		val, ok := vars[u]
+		if !ok {
+			http.Error(w, "Missing value for "+u, http.StatusBadRequest)
+			return
+		}
+
+		if _, err := uuid.FromString(val); err != nil {
+			http.Error(w, "The value ("+val+") used for "+u+" is not a valid UUID", http.StatusBadRequest)
+			return
+		}
+	}
+
 	surveyID := vars["surveyId"]
 
 	// Check survey exists and get it's PK
@@ -436,7 +513,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []string) (string, error) {
-
+	logger.Info("Creating classifiers", zap.String("surveyID", surveyID))
 	// Check if classifier type selector already exists
 	classifierTypeSelectorAlreadyExists, err := api.classifierTypeSelectorExists(name, surveyID)
 	if err != nil {
@@ -470,7 +547,7 @@ func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []s
 		tx.Rollback()
 		return "", errors.Wrap(err, "Error committing transaction for posting survey classifier")
 	}
-
+	logger.Info("Finished creating classifiers", zap.String("surveyID", surveyID))
 	return classifierTypeSelectorID.String(), nil
 }
 
@@ -843,6 +920,17 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 // the classifier type selector identified by the string classifierTypeSelectorID.
 func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	for _, u := range []string{"classifierTypeSelectorId", "surveyId"} {
+		val, ok := vars[u]
+		if !ok {
+			http.Error(w, "Missing value for "+u, http.StatusBadRequest)
+		}
+
+		if _, err := uuid.FromString(val); err != nil {
+			http.Error(w, "The value ("+val+") used for "+u+" is not a valid UUID", http.StatusBadRequest)
+			return
+		}
+	}
 	surveyID := vars["surveyId"]
 	classifierTypeSelectorID := vars["classifierTypeSelectorId"]
 
