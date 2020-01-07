@@ -1,5 +1,5 @@
 resources:
-  - name: rm-survey-service
+  - name: survey-git
     type: git
     source:
       uri: https://github.com/ONSdigital/rm-survey-service
@@ -16,7 +16,7 @@ resources:
 jobs:
   - name: build-survey
     plan:
-      - get: rm-survey-service
+      - get: survey-git
         trigger: true
       - task: build
         config:
@@ -26,18 +26,18 @@ jobs:
             source:
               repository: golang
           inputs:
-            - name: rm-survey-service
+            - name: survey-git
           outputs:
-            - name: docker
+            - name: docker-build
           run:
             path: /bin/sh
             args:
               - -exc
               - |
-                cd rm-survey-service
+                cd survey-git
                 make build
-                cp Dockerfile ../docker
-                cp -r build ../docker
-                cp -r db-migrations ../docker
+                cp Dockerfile ../docker-build
+                cp -r build ../docker-build
+                cp -r db-migrations ../docker-build
       - put: survey-docker-image
-        params: {build: docker}
+        params: {build: docker-build}
