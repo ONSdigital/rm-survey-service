@@ -3,12 +3,9 @@ replicaCount: 1
 env: "dev"
 
 image:
-#  name: survey
-#  tag: latest
-#  repository: eu.gcr.io/ons-gcr-rmrasbs
-  name: surveysvc
-  tag: migration-sandbox
-  repository: eu.gcr.io/rm-ras-sandbox
+  name: survey
+  tag: latest
+  repository: eu.gcr.io/ons-gcr-rmrasbs
 
 service:
   port: 8080
