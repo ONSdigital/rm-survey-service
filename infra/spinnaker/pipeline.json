@@ -1,0 +1,108 @@
+{
+  "appConfig": {},
+  "application": "survey",
+  "expectedArtifacts": [
+    {
+      "defaultArtifact": {
+        "artifactAccount": "ras-rm-sandbox",
+        "id": "bd5c937e-9dd0-4ef6-a2a6-d08b3e90aee2",
+        "name": "gs://ras-rm-helm-charts/releases/survey-0.1.0.tgz",
+        "reference": "gs://ras-rm-helm-charts/releases/survey-0.1.0.tgz",
+        "type": "gcs/object"
+      },
+      "displayName": "survey-helm-chart",
+      "id": "d5bbb75e-1c74-4639-852a-5f6db22d5a87",
+      "matchArtifact": {
+        "artifactAccount": "ras-rm-sandbox",
+        "id": "c92c4973-f206-4667-8338-d76a429d8da2",
+        "name": "gs://ras-rm-helm-charts/releases/survey-0.1.0.tgz",
+        "type": "gcs/object"
+      },
+      "useDefaultArtifact": true,
+      "usePriorArtifact": false
+    }
+  ],
+  "id": "28790ed3-859d-4b4a-a0c3-c9e82a17815e",
+  "index": 0,
+  "keepWaitingPipelines": false,
+  "lastModifiedBy": "anonymous",
+  "limitConcurrent": true,
+  "name": "survey",
+  "stages": [
+    {
+      "expectedArtifacts": [
+        {
+          "defaultArtifact": {
+            "customKind": true,
+            "id": "a6bed465-9b8a-4c36-a0a5-703e52caa2fc"
+          },
+          "displayName": "suvery-service",
+          "id": "318b66b1-f2f6-4f0a-9ebb-b6abd0d0abb3",
+          "matchArtifact": {
+            "id": "a5d4909c-b939-4c94-8af4-760041be5d18",
+            "name": "survey-service-chart",
+            "type": "embedded/base64"
+          },
+          "useDefaultArtifact": false,
+          "usePriorArtifact": false
+        }
+      ],
+      "inputArtifacts": [
+        {
+          "account": "ras-rm-sandbox",
+          "id": "d5bbb75e-1c74-4639-852a-5f6db22d5a87"
+        }
+      ],
+      "name": "Bake",
+      "namespace": "wb",
+      "notifications": [
+        {
+          "address": "warren@warrenbailey.net",
+          "level": "stage",
+          "type": "email",
+          "when": [
+            "stage.starting",
+            "stage.complete",
+            "stage.failed"
+          ]
+        }
+      ],
+      "outputName": "rasrm-dev",
+      "overrides": {},
+      "refId": "1",
+      "requisiteStageRefIds": [],
+      "sendNotifications": true,
+      "templateRenderer": "HELM2",
+      "type": "bakeManifest"
+    },
+    {
+      "account": "dev",
+      "cloudProvider": "kubernetes",
+      "manifestArtifactAccount": "embedded-artifact",
+      "manifestArtifactId": "318b66b1-f2f6-4f0a-9ebb-b6abd0d0abb3",
+      "moniker": {
+        "app": "survey"
+      },
+      "name": "Deploy (Manifest)",
+      "namespaceOverride": "wb",
+      "refId": "2",
+      "requiredArtifactIds": [],
+      "requiredArtifacts": [],
+      "requisiteStageRefIds": [
+        "1"
+      ],
+      "skipExpressionEvaluation": false,
+      "source": "artifact",
+      "trafficManagement": {
+        "enabled": false,
+        "options": {
+          "enableTraffic": false,
+          "services": []
+        }
+      },
+      "type": "deployManifest"
+    }
+  ],
+  "triggers": [],
+  "updateTs": "1578922605800"
+}
