@@ -5,7 +5,7 @@ env: "dev"
 image:
   name: survey
   tag: latest
-  repository: eu.gcr.io/ons-gcr-rmrasbs
+  repository: eu.gcr.io/ons-rasrmbs-management
 
 service:
   port: 8080

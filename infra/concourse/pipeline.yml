@@ -15,7 +15,7 @@ resources:
   - name: survey-docker-image
     type: docker-image
     source:
-      repository: eu.gcr.io/ons-gcr-rmrasbs/survey
+      repository: eu.gcr.io/ons-rasrmbs-management/survey
       tag: latest
       username: _json_key
       password: ((gcp.service_account_json))
