@@ -8,7 +8,9 @@
     "type": "front50/pipelineTemplate"
   },
   "variables": {
-    "waitTime": 4
+    "name": "survey",
+    "defaultHelmChart": "survey-0.1.0.tgz",
+    "helmChartMatcher": "survey-.*\\.tgz"
   },
   "exclude": [],
   "triggers": [],

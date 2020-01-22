@@ -23,8 +23,8 @@ resources:
   - name: gcs-bucket
     type: google-cloud-storage
     source:
-      bucket: ras-rm-helm-charts
-      regexp: releases/(.*).tgz
+      bucket: ras-rm-artifacts
+      regexp: survey/(.*).tgz
       json_key: ((gcp.service_account_json))
 
 jobs:
