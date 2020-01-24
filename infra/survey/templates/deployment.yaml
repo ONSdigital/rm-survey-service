@@ -20,6 +20,8 @@ spec:
       labels:
         app: {{ .Chart.Name }}
     spec:
+      imagePullSecrets:
+        - name: gcrsecret
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
