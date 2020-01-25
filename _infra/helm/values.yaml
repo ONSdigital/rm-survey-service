@@ -1,12 +1,6 @@
 replicaCount: 1
 
 env: "dev"
-version: "1.2"
-
-image:
-  name: surveysvc
-  tag: migration-sandbox
-  repository: eu.gcr.io/rm-ras-sandbox
 
 service:
   port: 8080
