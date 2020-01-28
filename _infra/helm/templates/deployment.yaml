@@ -87,9 +87,4 @@ spec:
           - name: DATABASE_URL
             value: "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
           resources:
-            limits:
-              cpu: 1000m
-              memory: 512Mi
-            requests:
-              cpu: 500m
-              memory: 256Mi
+            {{ toYaml .Values.resources | nindent 12 }}
