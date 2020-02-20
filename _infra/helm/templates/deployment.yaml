@@ -3,31 +3,35 @@ kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   strategy:
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
+      maxSurge: {{ .Values.maxSurge }}
+      maxUnavailable: {{ .Values.maxUnavailable }}
     type: RollingUpdate
   selector:
     matchLabels:
       app: {{ .Chart.Name }}
+      env: {{ .Values.env }}
   template:
     metadata:
       labels:
         app: {{ .Chart.Name }}
+        appVersion: {{ .Chart.AppVersion }}
+        helmVersion: {{ .Chart.Version }}
+        env: {{ .Values.env }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
           image: "eu.gcr.io/ons-rasrmbs-management/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http-server
-              containerPort: 8080
+              containerPort: {{ .Values.containerPort }}
           readinessProbe:
             httpGet:
               path: /info
-              port: 8080
+              port: {{ .Values.containerPort }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
@@ -36,35 +40,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /info
-              port: 8080
+              port: {{ .Values.containerPort }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
             successThreshold: 1
             timeoutSeconds: 5
           env:
-          - name: DB_HOST
-            value: $(POSTGRES_SERVICE_HOST)
-          - name: DB_PORT
-            valueFrom:
-              secretKeyRef:
-                name: db-config
-                key: db-port
-          - name: DB_NAME
-            valueFrom:
-              secretKeyRef:
-                name: db-config
-                key: db-name
-          - name: DB_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: db-credentials
-                key: username
-          - name: DB_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: db-credentials
-                key: password
+          {{- .Values.databaseConfig | nindent 10 -}}
           - name: security_user_name
             valueFrom:
               secretKeyRef:
