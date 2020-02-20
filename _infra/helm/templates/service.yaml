@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: {{ .Chart.Name }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
-  - port: 8080
+  - port: {{ .Values.service.port }}
     protocol: TCP
   selector:
     app: {{ .Chart.Name }}
