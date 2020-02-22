@@ -18,9 +18,9 @@ database:
     nameKey: db-name
 
 container:
-  port: 80
+  port: 8080
 service:
-  port: 80
+  port: 8080
 
 resources:
   requests:
