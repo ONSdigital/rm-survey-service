@@ -9,34 +9,16 @@ image:
   name: eu.gcr.io/ons-rasrmbs-management
   pullPolicy: Always
 
-databaseConfig: |
-  - name: DB_HOST
-    value: $(POSTGRES_SERVICE_HOST)
-  - name: DB_PORT
-    valueFrom:
-      secretKeyRef:
-        name: db-config
-        key: db-port
-  - name: DB_NAME
-    valueFrom:
-      secretKeyRef:
-        name: db-config
-        key: db-name
-  - name: DB_USERNAME
-    valueFrom:
-      secretKeyRef:
-        name: db-credentials
-        key: username
-  - name: DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: db-credentials
-        key: password
+database:
+  managedPostgres: false
+  secrets:
+    usernameKey: username
+    passwordKey: password
+    nameKey: db-name
 
-service:
-  port: 80
-  type: ClusterIP
 container:
+  port: 80
+service:
   port: 80
 
 resources:
