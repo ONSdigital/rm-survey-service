@@ -1,4 +1,5 @@
 env: minikube
+namespace: minikube
 
 replicas: 1
 rollingUpdate:
