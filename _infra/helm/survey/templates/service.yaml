@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ .Chart.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
   - port: {{ .Values.service.port }}
     protocol: TCP

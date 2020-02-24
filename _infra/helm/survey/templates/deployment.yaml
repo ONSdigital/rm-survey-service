@@ -6,8 +6,8 @@ spec:
   replicas: {{ .Values.replicas }}
   strategy:
     rollingUpdate:
-      maxSurge: {{ .Values.maxSurge }}
-      maxUnavailable: {{ .Values.maxUnavailable }}
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
     type: RollingUpdate
   selector:
     matchLabels:
@@ -23,15 +23,15 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "eu.gcr.io/ons-rasrmbs-management/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
-          imagePullPolicy: Always
+          image: "{{ .Values.image.name }}/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http-server
-              containerPort: {{ .Values.containerPort }}
+              containerPort: {{ .Values.container.port }}
           readinessProbe:
             httpGet:
               path: /info
-              port: {{ .Values.containerPort }}
+              port: {{ .Values.container.port }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
@@ -40,14 +40,42 @@ spec:
           livenessProbe:
             httpGet:
               path: /info
-              port: {{ .Values.containerPort }}
+              port: {{ .Values.container.port }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
             successThreshold: 1
             timeoutSeconds: 5
           env:
-          {{- .Values.databaseConfig | nindent 10 -}}
+          - name: DB_HOST
+            {{- if .Values.database.managedPostgres }}
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-host
+            {{- else }}
+            value: $(POSTGRES_SERVICE_HOST)
+            {{- end }}
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-port
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: {{ .Values.database.secrets.nameKey }}
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: {{ .Values.database.secrets.usernameKey }}
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: {{ .Values.database.secrets.passwordKey }}
           - name: security_user_name
             valueFrom:
               secretKeyRef:

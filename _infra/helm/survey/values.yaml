@@ -1,0 +1,27 @@
+env: minikube
+namespace: minikube
+
+replicas: 1
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 1
+
+image:
+  name: eu.gcr.io/ons-rasrmbs-management
+  pullPolicy: Always
+
+database:
+  managedPostgres: false
+  secrets:
+    usernameKey: username
+    passwordKey: password
+    nameKey: db-name
+
+container:
+  port: 8080
+service:
+  port: 8080
+
+resources:
+  requests:
+    memory: "128Mi"
