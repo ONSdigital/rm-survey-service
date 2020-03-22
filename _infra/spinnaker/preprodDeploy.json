@@ -1,0 +1,21 @@
+{
+  "schema": "v2",
+  "application": "survey",
+  "name": "deploy preprod",
+  "template": {
+    "artifactAccount": "front50ArtifactCredentials",
+    "reference": "spinnaker://individualDeploymentTemplate",
+    "type": "front50/pipelineTemplate"
+  },
+  "variables": {
+    "namespace": "preprod",
+    "environment": "preprod",
+    "service": "survey"
+  },
+  "exclude": [],
+  "triggers": [],
+  "parameters": [],
+  "notifications": [],
+  "description": "",
+  "stages": []
+}

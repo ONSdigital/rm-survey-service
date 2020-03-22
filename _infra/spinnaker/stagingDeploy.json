@@ -1,0 +1,21 @@
+{
+  "schema": "v2",
+  "application": "survey",
+  "name": "deploy staging",
+  "template": {
+    "artifactAccount": "front50ArtifactCredentials",
+    "reference": "spinnaker://individualDeploymentTemplate",
+    "type": "front50/pipelineTemplate"
+  },
+  "variables": {
+    "namespace": "staging",
+    "environment": "sandbox",
+    "service": "survey"
+  },
+  "exclude": [],
+  "triggers": [],
+  "parameters": [],
+  "notifications": [],
+  "description": "",
+  "stages": []
+}
