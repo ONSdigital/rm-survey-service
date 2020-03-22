@@ -9,7 +9,7 @@
   },
   "variables": {
     "namespace": "staging",
-    "environment": "sandbox",
+    "environment": "dev",
     "service": "survey"
   },
   "exclude": [],
