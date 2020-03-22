@@ -1,16 +1,16 @@
 {
   "schema": "v2",
   "application": "survey",
-  "name": "survey",
+  "name": "deploy dev",
   "template": {
     "artifactAccount": "front50ArtifactCredentials",
-    "reference": "spinnaker://rasrmApplicationTemplate",
+    "reference": "spinnaker://individualDeploymentTemplate",
     "type": "front50/pipelineTemplate"
   },
   "variables": {
-    "name": "survey",
-    "defaultHelmChart": "survey-0.1.0.tgz",
-    "helmChartMatcher": "survey-.*\\.tgz"
+    "namespace": "dev",
+    "environment": "sandbox",
+    "service": "survey"
   },
   "exclude": [],
   "triggers": [],
