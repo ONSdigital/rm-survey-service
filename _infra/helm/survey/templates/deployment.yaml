@@ -128,16 +128,6 @@ spec:
               secretKeyRef:
                 name: security-credentials
                 key: security-password
-          - name: ZIPKIN_HOST
-            value: "$(ZIPKIN_SERVICE_HOST)"
-          - name: ZIPKIN_PORT
-            value: "$(ZIPKIN_SERVICE_PORT)"
-          - name: ZIPKIN_DSN
-            value: "http://$(ZIPKIN_SERVICE_HOST):$(ZIPKIN_SERVICE_PORT)/api/v1/spans"
-          - name: ZIPKIN_DISABLE
-            value: "false"
-          - name: ZIPKIN_SAMPLE_RATE
-            value: "1.0"
           - name: DATABASE_URL
             value: "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
           resources:
