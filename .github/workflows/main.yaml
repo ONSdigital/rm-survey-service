@@ -46,10 +46,12 @@ jobs:
         docker push "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":latest
 
     - name: Helm Image pull
+      if: github.ref == 'refs/heads/master'
       run: |
         docker pull gcr.io/${{ secrets.GOOGLE_PROJECT_ID }}/helm:latest
 
     - name: Package Helm
+      if: github.ref == 'refs/heads/master'
       run: |
         helm dep up _infra/helm/sample
         helm package _infra/helm/sample
@@ -65,4 +67,4 @@ jobs:
     - name: Publish Charts
       if: github.ref == 'refs/heads/master'
       run: |
-        gsutil cp action-*.tgz gs://ras-rm-artifacts/act/
+        gsutil cp action-*.tgz gs://ras-rm-artifacts/survey/
