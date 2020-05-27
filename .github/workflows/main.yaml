@@ -47,7 +47,7 @@ jobs:
 
     - name: Helm Image pull
       run: |
-        docker pull gcr.io/ons-rasrmbs-management/helm:latest
+        docker pull gcr.io/${{ secrets.GOOGLE_PROJECT_ID }}/helm:latest
 
     - name: Package Helm
       run: |
