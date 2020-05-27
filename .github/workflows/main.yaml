@@ -67,4 +67,4 @@ jobs:
     - name: Publish Charts
       if: github.ref == 'refs/heads/master'
       run: |
-        gsutil cp action-*.tgz gs://ras-rm-artifacts/survey/
+        gsutil cp survey-*.tgz gs://ras-rm-artifacts/act/
