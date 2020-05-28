@@ -111,7 +111,7 @@ jobs:
     - name: Build Release Image
       if: github.ref == 'refs/heads/master'
       run: |
-        docker build -f _infra/docker/Dockerfile -t "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":${{ steps.release.outputs.version }} .
+        docker build -t "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":${{ steps.release.outputs.version }} .
     - name: Push Release image
       if: github.ref == 'refs/heads/master'
       run: |
