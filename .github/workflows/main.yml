@@ -12,6 +12,8 @@ env:
   HOST: ${{ secrets.GOOGLE_PROJECT_ID }}
   RELEASE_HOST: ${{ secrets.RELEASE_PROJECT_ID }}
   CHART_DIRECTORY: _infra/helm/survey
+  SPINNAKER_TOPIC: ${{ secrets.SPINNAKER_TOPIC }}
+  ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
 
 jobs:
   build:
@@ -54,7 +56,26 @@ jobs:
 
     - name: template helm
       run: |
-        helm template _infra/helm/survey
+       helm template $CHART_DIRECTORY
+    
+    - name: package helm
+      run: |
+        echo ::set-env name=HELM_VERSION::$(grep -E "version:\s+" $CHART_DIRECTORY/Chart.yaml | cut -d" " -f2 | sed -r 's/"//g')
+        helm dep up $CHART_DIRECTORY
+        helm package $CHART_DIRECTORY
+
+    - name: Publish dev Chart
+      if: github.ref != 'refs/heads/master'
+      run: |
+        mv $IMAGE-${{ env.HELM_VERSION }}.tgz $IMAGE-latest.tgz
+        gsutil cp $IMAGE-*.tgz gs://$ARTIFACT_BUCKET/$IMAGE/
+    
+    - name: CI hook
+      if: github.ref != 'refs/heads/master'
+      run: |
+        gcloud pubsub topics publish $SPINNAKER_TOPIC --project $HOST \
+        --message "{ \"kind\": \"storage#object\", \"name\": \"$IMAGE/$IMAGE-latest.tgz\", \"bucket\": \"$ARTIFACT_BUCKET\", \"parameters\": { \"tag\": \"${{ steps.release.outputs.pr_number }}\", \"actor\": \"$GITHUB_ACTOR\" } }" \
+        --attribute ci="actions"
 
     - name: Set current tag
       if: github.ref != 'refs/heads/master'
@@ -141,3 +162,10 @@ jobs:
           ${{ steps.release.outputs.version }}
         draft: false
         prerelease: false
+
+    - name: CD hook
+      if: github.ref == 'refs/heads/master'
+      run: |
+        gcloud pubsub topics publish $SPINNAKER_TOPIC --project $HOST \
+        --message "{ \"kind\": \"storage#object\", \"name\": \"$IMAGE/$IMAGE-${{ env.HELM_VERSION }}.tgz\", \"bucket\": \"$ARTIFACT_BUCKET\" }" \
+        --attribute ci="actions"
