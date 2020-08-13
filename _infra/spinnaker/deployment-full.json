@@ -9,7 +9,7 @@
   },
   "variables": {
     "service": "survey",
-    "defaultVersion": "1.0.0",
+    "defaultVersion": "1.1.1",
     "devDeploymentCluster": "dev",
     "devDeploymentNamespace": "dev"
   },
