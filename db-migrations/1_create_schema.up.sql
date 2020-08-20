@@ -12,7 +12,7 @@ ALTER SEQUENCE survey.classifiertype_classifiertypepk_seq RESTART WITH 1000;
 ALTER SEQUENCE survey.classifiertypeselector_classifiertypeselectorpk_seq RESTART WITH 1000;
 
 -- Create tables
-CREATE TABLE survey.survey (surveypk serial NOT NULL, id uuid NOT NULL, shortname character varying(20) NOT NULL, longname character varying(100) NOT NULL, surveyref character varying(20) NOT NULL, legalbasis character varying(400) NOT NULL);
+CREATE TABLE survey.survey (surveypk serial NOT NULL, id uuid NOT NULL, shortname character varying(20) NOT NULL, longname character varying(100) NOT NULL, surveyref character varying(20) NOT NULL, legalbasis character varying(400) NOT NULL, surveymode character varying(4) NOT NULL);
 ALTER TABLE survey.survey ADD CONSTRAINT survey_pkey PRIMARY KEY (surveypk);
 ALTER TABLE survey.survey ADD CONSTRAINT survey_id_key UNIQUE (id);
 CREATE TABLE survey.classifiertypeselector (classifiertypeselectorpk serial NOT NULL, id uuid NOT NULL, surveyfk integer NOT NULL, classifiertypeselector character varying(50) NOT NULL);
