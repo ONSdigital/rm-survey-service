@@ -1,0 +1,1 @@
+ALTER TABLE survey.survey DROP COLUMN surveymode;
