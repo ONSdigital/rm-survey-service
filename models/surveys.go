@@ -188,7 +188,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6) RETURNING surveypk", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7) RETURNING surveypk", db)
 	if err != nil {
 		return nil, err
 	}
@@ -360,6 +360,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 			survey.LongName,
 			legalBasis.Reference,
 			survey.SurveyType,
+			survey.SurveyMode,
 		).Scan(&surveyPK)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)

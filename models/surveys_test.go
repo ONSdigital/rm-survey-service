@@ -24,6 +24,7 @@ const reference = "test-reference"
 const surveyType = "Business"
 const surveyID = "67602ba2-8af6-4298-af66-4e46a62f32c8"
 const classifierID = "c0482274-9e96-4001-8797-4b487454c187"
+const surveyMode = "test-surveymode"
 
 var httpClient = &http.Client{}
 
@@ -51,8 +52,8 @@ func TestSurveyListReturnsJson(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -91,7 +92,7 @@ func TestSurveyListInternalServerError(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, surveytype, legalbasis FROM survey.survey").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, surveytype, legalbasis, surveymode FROM survey.survey").ExpectQuery().WillReturnError(fmt.Errorf("Testing internal server error"))
 		db.Begin()
 		defer db.Close()
 
@@ -126,8 +127,8 @@ func TestSurveyListNotFound(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"})
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"})
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 		// When
@@ -158,8 +159,8 @@ func TestSurveyListBySurveyTypeReturnsJson(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow("testid", shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow("testid", shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -198,8 +199,8 @@ func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s,surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -238,8 +239,8 @@ func TestSurveyListBySurveyTypeReturnsErrorForUnknownType(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow("testid", shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow("testid", shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -274,8 +275,8 @@ func TestSurveyGetReturnsJson(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveymode", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -300,7 +301,7 @@ func TestSurveyGetReturnsJson(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
-		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType}
+		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType, SurveyMode: surveyMode}
 		res := models.Survey{}
 		body, err := ioutil.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
@@ -309,6 +310,7 @@ func TestSurveyGetReturnsJson(t *testing.T) {
 		So(res.LongName, ShouldEqual, expected.LongName)
 		So(res.Reference, ShouldEqual, expected.Reference)
 		So(res.SurveyType, ShouldEqual, expected.SurveyType)
+		So(res.SurveyMode, ShouldEqual, expected.SurveyMode)
 	})
 }
 
@@ -317,8 +319,8 @@ func TestSurveyGetNotFound(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"})
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"})
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -353,7 +355,7 @@ func TestSurveyGetInternalServerError(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveytype from survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveymode, surveytype from survey.survey WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
 		db.Begin()
 		defer db.Close()
 
@@ -388,8 +390,8 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -414,7 +416,7 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
-		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: "test-surveytype"}
+		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: "test-surveytype", SurveyMode: surveyMode}
 		res := models.Survey{}
 		body, err := ioutil.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
@@ -423,6 +425,7 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		So(res.LongName, ShouldEqual, expected.LongName)
 		So(res.Reference, ShouldEqual, expected.Reference)
 		So(res.SurveyType, ShouldEqual, expected.SurveyType)
+		So(res.SurveyMode, ShouldEqual, expected.SurveyMode)
 	})
 }
 
@@ -431,8 +434,8 @@ func TestSurveyGetByShortNameNotFound(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"})
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"})
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -467,7 +470,7 @@ func TestSurveyGetByShortNameInternalServerError(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveymode from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
 		db.Begin()
 		defer db.Close()
 		api, err := models.NewAPI(db)
@@ -486,8 +489,8 @@ func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytyp", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytyp", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -513,7 +516,7 @@ func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 		resp, err := c.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
-		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType}
+		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType, SurveyMode: surveyMode}
 		res := models.Survey{}
 		body, err := ioutil.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
@@ -522,6 +525,7 @@ func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 		So(res.LongName, ShouldEqual, expected.LongName)
 		So(res.Reference, ShouldEqual, expected.Reference)
 		So(res.SurveyType, ShouldEqual, expected.SurveyType)
+		So(res.SurveyMode, ShouldEqual, expected.SurveyMode)
 	})
 }
 
@@ -530,8 +534,8 @@ func TestSurveyGetByReferenceNotFound(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "longname"})
-		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"})
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 		// When
@@ -564,7 +568,7 @@ func TestSurveyGetByReferenceInternalServerError(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis from survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
+		mock.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveymodefrom survey.survey").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("Testing internal server error"))
 		db.Begin()
 		defer db.Close()
 		api, err := models.NewAPI(db)
@@ -1084,7 +1088,7 @@ func TestCreateNewSurvey(t *testing.T) {
 
 		mock.ExpectRollback()
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs("99").WillReturnRows(rows)
-		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype \\) VALUES \\( .+\\) RETURNING surveypk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social").WillReturnRows(newSurveyPK)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode \\) VALUES \\( .+\\) RETURNING surveypk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "test-surveymode").WillReturnRows(newSurveyPK)
 		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs("Statistics of Trade Act 1947").WillReturnRows(legalBasis)
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE shortname = .+").ExpectQuery().WithArgs("test-short-name").WillReturnRows(rows)
 
@@ -1120,7 +1124,7 @@ func TestCreateNewSurvey(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1159,7 +1163,7 @@ func TestCreateNewSurveyInvalidSurveyType(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Invalid"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Invalid", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1200,7 +1204,7 @@ func TestCreateNewSurveySurveyTypeDoesNotExist(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1239,7 +1243,7 @@ func TestCreateNewSurveyNonExistentLegalBasisRef(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"Statistics of Trade Act 1947", "SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"Statistics of Trade Act 1947", "SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1280,7 +1284,7 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1293,6 +1297,47 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
 	})
 }
+
+//func TestCreateNewSurveyNonExistentSurveyModeName(t *testing.T) {
+//	Convey("Create new survey with non existent legal basis ref", t, func() {
+//		db, mock, err := sqlmock.New()
+//		So(err, ShouldBeNil)
+//		rows := sqlmock.NewRows([]string{"surveyref"})
+//		legalBasis := sqlmock.NewRows([]string{"ref", "longname"})
+//		prepareMockStmts(mock)
+//		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+//		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+//		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
+//		db.Begin()
+//		defer db.Close()
+//
+//		// When
+//		api, err := models.NewAPI(db)
+//		So(err, ShouldBeNil)
+//		defer api.Close()
+//
+//		// Create a new router and plug in the defined routes
+//		router := mux.NewRouter()
+//		models.SetUpRoutes(router, api)
+//
+//		ts := httptest.NewServer(router)
+//		defer ts.Close()
+//		url := ts.URL + "/surveys"
+//		// User and password not set so base64encode the dividing character
+//		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+//		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+//
+//		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+//		r.Header.Set("Authorization", "Basic: "+basicAuth)
+//		r.Header.Set("Content-Type", "application/json")
+//
+//		resp, err := httpClient.Do(r)
+//
+//		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
+//		body, err := ioutil.ReadAll(resp.Body)
+//		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
+//	})
+//}
 
 func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 	Convey("Create new survey with non existent legal basis ref", t, func() {
@@ -1320,7 +1365,7 @@ func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"STA1947", "SurveyType":"Business"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1408,7 +1453,7 @@ func TestCreateNewSurveyRefTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"012345678901234567890","LegalBasisRef":"STA1947","SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"012345678901234567890","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1449,7 +1494,7 @@ func TestCreateNewSurveyShortNameWithSpace(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test short name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test short name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social","SurveyMode":"test-surveymode"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1490,7 +1535,7 @@ func TestCreateNewSurveyShortNameTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name-0123456", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947", "SurveyType":"Business"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name-0123456", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1530,7 +1575,7 @@ func TestCreateNewSurveyLongNameTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name-012345678-012345678-012345678-012345678-012345678-012345678-012345678-01234567899999999-0123456789","SurveyRef":"123","LegalBasisRef":"STA1947", "SurveyType":"Business"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name-012345678-012345678-012345678-012345678-012345678-012345678-012345678-01234567899999999-0123456789","SurveyRef":"123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1572,7 +1617,7 @@ func TestCreateNewSurveyDupilcateSurveyRef(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1614,7 +1659,7 @@ func TestCreateNewSurveyDupilcateShortName(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -2117,22 +2162,22 @@ func TestCreateNewSurveyClassifiers500Error(t *testing.T) {
 func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectBegin()
 	m.MatchExpectationsInOrder(false)
-	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC")
-	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?")
-	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(shortName\\) = LOWER\\(.+\\)")
-	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)")
-	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref")
+	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC")
+	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?")
+	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(shortName\\) = LOWER\\(.+\\)")
+	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)")
+	m.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref")
 
 	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+")
 	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE ref = .+")
 
-	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveytype from survey.survey")
+	m.ExpectPrepare("SELECT id, shortname, longname, surveyref, legalbasis, surveytype, surveymode from survey.survey")
 	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("UPDATE survey.survey SET shortname = .*, longname = .* WHERE LOWER\\(surveyref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk .*")
-	m.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype \\) VALUES \\( .+\\)")
+	m.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode \\) VALUES \\( .+\\)")
 	m.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis")
 	m.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE shortname = .+")
 	m.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifiertypeselectorpk, id, surveyfk, classifiertypeselector \\) VALUES \\( .+\\) RETURNING classifiertypeselectorpk as id")
