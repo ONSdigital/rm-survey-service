@@ -232,6 +232,82 @@ func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
 	})
 }
 
+func TestSurveyListBySurveyModeEQ(t *testing.T) {
+	Convey("Testing to see if survey mode returns what is 'eQ'", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, "eQ", legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s,surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/surveytype/Business"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("GET", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+		resp, err := httpClient.Do(r)
+		fmt.Print("\nresp: ", resp)
+		So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		expected := []models.Survey{{SurveyMode: "eQ"}}
+		res := []models.Survey{}
+		body, err := ioutil.ReadAll(resp.Body)
+		json.Unmarshal(body, &res)
+		So(res[0].SurveyMode, ShouldEqual, expected[0].SurveyMode)
+	})
+}
+
+func TestSurveyListBySurveyModeSEFT(t *testing.T) {
+	Convey("Testing to see if survey mode returns what is 'SEFT'", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s,surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType =").ExpectQuery().WillReturnRows(rows)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/surveytype/Business"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("GET", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+		resp, err := httpClient.Do(r)
+		fmt.Print("\nresp: ", resp)
+		So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		expected := []models.Survey{{SurveyMode: "SEFT"}}
+		res := []models.Survey{}
+		body, err := ioutil.ReadAll(resp.Body)
+		json.Unmarshal(body, &res)
+		So(res[0].SurveyMode, ShouldEqual, expected[0].SurveyMode)
+	})
+}
+
 func TestSurveyListBySurveyTypeReturnsErrorForUnknownType(t *testing.T) {
 	Convey("Surveys list restricted by survey type returns an array of surveys", t, func() {
 		db, mock, err := sqlmock.New()
