@@ -24,7 +24,7 @@ const reference = "test-reference"
 const surveyType = "Business"
 const surveyID = "67602ba2-8af6-4298-af66-4e46a62f32c8"
 const classifierID = "c0482274-9e96-4001-8797-4b487454c187"
-const surveyMode = "test-surveymode"
+const surveyMode = "SEFT"
 
 var httpClient = &http.Client{}
 
@@ -221,9 +221,7 @@ func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
 		r, err := http.NewRequest("GET", url, nil)
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
-
 		resp, err := httpClient.Do(r)
-
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{ID: surveyID, SurveyType: surveyType}}
 		res := []models.Survey{}
@@ -1088,7 +1086,7 @@ func TestCreateNewSurvey(t *testing.T) {
 
 		mock.ExpectRollback()
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs("99").WillReturnRows(rows)
-		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode \\) VALUES \\( .+\\) RETURNING surveypk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "test-surveymode").WillReturnRows(newSurveyPK)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode \\) VALUES \\( .+\\) RETURNING surveypk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "SEFT").WillReturnRows(newSurveyPK)
 		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs("Statistics of Trade Act 1947").WillReturnRows(legalBasis)
 		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE shortname = .+").ExpectQuery().WithArgs("test-short-name").WillReturnRows(rows)
 
@@ -1124,7 +1122,7 @@ func TestCreateNewSurvey(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1163,7 +1161,7 @@ func TestCreateNewSurveyInvalidSurveyType(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Invalid", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Invalid", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1204,7 +1202,7 @@ func TestCreateNewSurveySurveyTypeDoesNotExist(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1243,7 +1241,7 @@ func TestCreateNewSurveyNonExistentLegalBasisRef(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"Statistics of Trade Act 1947", "SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"Statistics of Trade Act 1947", "SurveyType":"Social", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1284,7 +1282,7 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1325,7 +1323,7 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 //		url := ts.URL + "/surveys"
 //		// User and password not set so base64encode the dividing character
 //		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-//		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+//		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
 //
 //		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 //		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1365,7 +1363,7 @@ func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1453,7 +1451,7 @@ func TestCreateNewSurveyRefTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"012345678901234567890","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"012345678901234567890","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1494,7 +1492,7 @@ func TestCreateNewSurveyShortNameWithSpace(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test short name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social","SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test short name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social","SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -1535,7 +1533,7 @@ func TestCreateNewSurveyShortNameTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name-0123456", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name-0123456", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1575,7 +1573,7 @@ func TestCreateNewSurveyLongNameTooLong(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name-012345678-012345678-012345678-012345678-012345678-012345678-012345678-01234567899999999-0123456789","SurveyRef":"123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name-012345678-012345678-012345678-012345678-012345678-012345678-012345678-01234567899999999-0123456789","SurveyRef":"123","LegalBasisRef":"STA1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1617,7 +1615,7 @@ func TestCreateNewSurveyDupilcateSurveyRef(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"SEFT"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1659,7 +1657,7 @@ func TestCreateNewSurveyDupilcateShortName(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"test-surveymode"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"0123","LegalBasisRef":"STA1947","SurveyType":"Social", "SurveyMode":"SEFT"}`)
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")

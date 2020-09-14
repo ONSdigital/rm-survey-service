@@ -8,7 +8,7 @@ This page documents the Survey service API endpoints. Apart from the Service Inf
 ```json
 {
   "name": "surveysvc",
-  "version": "10.42.0",
+  "version": "10.42.1",
   "origin": "git@github.com:ONSdigital/rm-survey-service.git",
   "commit": "c81fc1dc2155aed0fc201f2273333d3af75e10e0",
   "branch": "master",
@@ -26,7 +26,8 @@ This page documents the Survey service API endpoints. Apart from the Service Inf
   "shortName": "BRES",
    "longName": "Business Register and Employment Survey",
    "surveyRef": "221",
-   "legalBasis": "Statistics of Trade Act 1947"
+   "legalBasis": "Statistics of Trade Act 1947",
+   "surveyMode": "SEFT"
 }]
 ```
 
@@ -42,7 +43,8 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
   "shortName": "BRES",
    "longName": "Business Register and Employment Survey",
    "surveyRef": "221",
-   "legalBasis": "Statistics of Trade Act 1947"
+   "legalBasis": "Statistics of Trade Act 1947",
+   "surveyMode": "SEFT"
 }]
 ```
 
@@ -56,9 +58,10 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
 {
   "id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
   "shortName": "BRES",
-  "longName": "Business Register and Employment Survey",
-  "surveyRef": "221",
-  "legalBasis": "Statistics of Trade Act 1947"
+   "longName": "Business Register and Employment Survey",
+   "surveyRef": "221",
+   "legalBasis": "Statistics of Trade Act 1947",
+   "surveyMode": "SEFT"
 }
 ```
 
@@ -74,7 +77,8 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
   "shortName": "BRES",
   "longName": "Business Register and Employment Survey",
   "surveyRef": "221",
-  "legalBasis": "Statistics of Trade Act 1947"
+  "legalBasis": "Statistics of Trade Act 1947",
+  "surveyMode": "SEFT"
 }
 ```
 
@@ -90,7 +94,8 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
   "shortName": "BRES",
   "longName": "Business Register and Employment Survey",
   "surveyRef": "221",
-  "legalBasis": "Statistics of Trade Act 1947"
+  "legalBasis": "Statistics of Trade Act 1947",
+  "surveyMode": "SEFT"
 }
 ```
 
@@ -167,6 +172,7 @@ The payload should be a JSON document, with an `id`, a `shortName`, a `longName`
     "surveyRef": "456",
     "legalBasis": "Statistics of Trade Act 1947",
     "surveyType": "Social",
+    "surveyMode": "SEFT",
     "legalBasisRef": "STA1947",
     "classifiers": [
       "LEGAL_BASIS"
@@ -190,6 +196,7 @@ The payload should be a JSON document, with an `id`, a `shortName`, a `longName`
     "surveyRef": "456",
     "legalBasis": "Statistics of Trade Act 1947",
     "surveyType": "Social",
+    "surveyMode": "SEFT",
     "legalBasisRef": "STA1947",
     "classifiers": [
       "LEGAL_BASIS"

@@ -1,1 +1,1 @@
-ALTER TABLE survey.survey DROP COLUMN surveymode;
+DROP TYPE survey.surveymode CASCADE;
