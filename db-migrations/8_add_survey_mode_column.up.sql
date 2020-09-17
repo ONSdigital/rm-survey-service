@@ -1,7 +1,7 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'surveymode') THEN
-        create type survey.surveymode AS ENUM ('eQ', 'SEFT');
+        create type survey.surveymode AS ENUM ('EQ', 'SEFT');
     END IF;
 END
 $$;
