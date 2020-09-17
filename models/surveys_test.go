@@ -260,7 +260,6 @@ func TestSurveyListBySurveyModeEQ(t *testing.T) {
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
 		resp, err := httpClient.Do(r)
-		fmt.Print("\nresp: ", resp)
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{SurveyMode: "eQ"}}
 		res := []models.Survey{}
@@ -297,8 +296,9 @@ func TestSurveyListBySurveyModeSEFT(t *testing.T) {
 		r, err := http.NewRequest("GET", url, nil)
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
+
 		resp, err := httpClient.Do(r)
-		fmt.Print("\nresp: ", resp)
+
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{SurveyMode: "SEFT"}}
 		res := []models.Survey{}
@@ -349,7 +349,7 @@ func TestSurveyGetReturnsJson(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveymode", "surveytype", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, legalBasisLongName)
+		rows := sqlmock.NewRows([]string{"id", "shortname", "longname", "surveyref", "legalbasis", "surveytype", "surveymode", "longname"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
 		mock.ExpectPrepare("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = ?").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()

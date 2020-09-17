@@ -45,8 +45,8 @@ type Survey struct {
 	Reference     string                   `json:"surveyRef" validate:"required,max=20"`
 	LegalBasis    string                   `json:"legalBasis"`
 	SurveyType    string                   `json:"surveyType"`
-	LegalBasisRef string                   `json:"legalBasisRef"`
 	SurveyMode    string                   `json:"surveyMode"`
+	LegalBasisRef string                   `json:"legalBasisRef"`
 	Classifiers   []ClassifierTypeSelector `json:"classifiers,omitempty"`
 }
 
@@ -394,6 +394,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 			zap.String("survey_id", survey.ID),
 			zap.String("survey_name", survey.LongName),
 			zap.String("survey_type", survey.SurveyType),
+			zap.String("survey_mode", survey.SurveyMode),
 			zap.String("created", time.Now().UTC().Format(timeFormat)))
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
