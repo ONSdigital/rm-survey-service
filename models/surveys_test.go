@@ -1372,46 +1372,46 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 	})
 }
 
-//func TestCreateNewSurveyNonExistentSurveyModeName(t *testing.T) {
-//	Convey("Create new survey with non existent legal basis ref", t, func() {
-//		db, mock, err := sqlmock.New()
-//		So(err, ShouldBeNil)
-//		rows := sqlmock.NewRows([]string{"surveyref"})
-//		legalBasis := sqlmock.NewRows([]string{"ref", "longname"})
-//		prepareMockStmts(mock)
-//		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
-//		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
-//		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
-//		db.Begin()
-//		defer db.Close()
-//
-//		// When
-//		api, err := models.NewAPI(db)
-//		So(err, ShouldBeNil)
-//		defer api.Close()
-//
-//		// Create a new router and plug in the defined routes
-//		router := mux.NewRouter()
-//		models.SetUpRoutes(router, api)
-//
-//		ts := httptest.NewServer(router)
-//		defer ts.Close()
-//		url := ts.URL + "/surveys"
-//		// User and password not set so base64encode the dividing character
-//		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-//		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
-//
-//		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-//		r.Header.Set("Authorization", "Basic: "+basicAuth)
-//		r.Header.Set("Content-Type", "application/json")
-//
-//		resp, err := httpClient.Do(r)
-//
-//		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-//		body, err := ioutil.ReadAll(resp.Body)
-//		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
-//	})
-//}
+func TestCreateNewSurveyNonExistentSurveyModeName(t *testing.T) {
+	Convey("Create new survey with non existent legal basis ref", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		rows := sqlmock.NewRows([]string{"surveyref"})
+		legalBasis := sqlmock.NewRows([]string{"ref", "longname"})
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT surveyref FROM survey.survey WHERE LOWER\\(surveyref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( surveypk, id, surveyref, shortname, longname, surveymode, legalbasis \\) VALUES \\( .+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("SELECT ref, longname FROM survey.legalbasis WHERE longname = .+").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(legalBasis)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947", "SurveyType":"Business", "SurveyMode":"SEFT"}`)
+
+		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+
+		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
+		body, err := ioutil.ReadAll(resp.Body)
+		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
+	})
+}
 
 func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 	Convey("Create new survey with non existent legal basis ref", t, func() {
