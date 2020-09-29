@@ -80,4 +80,4 @@ make clean
 ```
 
 ## Copyright
-Copyright (C) 2017 Crown Copyright (Office for National Statistics)
+Copyright (C) 2017 - 2020 Crown Copyright (Office for National Statistics)
