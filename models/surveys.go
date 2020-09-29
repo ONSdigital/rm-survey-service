@@ -605,7 +605,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 //Info endpoint handler returns info like name, version, origin, commit, branch
 //and built
 func (api *API) Info(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting info", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting info", zap.String("url", r.URL.Path))
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(NewVersion()); err != nil {
@@ -615,7 +615,7 @@ func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 
 // AllSurveys returns a list of all known surveys
 func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting AllSurveys", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting AllSurveys", zap.String("url", r.URL.Path))
 	var rows *sql.Rows
 	var err error
 	rows, err = api.AllSurveysStmt.Query()
@@ -629,7 +629,7 @@ func (api *API) AllSurveys(w http.ResponseWriter, r *http.Request) {
 
 // SurveysByType returns surveys of a particular type
 func (api *API) SurveysByType(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting SurveysByType", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting SurveysByType", zap.String("url", r.URL.Path))
 	var rows *sql.Rows
 	var err error
 	var surveyMap = map[string]string{
@@ -693,7 +693,7 @@ func parseSurveys(rows *sql.Rows, w http.ResponseWriter) {
 
 // AllLegalBases returns details of all legal bases
 func (api *API) AllLegalBases(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting AllLegalBases", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting AllLegalBases", zap.String("url", r.URL.Path))
 	rows, err := api.GetLegalBasesStmt.Query()
 
 	if err != nil {
@@ -734,7 +734,7 @@ func (api *API) AllLegalBases(w http.ResponseWriter, r *http.Request) {
 
 // GetSurvey returns the details of the survey identified by the string surveyID.
 func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting Survey", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting Survey", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
 	survey := new(Survey)
@@ -774,7 +774,7 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.
 func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting SurveyByShortName", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting SurveyByShortName", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	id := vars["shortName"]
 
@@ -817,7 +817,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 
 // GetSurveyByReference returns the details of the survey identified by the string ref.
 func (api *API) GetSurveyByReference(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting SurveyByReference", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting SurveyByReference", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	id := vars["ref"]
 
@@ -861,7 +861,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 	// We need to run a query first to check if the survey exists so an HTTP 404 can be correctly
 	// returned if it doesn't exist. Without this check an HTTP 204 is incorrectly returned for an
 	// invalid survey ID.
-	logger.Info("Getting AllClassifierTypeSelectors", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting AllClassifierTypeSelectors", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	surveyID := vars["surveyId"]
 
@@ -930,7 +930,7 @@ func (api *API) AllClassifierTypeSelectors(w http.ResponseWriter, r *http.Reques
 // GetClassifierTypeSelectorByID returns the details of the classifier type selector for the survey identified by the string surveyID and
 // the classifier type selector identified by the string classifierTypeSelectorID.
 func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting ClassifierTypeSelectorByID", zap.String("url", r.URL.RawQuery))
+	logger.Info("Getting ClassifierTypeSelectorByID", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	for _, u := range []string{"classifierTypeSelectorId", "surveyId"} {
 		val, ok := vars[u]
