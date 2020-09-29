@@ -71,16 +71,6 @@ make integration-test
 
 This will build a docker image from source and run the container then run all tests including integration tests.
 
-## Deployment
-To deploy to Cloud Foundry, run one of the targets below depending on the Cloud Foundry space you wish to push to:
-
-```
-make push-ci
-make push-demo
-make push-dev
-make push-int
-make push-test
-```
 
 ## Cleaning
 To clobber the `build` directory tree that's created when running `make`, run:
@@ -90,4 +80,4 @@ make clean
 ```
 
 ## Copyright
-Copyright (C) 2017 Crown Copyright (Office for National Statistics)
+Copyright (C) 2017 - 2020 Crown Copyright (Office for National Statistics)
