@@ -18,6 +18,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/blendle/zapdriver"
 )
 
 const (
@@ -29,7 +30,7 @@ const (
 var logger *zap.Logger
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger, _ = zapdriver.NewProduction()
 	defer logger.Sync()
 }
 

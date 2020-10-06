@@ -21,6 +21,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"github.com/blendle/zapdriver"
 	validator2 "gopkg.in/go-playground/validator.v9"
 )
 
@@ -79,6 +80,11 @@ type API struct {
 	CountMatchingClassifierTypeSelectors   *sql.Stmt
 	Validator                              *validator2.Validate
 	DB                                     *sql.DB
+}
+
+func init() {
+	logger, _ = zapdriver.NewProduction()
+	defer logger.Sync()
 }
 
 func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {

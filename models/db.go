@@ -9,6 +9,7 @@ import (
 	"github.com/mattes/migrate/database/postgres"
 	_ "github.com/mattes/migrate/source/file"
 	"go.uber.org/zap"
+	"github.com/blendle/zapdriver"
 )
 
 const serviceName = "surveysvc"
@@ -18,7 +19,7 @@ var db *sql.DB
 var logger *zap.Logger
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger, _ = zapdriver.NewProduction()
 	defer logger.Sync()
 }
 
