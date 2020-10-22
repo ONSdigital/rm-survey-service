@@ -8,7 +8,6 @@ INSERT INTO survey.legalbasis ( ref, longname ) VALUES ( 'STA1947', 'Statistics 
 INSERT INTO survey.legalbasis ( ref, longname ) VALUES ( 'STA1947_BEIS', 'Statistics of Trade Act 1947 - BEIS' );
 INSERT INTO survey.legalbasis ( ref, longname ) VALUES ( 'Vol', 'Voluntary Not Stated' );
 INSERT INTO survey.legalbasis ( ref, longname ) VALUES ( 'Vol_BEIS', 'Voluntary - BEIS' );
-INSERT INTO survey.legalbasis ( ref, longname ) VALUES ( 'Voluntary', 'Voluntary' );
 
 UPDATE survey.survey SET legalbasis = 'GovERD' WHERE legalbasis = 'GovERD';
 UPDATE survey.survey SET legalbasis = 'STA1947' WHERE legalbasis = 'Statistics of Trade Act 1947';
