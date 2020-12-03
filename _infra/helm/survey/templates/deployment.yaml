@@ -57,6 +57,8 @@ spec:
               secretKeyRef:
                 name: db-config
                 key: db-port
+          resources:
+            {{ toYaml .Values.resources.proxy | nindent 12 }}
         {{- end }}
         - name: {{ .Chart.Name }}
           {{- if eq .Values.image.tag "latest"}}
@@ -131,4 +133,4 @@ spec:
           - name: DATABASE_URL
             value: "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
           resources:
-            {{ toYaml .Values.resources | nindent 12 }}
+            {{ toYaml .Values.resources.application | nindent 12 }}
