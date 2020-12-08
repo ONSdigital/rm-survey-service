@@ -42,6 +42,7 @@ scaleAt:
   cpuPercentage: 120
 
 replicas: 1
+maxReplicas: 1
 rollingUpdate:
   maxSurge: 1
   maxUnavailable: 1
