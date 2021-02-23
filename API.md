@@ -11,7 +11,7 @@ This page documents the Survey service API endpoints. Apart from the Service Inf
   "version": "10.42.1",
   "origin": "git@github.com:ONSdigital/rm-survey-service.git",
   "commit": "c81fc1dc2155aed0fc201f2273333d3af75e10e0",
-  "branch": "master",
+  "branch": "main",
   "built": "2017-07-05T18:47:28Z"
 }
 ```
