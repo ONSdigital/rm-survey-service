@@ -5,11 +5,11 @@ on:
     branches: [ main ]
     paths-ignore:
       - _infra/spinnaker/**
-      - _infra/helm/survey/Chart.yaml
   pull_request:
     branches: [ main ]
     paths-ignore:
       - _infra/spinnaker/**
+      - _infra/helm/survey/Chart.yaml
 
 env:
   IMAGE: survey
@@ -76,19 +76,18 @@ jobs:
         gsutil cp $IMAGE-*.tgz gs://$ARTIFACT_BUCKET/$IMAGE/
 
     - name: Set current tag
-      if: github.ref == 'refs/heads/main'
+      if: github.ref != 'refs/heads/main'
       id: vars
       run: |
         git fetch --tags
         echo ::set-output name=tag::$(git describe --tags --abbrev=0)
 
     - name: update version
-      if: github.ref == 'refs/heads/main'
+      if: github.ref != 'refs/heads/main'
       env:
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
         COMMIT_MSG: |
-          [ci skip] auto patch increment
-          skip-checks: true
+          auto patch increment
       shell: bash
       run: |
         echo "Current git version: ${{ steps.vars.outputs.tag }}"
