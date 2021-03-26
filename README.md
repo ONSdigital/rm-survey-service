@@ -1,6 +1,3 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5adaae19b8f4b899ce935fe856a85d9)](https://www.codacy.com/app/sdcplatform/rm-survey-service?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ONSdigital/rm-survey-service&amp;utm_campaign=Badge_Grade) [![Docker Pulls](https://img.shields.io/docker/pulls/sdcplatform/surveysvc.svg)]()
-[![Build Status](https://travis-ci.org/ONSdigital/rm-survey-service.svg?branch=main)](https://travis-ci.org/ONSdigital/rm-survey-service)
-
 # Survey Service
 This repository contains the Survey service. This microservice is a RESTful web service implemented using [Go](https://golang.org/). This service features structured JSON logging, a self-bootstrapping database schema and database connection code that retries the connection if it's not available, increasing the time between each attempt. This [eliminates the need to deploy services in a specific order](https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c).
 
