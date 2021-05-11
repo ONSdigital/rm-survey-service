@@ -10,7 +10,7 @@ database:
 
 survey:
   container_name: surveysvc
-  image: sdcplatform/surveysvc
+  image: eu.gcr.io/ons-rasrmbs-management/survey
   ports:
    - "8080:8080"
   links:
