@@ -3,13 +3,8 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - _infra/spinnaker/**
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - _infra/spinnaker/**
-      - _infra/helm/survey/Chart.yaml
 
 env:
   IMAGE: survey
@@ -130,12 +125,13 @@ jobs:
     - name: Build Release Image
       if: github.ref == 'refs/heads/main'
       run: |
-        docker build -t "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":${{ steps.release.outputs.version }} .
+        docker build -t "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":latest -t "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":${{ steps.release.outputs.version }} .
     - name: Push Release image
       if: github.ref == 'refs/heads/main'
       run: |
         docker push "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":${{ steps.release.outputs.version }}
-    
+        docker push "$REGISTRY_HOSTNAME"/"$RELEASE_HOST"/"$IMAGE":latest
+
     - name: Publish Charts
       if: github.ref == 'refs/heads/main'
       run: |
