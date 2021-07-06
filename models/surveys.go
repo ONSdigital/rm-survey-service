@@ -144,27 +144,27 @@ func SetUpRoutes(r *mux.Router, api *API) {
 
 //NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
-	allSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref ORDER BY shortname ASC", db)
+	allSurveyStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref ORDER BY short_name ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE s.surveyType = $1 ORDER BY shortname ASC", db)
+	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type = $1 ORDER BY short_name ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref WHERE id = $1", db)
+	getSurveyStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER(shortName) = LOWER($1)", db)
+	getSurveyByShortNameStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER(short_Name) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByReferenceStmt, err := createStmt("SELECT id, s.shortname, s.longname, s.surveyref, s.legalbasis, s.surveytype, s.surveymode, lb.longname FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legalbasis = lb.ref  WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyByReferenceStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -174,67 +174,67 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorStmt, err := createStmt("SELECT classifiertypeselector.id, classifiertypeselector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 ORDER BY classifiertypeselector ASC", db)
+	getClassifierTypeSelectorStmt, err := createStmt("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id = $1 ORDER BY classifier_type_selector ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorByIDStmt, err := createStmt("SELECT id, classifiertypeselector, classifiertype FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifiertypeselectorfk = classifiertypeselector.classifiertypeselectorpk WHERE classifiertypeselector.id = $1 ORDER BY classifiertype ASC", db)
+	getClassifierTypeSelectorByIDStmt, err := createStmt("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk WHERE classifier_type_selector.id = $1 ORDER BY classifier_type ASC", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyRefStmt, err := createStmt("SELECT surveyref FROM survey.survey WHERE LOWER(surveyref) = LOWER($1)", db)
+	getSurveyRefStmt, err := createStmt("SELECT survey_ref FROM survey.survey WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET shortname = $2, longname = $3 WHERE LOWER(surveyref) = LOWER($1)", db)
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3 WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( surveypk, id, surveyref, shortname, longname, legalbasis, surveytype, surveymode ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7) RETURNING surveypk", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7) RETURNING survey_pk", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getLegalBases, err := createStmt("SELECT ref, longname FROM survey.legalbasis", db)
+	getLegalBases, err := createStmt("SELECT ref, long_name FROM survey.legalbasis", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getLegalBasisFromLongName, err := createStmt("SELECT ref, longname FROM survey.legalbasis WHERE longname = $1", db)
+	getLegalBasisFromLongName, err := createStmt("SELECT ref, long_name FROM survey.legalbasis WHERE long_name = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getLegalBasisFromRef, err := createStmt("SELECT ref, longname FROM survey.legalbasis WHERE ref = $1", db)
+	getLegalBasisFromRef, err := createStmt("SELECT ref, long_name FROM survey.legalbasis WHERE ref = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyByShortname, err := createStmt("SELECT surveyref FROM survey.survey WHERE shortname = $1", db)
+	getSurveyByShortname, err := createStmt("SELECT survey_ref FROM survey.survey WHERE short_name = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifiertypeselectorpk, id, surveyfk, classifiertypeselector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifiertypeselectorpk as id", db)
+	createSurveyClassifierTypeSelectorStmt, err := createStmt("INSERT INTO survey.classifiertypeselector ( classifier_type_selector_pk, id, survey_fk, classifier_type_selector ) VALUES ( nextval('survey.classifiertypeselector_classifiertypeselectorpk_seq'), $1, $2, $3 ) RETURNING classifier_type_selector_pk as id", db)
 	if err != nil {
 		return nil, err
 	}
 
-	createSurveyClassifierTypeStmt, err := createStmt("INSERT INTO survey.classifiertype ( classifiertypepk, classifiertypeselectorfk, classifiertype ) VALUES ( nextval('survey.classifiertype_classifiertypepk_seq'), $1, $2 )", db)
+	createSurveyClassifierTypeStmt, err := createStmt("INSERT INTO survey.classifiertype ( classifier_type_pk, classifier_type_selector_fk, classifier_type ) VALUES ( nextval('survey.classifiertype_classifiertypepk_seq'), $1, $2 )", db)
 	if err != nil {
 		return nil, err
 	}
 
-	getSurveyPKByID, err := createStmt("SELECT surveypk FROM survey.survey WHERE id = $1", db)
+	getSurveyPKByID, err := createStmt("SELECT survey_pk FROM survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
 
-	countMatchingClassifierTypeSelectorStmt, err := createStmt("SELECT COUNT(classifiertypeselector.id) FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.surveyfk = survey.surveypk WHERE survey.id = $1 AND classifiertypeselector.classifiertypeselector = $2", db)
+	countMatchingClassifierTypeSelectorStmt, err := createStmt("SELECT COUNT(classifiertypeselector.id) FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id = $1 AND classifiertypeselector.classifier_type_selector = $2", db)
 	if err != nil {
 		return nil, err
 	}
