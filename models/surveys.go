@@ -179,7 +179,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getClassifierTypeSelectorByIDStmt, err := createStmt("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk WHERE classifier_type_selector.id = $1 ORDER BY classifier_type ASC", db)
+	getClassifierTypeSelectorByIDStmt, err := createStmt("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk WHERE classifiertypeselector.id = $1 ORDER BY classifier_type ASC", db)
 	if err != nil {
 		return nil, err
 	}
@@ -976,7 +976,6 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 
 	// Now we can get the classifier type selector and classifier type records.
 	classifierRows, err := api.GetClassifierTypeSelectorByIDStmt.Query(classifierTypeSelectorID)
-
 	if err != nil {
 		http.Error(w, "Get classifiers query failed", http.StatusInternalServerError)
 
@@ -990,7 +989,6 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 
 	for classifierRows.Next() {
 		err = classifierRows.Scan(&classifierTypeSelector.ID, &classifierTypeSelector.Name, &classifierType)
-
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "Get classifier type by id query failed", http.StatusInternalServerError)
@@ -1014,7 +1012,6 @@ func (api *API) GetClassifierTypeSelectorByID(w http.ResponseWriter, r *http.Req
 
 		return
 	}
-
 	classifierTypeSelector.ClassifierTypes = classifierTypes
 
 	data, err := json.Marshal(classifierTypeSelector)
