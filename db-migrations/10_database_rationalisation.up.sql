@@ -1,6 +1,6 @@
 ALTER TABLE survey.classifiertypeselector RENAME COLUMN classifiertypeselectorpk TO classifier_type_selector_pk;
 ALTER TABLE survey.classifiertypeselector RENAME COLUMN classifiertypeselector TO classifier_type_selector;
-ALTER TABLE survey.classifiertypeselector RENAME COLUMN surveypk TO survey_pk;
+ALTER TABLE survey.classifiertypeselector RENAME COLUMN surveyfk TO survey_fk;
 
 ALTER TABLE survey.classifiertype RENAME COLUMN classifiertypepk TO classifier_type_pk;
 ALTER TABLE survey.classifiertype RENAME COLUMN classifiertypeselectorfk TO classifier_type_selector_fk;
