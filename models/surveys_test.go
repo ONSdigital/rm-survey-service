@@ -160,7 +160,7 @@ func TestSurveyListBySurveyTypeReturnsJson(t *testing.T) {
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
 		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "long_name"}).AddRow("testid", shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type =").ExpectQuery().WillReturnRows(rows)
+		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_type =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -200,7 +200,7 @@ func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
 		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type =").ExpectQuery().WillReturnRows(rows)
+		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_type =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -238,7 +238,7 @@ func TestSurveyListBySurveyModeEQ(t *testing.T) {
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
 		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, "eQ", legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type =").ExpectQuery().WillReturnRows(rows)
+		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_type =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -275,7 +275,7 @@ func TestSurveyListBySurveyModeSEFT(t *testing.T) {
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
 		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", surveyType, surveyMode, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type =").ExpectQuery().WillReturnRows(rows)
+		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_type =").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -2238,7 +2238,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.MatchExpectationsInOrder(false)
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref ORDER BY short_name ASC")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE id = ?")
-	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(short_Name\\) = LOWER\\(.+\\)")
+	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(short_name\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref")
 
