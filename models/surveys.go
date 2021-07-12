@@ -149,7 +149,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_Type = $1 ORDER BY short_name ASC", db)
+	getSurveysBySurveyTypeStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE s.survey_type = $1 ORDER BY short_name ASC", db)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	getSurveyByShortNameStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER(short_Name) = LOWER($1)", db)
+	getSurveyByShortNameStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER(short_name) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
