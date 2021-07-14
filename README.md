@@ -76,5 +76,14 @@ To clobber the `build` directory tree that's created when running `make`, run:
 make clean
 ```
 
+## Database Migrations in Kubernetes
+Due to limitations on the DB migration library in use in this project the following steps need to be followed to ensure
+a database migration is successful on a Kubernetes environment.
+
+1. deploy the application via Spinnaker
+1. scale the replicas to 1 pod (so it does the migration)
+1. scale the replicas to 0 pods (to release the lock)
+1. scale the replicas back to 2 pods again (or redeploy via Spinnaker)
+
 ## Copyright
 Copyright (C) 2017 - 2020 Crown Copyright (Office for National Statistics)
