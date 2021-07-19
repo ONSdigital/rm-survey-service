@@ -147,22 +147,22 @@ jobs:
         run: |
           gsutil cp $IMAGE-*.tgz gs://$ARTIFACT_BUCKET/$IMAGE/
 
-    - uses: actions/create-release@v1
-      if: github.ref == 'refs/heads/main'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.release.outputs.version }}
-        release_name: ${{ steps.release.outputs.version }}
-        body: |
-          Automated release
-          ${{ steps.release.outputs.version }}
-        draft: false
-        prerelease: false
+      - uses: actions/create-release@v1
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release.outputs.version }}
+          release_name: ${{ steps.release.outputs.version }}
+          body: |
+            Automated release
+            ${{ steps.release.outputs.version }}
+          draft: false
+          prerelease: false
 
-    - name: CD hook
-      if: github.ref == 'refs/heads/main'
-      run: |
-        gcloud pubsub topics publish $SPINNAKER_TOPIC --project $HOST \
-        --message "{ \"kind\": \"storage#object\", \"name\": \"$IMAGE/$IMAGE-${{ env.HELM_VERSION }}.tgz\", \"bucket\": \"$ARTIFACT_BUCKET\" }" \
-        --attribute cd="actions"
+      - name: CD hook
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gcloud pubsub topics publish $SPINNAKER_TOPIC --project $HOST \
+          --message "{ \"kind\": \"storage#object\", \"name\": \"$IMAGE/$IMAGE-${{ env.HELM_VERSION }}.tgz\", \"bucket\": \"$ARTIFACT_BUCKET\" }" \
+          --attribute cd="actions"
