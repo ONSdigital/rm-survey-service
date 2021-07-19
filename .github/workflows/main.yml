@@ -20,24 +20,30 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: '0'
-        token: ${{ secrets.BOT_TOKEN }}
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          token: ${{ secrets.BOT_TOKEN }}
 
-    - name: Run Tests
-      run: |
-        make test
-        make integration-test
-    - uses: google-github-actions/setup-gcloud@master
-      with:
-        version: '270.0.0'
-        service_account_key: ${{ secrets.GCR_KEY }}
+      - name: Run Tests
+        run: |
+          make test
+          make integration-test
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          version: '270.0.0'
+          service_account_key: ${{ secrets.GCR_KEY }}
       # Configure docker to use the gcloud command-line tool as a credential helper
-    - run: |
+      - run: |
         gcloud auth configure-docker
-
-  # Build the Docker image
+      - name: pr docker tag
+        if: github.ref != 'refs/heads/main'
+        id: tag
+        run: |
+          PR=$(echo "$GITHUB_REF" | awk -F / '{print $3}')
+          echo "$PR"
+          echo ::set-output name=pr_number::pr-"$PR"
+      # Build the Docker image
       - name: Build Docker Image
         if: github.ref != 'refs/heads/main'
         run: |
