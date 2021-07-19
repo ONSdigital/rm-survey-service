@@ -28,14 +28,13 @@ jobs:
       - name: Run Tests
         run: |
           make test
-          make integration-test
       - uses: google-github-actions/setup-gcloud@master
         with:
           version: '270.0.0'
           service_account_key: ${{ secrets.GCR_KEY }}
-      # Configure docker to use the gcloud command-line tool as a credential helper
+        # Configure docker to use the gcloud command-line tool as a credential helper
       - run: |
-        gcloud auth configure-docker
+          gcloud auth configure-docker
       - name: pr docker tag
         if: github.ref != 'refs/heads/main'
         id: tag
