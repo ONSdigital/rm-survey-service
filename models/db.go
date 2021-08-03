@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/blendle/zapdriver"
-	"github.com/golang-migrate/migrate/v4" migrate
+	migrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/github"
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
