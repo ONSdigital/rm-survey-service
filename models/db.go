@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"time"
 
-	_ "github.com/lib/pq" // Import the PostgreSQL driver
-	"github.com/mattes/migrate"
-	"github.com/mattes/migrate/database/postgres"
-	_ "github.com/mattes/migrate/source/file"
-	"go.uber.org/zap"
 	"github.com/blendle/zapdriver"
+	"github.com/golang-migrate/migrate/v4" migrate
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/github"
+	_ "github.com/lib/pq" // Import the PostgreSQL driver
+	"github.com/mattes/migrate/database/postgres"
+	"go.uber.org/zap"
 )
 
 const serviceName = "surveysvc"
