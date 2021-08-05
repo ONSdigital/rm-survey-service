@@ -17,11 +17,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/blendle/zapdriver"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"github.com/blendle/zapdriver"
 	validator2 "gopkg.in/go-playground/validator.v9"
 )
 
