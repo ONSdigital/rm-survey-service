@@ -28,6 +28,7 @@ jobs:
       - name: Run Tests
         run: |
           make test
+          make integration-test
       - uses: google-github-actions/setup-gcloud@master
         with:
           version: '270.0.0'
@@ -46,7 +47,7 @@ jobs:
       - name: Build Docker Image
         if: github.ref != 'refs/heads/main'
         run: |
-          make
+          make build
           docker build -t "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":${{ steps.tag.outputs.pr_number }} .
       - name: Push dev image
         if: github.ref != 'refs/heads/main'
