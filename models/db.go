@@ -7,6 +7,7 @@ import (
 	"github.com/blendle/zapdriver"
 	migrate "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/golang-migrate/migrate/v4/source/github"
 	_ "github.com/lib/pq" // Import the PostgreSQL driver
 	"go.uber.org/zap"
