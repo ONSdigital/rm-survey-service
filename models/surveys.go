@@ -49,6 +49,7 @@ type Survey struct {
 	SurveyMode    string                   `json:"surveyMode"`
 	LegalBasisRef string                   `json:"legalBasisRef"`
 	Classifiers   []ClassifierTypeSelector `json:"classifiers,omitempty"`
+	EQVersion     string                   `json:"eqVersion"`
 }
 
 // LegalBasis - the legal basis for a survey consisting of a short reference and a long name
@@ -787,7 +788,7 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &survey.LegalBasis)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &survey.LegalBasis, &survey.EQVersion)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
