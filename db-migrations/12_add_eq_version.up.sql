@@ -1,0 +1,1 @@
+ALTER TABLE survey.survey ADD eq_version character varying(3) DEFAULT "v2" WITH VALUES;
