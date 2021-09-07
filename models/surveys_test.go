@@ -1163,7 +1163,7 @@ func TestCreateNewSurvey(t *testing.T) {
 
 		mock.ExpectRollback()
 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs("99").WillReturnRows(rows)
-		mock.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\) RETURNING survey_pk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "SEFT").WillReturnRows(newSurveyPK)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\) VALUES \\( .+\\) RETURNING survey_pk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "SEFT").WillReturnRows(newSurveyPK)
 		mock.ExpectPrepare("SELECT ref, long_name FROM survey.legalbasis WHERE long_name = .+").ExpectQuery().WithArgs("Statistics of Trade Act 1947").WillReturnRows(legalBasis)
 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE short_name = .+").ExpectQuery().WithArgs("test-short-name").WillReturnRows(rows)
 
@@ -2252,7 +2252,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk .*")
-	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\)")
+	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\) VALUES \\( .+\\)")
 	m.ExpectPrepare("SELECT ref, long_name FROM survey.legalbasis")
 	m.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE short_name = .+")
 	m.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifier_type_selector_pk, id, survey_fk, classifier_type_selector \\) VALUES \\( .+\\) RETURNING classifier_type_selector_pk as id")

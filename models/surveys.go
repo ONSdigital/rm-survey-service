@@ -195,7 +195,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING survey_pk", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7) RETURNING survey_pk", db)
 	if err != nil {
 		return nil, err
 	}
