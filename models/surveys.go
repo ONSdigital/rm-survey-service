@@ -806,12 +806,14 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
+		logError("get survey by shortname query failed", err)
 		http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
 		return
 	}
 
 	data, err := json.Marshal(survey)
 	if err != nil {
+		logError("Failed to marshal survey JSON", err)
 		http.Error(w, "Failed to marshal survey JSON", http.StatusInternalServerError)
 		return
 	}
