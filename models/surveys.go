@@ -358,8 +358,13 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Survey failed to validate - %v", err), http.StatusBadRequest)
 			return
 		}
-
 		surveyPK := 0
+		var eqVersion interface{}
+		if survey.EQVersion != "" {
+			eqVersion = survey.EQVersion
+		} else {
+			eqVersion = nil
+		}
 		err := api.CreateSurveyStmt.QueryRow(
 			surveyID,
 			survey.Reference,
@@ -368,7 +373,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 			legalBasis.Reference,
 			survey.SurveyType,
 			survey.SurveyMode,
-			survey.EQVersion,
+			eqVersion,
 		).Scan(&surveyPK)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
@@ -789,7 +794,9 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 	surveyRow := api.GetSurveyByShortNameStmt.QueryRow(id)
 
 	survey := new(Survey)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &survey.EQVersion, &survey.LegalBasis)
+	var eqVersion interface{}
+
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &eqVersion, &survey.LegalBasis)
 
 	if err == sql.ErrNoRows {
 		re := NewRESTError("404", "Survey not found")
@@ -811,7 +818,11 @@ func (api *API) GetSurveyByShortName(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "get survey by shortname query failed", http.StatusInternalServerError)
 		return
 	}
-
+	if eqVersion == nil {
+		survey.EQVersion = ""
+	} else {
+		survey.EQVersion = fmt.Sprintf("%v", eqVersion)
+	}
 	data, err := json.Marshal(survey)
 	if err != nil {
 		logError("Failed to marshal survey JSON", err)
