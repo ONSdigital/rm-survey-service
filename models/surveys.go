@@ -49,7 +49,7 @@ type Survey struct {
 	SurveyMode    string                   `json:"surveyMode"`
 	LegalBasisRef string                   `json:"legalBasisRef"`
 	Classifiers   []ClassifierTypeSelector `json:"classifiers,omitempty"`
-	EQVersion     string                   `json:"eqVersion"`
+	EQVersion     string                   `json:"eqVersion,omitempty"`
 }
 
 // LegalBasis - the legal basis for a survey consisting of a short reference and a long name
@@ -195,7 +195,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	createSurvey, err := createStmt("INSERT INTO survey.survey ( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7) RETURNING survey_pk", db)
+	createSurvey, err := createStmt("INSERT INTO survey.survey ( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version ) VALUES ( nextval('survey.survey_surveypk_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING survey_pk", db)
 	if err != nil {
 		return nil, err
 	}
@@ -368,6 +368,7 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 			legalBasis.Reference,
 			survey.SurveyType,
 			survey.SurveyMode,
+			survey.EQVersion,
 		).Scan(&surveyPK)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Create survey details failed - %v", err), http.StatusInternalServerError)
