@@ -1,0 +1,12 @@
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (52, 3, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (53, 4, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (54, 5, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (55, 6, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (56, 7, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (57, 8, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (58, 9, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (59, 11, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (60, 13, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (61, 14, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (62, 15, 'COLLECTION_EXERCISE');
+INSERT INTO survey.classifiertype (classifiertypepk, classifiertypeselectorfk, classifiertype) VALUES (63, 16, 'COLLECTION_EXERCISE');
