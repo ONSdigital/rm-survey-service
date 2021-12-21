@@ -618,7 +618,6 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 //Info endpoint handler returns info like name, version, origin, commit, branch
 //and built
 func (api *API) Info(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting info", zap.String("url", r.URL.Path))
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(NewVersion()); err != nil {
