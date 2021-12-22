@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/blendle/zapdriver v1.3.1
-	github.com/cloudfoundry-community/go-cfenv v1.18.0
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/gorilla/handlers v1.5.1

@@ -15,10 +15,9 @@ import (
 	"syscall"
 
 	"github.com/ONSdigital/rm-survey-service/models"
-	"github.com/cloudfoundry-community/go-cfenv"
+	"github.com/blendle/zapdriver"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/blendle/zapdriver"
 )
 
 const (
@@ -88,37 +87,12 @@ func configureEnvironment() (dataSource, port string, migrationSource string, ma
 		LogError(message, nil)
 	}
 
-	appEnv, err := cfenv.Current()
-
-	if err != nil {
-		LogInfo("No Cloud Foundry environment")
-
-		if v := os.Getenv("PORT"); len(v) > 0 {
-			port = v
-		}
-
-		if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
-			dataSource = v
-		}
-
-		return dataSource, port, migrationSource, maxIdleConn, connMaxLifetime
+	if v := os.Getenv("PORT"); len(v) > 0 {
+		port = v
 	}
 
-	ps := appEnv.Port
-	port = strconv.FormatInt(int64(ps), 10)
-	postgresServer, err := appEnv.Services.WithTag("postgresql")
-	LogInfo("Found Cloud Foundry environment")
-
-	if err == nil {
-		uri, found := postgresServer[0].CredentialString("uri")
-
-		if found {
-			dataSource = uri
-		} else {
-			message := "Unable to retrieve PostgreSQL URI from Cloud Foundry environment"
-			LogInfo(message)
-			panic(message)
-		}
+	if v := os.Getenv("DATABASE_URL"); len(v) > 0 {
+		dataSource = v
 	}
 
 	return dataSource, port, migrationSource, maxIdleConn, connMaxLifetime
