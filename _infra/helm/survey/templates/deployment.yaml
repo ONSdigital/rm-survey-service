@@ -34,7 +34,7 @@ spec:
       containers:
         {{- if .Values.database.sqlProxyEnabled }}
         - name: cloudsql-proxy
-          image: gcr.io/cloudsql-docker/gce-proxy:1.22.0
+          image: gcr.io/cloudsql-docker/gce-proxy:1.32.0
           command: ["/cloud_sql_proxy",
                     "-instances=$(SQL_INSTANCE_NAME)=tcp:$(DB_PORT)",
                     "-ip_address_types=PRIVATE",
