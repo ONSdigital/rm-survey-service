@@ -61,11 +61,7 @@ spec:
             {{ toYaml .Values.resources.proxy | nindent 12 }}
         {{- end }}
         - name: {{ .Chart.Name }}
-          {{- if eq .Values.image.tag "latest"}}
-          image: "{{ .Values.image.name }}/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
-          {{- else}}
           image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
-          {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http-server
