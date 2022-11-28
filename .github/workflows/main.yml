@@ -58,7 +58,6 @@ jobs:
         run: |
           make build
           docker build -t "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":${{ steps.tag.outputs.pr_number }} .
-          go version
       - name: Push dev image
         if: github.ref != 'refs/heads/main'
         run: |
