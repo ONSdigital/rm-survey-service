@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM golang:1.19.3-alpine3.16
 
 RUN apt-get update\
      && apt-get install curl -y --no-install-recommends\
