@@ -7,5 +7,12 @@ WORKDIR "/src"
 
 COPY . .
 
+COPY build/linux-amd64/bin/main /usr/local/bin/
+
+COPY db-migrations /db-migrations
+
+ENTRYPOINT [ "/usr/local/bin/main" ]
+
+
 RUN go build
 RUN ls
