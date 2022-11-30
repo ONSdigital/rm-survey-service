@@ -5,14 +5,13 @@ EXPOSE 8080
 RUN mkdir "/src"
 WORKDIR "/src"
 
-COPY . .
+COPY main .
 
 COPY build/linux-amd64/bin/main /usr/local/bin/
 
 COPY db-migrations /db-migrations
 
-CMD "./survey"
-
-
 RUN go build
 RUN ls
+
+CMD "./main"
