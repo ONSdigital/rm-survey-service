@@ -129,7 +129,7 @@ jobs:
         id: release
         shell: bash
         run: |
-          cho "version=$(grep -E "appVersion:\s+" $CHART_DIRECTORY/Chart.yaml | cut -d" " -f2 | sed -r 's/"//g')" >> $GITHUB_OUTPUT
+          echo "version=$(grep -E "appVersion:\s+" $CHART_DIRECTORY/Chart.yaml | cut -d" " -f2 | sed -r 's/"//g')" >> $GITHUB_OUTPUT
     
       - name: package helm
         run: |
