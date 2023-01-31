@@ -190,7 +190,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3 WHERE LOWER(survey_ref) = LOWER($1)", db)
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3, survey_mode = $4 WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
