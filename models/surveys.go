@@ -582,6 +582,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	shortName := putData.ShortName
 	longName := putData.LongName
+	surveyMode := putData.SurveyMode
 
 	err = api.getSurveyRef(surveyRef)
 
