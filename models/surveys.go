@@ -606,7 +606,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
+	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName, surveyMode)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Update survey details query failed - %v", err), http.StatusInternalServerError)
