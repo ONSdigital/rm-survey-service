@@ -571,7 +571,6 @@ func (api *API) createClassifiers(surveyPK int, surveyID, name string, types []s
 func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyRef := vars["ref"]
-
 	body, err := ioutil.ReadAll(r.Body)
 
 	var putData Survey
