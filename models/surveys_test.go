@@ -1080,41 +1080,41 @@ func TestClassifierTypeSelectorByIdInternalServerError(t *testing.T) {
 	})
 }
 
-// func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
-// 	Convey("Survey Details PUT by Survey Reference success", t, func() {
-// 		db, mock, err := sqlmock.New()
-// 		So(err, ShouldBeNil)
-// 		refRow := sqlmock.NewRows([]string{"survey_ref"}).AddRow("456")
-// 		prepareMockStmts(mock)
-// 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
-// 		mock.ExpectPrepare("UPDATE survey.survey SET short_name = .+, long_name = .+, survey_mode = .+ WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
-// 		db.Begin()
-// 		defer db.Close()
-//
-// 		// When
-// 		api, err := models.NewAPI(db)
-// 		So(err, ShouldBeNil)
-// 		defer api.Close()
-//
-// 		// Create a new router and plug in the defined routes
-// 		router := mux.NewRouter()
-// 		models.SetUpRoutes(router, api)
-//
-// 		ts := httptest.NewServer(router)
-// 		defer ts.Close()
-// 		url := ts.URL + "/surveys/ref/456"
-// 		// User and password not set so base64encode the dividing character
-// 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-// 		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name", "surveyMode":"SEFT"}`)
-// 		r, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonStr))
-// 		r.Header.Set("Authorization", "Basic: "+basicAuth)
-// 		r.Header.Set("Content-Type", "application/json")
-//
-// 		resp, err := httpClient.Do(r)
-//
-// 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
-// 	})
-// }
+func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
+	Convey("Survey Details PUT by Survey Reference success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		refRow := sqlmock.NewRows([]string{"survey_ref"}).AddRow("456")
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
+		mock.ExpectPrepare("UPDATE survey.survey SET short_name = .+, long_name = .+, survey_mode = .+ WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/ref/456"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name", "surveyMode":"SEFT"}`)
+		r, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonStr))
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+
+		So(resp.StatusCode, ShouldEqual, http.StatusOK)
+	})
+}
 
 func TestPutSurveyDetailsBySurveyRefInternalServerError(t *testing.T) {
 	Convey("Survey Details PUT by Survey Reference success", t, func() {
