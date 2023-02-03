@@ -58,11 +58,12 @@ type LegalBasis struct {
 	LongName  string `json:"longName"`
 }
 
-//API contains all the pre-prepared sql statements
+// API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                         *sql.Stmt
 	GetSurveysBySurveyTypeStmt             *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
+	DeleteSurveyStmt                       *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
 	GetSurveyIDStmt                        *sql.Stmt
@@ -127,13 +128,14 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SetUpRoutes balh
+// SetUpRoutes
 func SetUpRoutes(r *mux.Router, api *API) {
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/surveytype/{surveyType}", use(api.SurveysByType, basicAuth)).Methods("GET")
 	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}", use(api.DeleteSurvey, basicAuth)).Methods("DELETE")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")
 	r.HandleFunc("/surveys", use(api.PostSurveyDetails, basicAuth)).Methods("POST")
@@ -143,7 +145,7 @@ func SetUpRoutes(r *mux.Router, api *API) {
 	r.HandleFunc("/surveys/{surveyId}/classifiers", use(api.PostSurveyClassifiers, basicAuth)).Methods("POST")
 }
 
-//NewAPI returns an API struct populated with all the created SQL statements
+// NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
 	allSurveyStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref ORDER BY short_name ASC", db)
 	if err != nil {
@@ -171,6 +173,11 @@ func NewAPI(db *sql.DB) (*API, error) {
 	}
 
 	getSurveyIDStmt, err := createStmt("SELECT id FROM survey.survey WHERE id = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
+	deleteSurveyIDStmt, err := createStmt("SELECT id FROM survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
@@ -249,6 +256,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 			GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
 			GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
 			GetSurveyIDStmt:                        getSurveyIDStmt,
+			DeleteSurveyStmt:                       deleteSurveyIDStmt,
 			GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
 			GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
 			GetSurveyRefStmt:                       getSurveyRefStmt,
@@ -615,8 +623,8 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-//Info endpoint handler returns info like name, version, origin, commit, branch
-//and built
+// Info endpoint handler returns info like name, version, origin, commit, branch
+// and built
 func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -746,6 +754,46 @@ func (api *API) AllLegalBases(w http.ResponseWriter, r *http.Request) {
 
 // GetSurvey returns the details of the survey identified by the string surveyID.
 func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
+	logger.Info("Getting Survey", zap.String("url", r.URL.Path))
+	vars := mux.Vars(r)
+	id := vars["surveyId"]
+	survey := new(Survey)
+	surveyRow := api.GetSurveyStmt.QueryRow(id)
+	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &survey.LegalBasis)
+
+	if err == sql.ErrNoRows {
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "get survey query failed", http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(survey)
+	if err != nil {
+		http.Error(w, "Failed to marshal survey JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// DeleteSurvey deletes a survey by its uuid
+func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Getting Survey", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
 	id := vars["surveyId"]
@@ -1086,7 +1134,7 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
 
-//Close closes all db connections on the api struct
+// Close closes all db connections on the api struct
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }
