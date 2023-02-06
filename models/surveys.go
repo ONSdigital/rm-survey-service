@@ -7,14 +7,13 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"os"
-	"time"
-
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/blendle/zapdriver"
@@ -63,7 +62,7 @@ type API struct {
 	AllSurveysStmt                         *sql.Stmt
 	GetSurveysBySurveyTypeStmt             *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
-	DeleteSurveyStmt                       *sql.Stmt
+	DeleteSurveyByIDStmt                   *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
 	GetSurveyIDStmt                        *sql.Stmt
@@ -177,7 +176,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	deleteSurveyIDStmt, err := createStmt("SELECT id FROM survey.survey WHERE id = $1", db)
+	deleteSurveyByIDStmt, err := createStmt("DELETE FROM survey.survey WHERE id = $1", db)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +255,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 			GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
 			GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
 			GetSurveyIDStmt:                        getSurveyIDStmt,
-			DeleteSurveyStmt:                       deleteSurveyIDStmt,
+			DeleteSurveyByIDStmt:                   deleteSurveyByIDStmt,
 			GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
 			GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
 			GetSurveyRefStmt:                       getSurveyRefStmt,
@@ -306,7 +305,7 @@ func createValidator() *validator2.Validate {
 
 // PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	var survey Survey
 	err = json.Unmarshal(body, &survey)
@@ -344,7 +343,6 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate a UUID to uniquely identify the new survey
-	// TODO replace with Google uuid generator?
 	surveyID, err := uuid.NewV4()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error generating random uuid"), http.StatusInternalServerError)
@@ -502,7 +500,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read and unmarshal request body
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		logErrorAndRespond(w, "Error creating classifier type selector for survey", http.StatusInternalServerError, err)
 		return
@@ -580,7 +578,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyRef := vars["ref"]
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	var putData Survey
 	err = json.Unmarshal(body, &putData)
@@ -792,44 +790,38 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-// DeleteSurvey deletes a survey by its uuid
 func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Getting Survey", zap.String("url", r.URL.Path))
 	vars := mux.Vars(r)
-	id := vars["surveyId"]
-	survey := new(Survey)
-	surveyRow := api.GetSurveyStmt.QueryRow(id)
-	err := surveyRow.Scan(&survey.ID, &survey.ShortName, &survey.LongName, &survey.Reference, &survey.LegalBasisRef, &survey.SurveyType, &survey.SurveyMode, &survey.LegalBasis)
+	surveyID := vars["surveyId"]
+	logger.Info("Deleting survey", zap.String("surveyID", surveyID))
 
-	if err == sql.ErrNoRows {
-		re := NewRESTError("404", "Survey not found")
-		data, err := json.Marshal(re)
-		if err != nil {
-			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
-			return
-		}
+	// Verify uuid is correct - return 400 if incorret
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(data)
-
-		return
-	}
-
+	// Start database transaction
+	tx, err := api.DB.Begin()
 	if err != nil {
-		http.Error(w, "get survey query failed", http.StatusInternalServerError)
+		http.Error(w, "Error creating transaction", http.StatusInternalServerError)
 		return
 	}
 
-	data, err := json.Marshal(survey)
+	// Delete survey from survey table.  Cascading foreign keys take care of the deletion of the associated
+	// classifiertype and classifiertypeselector records
+	txDeleteSurveyByIDStmt := tx.Stmt(api.DeleteSurveyByIDStmt)
+	_, err = txDeleteSurveyByIDStmt.Exec(surveyID)
 	if err != nil {
-		http.Error(w, "Failed to marshal survey JSON", http.StatusInternalServerError)
+		tx.Rollback()
+		http.Error(w, "Error deleting record", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		http.Error(w, "Error comitting transaction", http.StatusInternalServerError)
+		return
+	}
+	logger.Info("Finished deleting survey", zap.String("surveyID", surveyID))
+	w.WriteHeader(http.StatusNoContent)
+	// Do we have to explicitly commit or does that just happen when the function ends?
 }
 
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.

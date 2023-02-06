@@ -465,7 +465,7 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode","eq_version", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, eQVersion, legalBasisLongName)
+		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "eq_version", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, eQVersion, legalBasisLongName)
 		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, s.eq_version, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
@@ -558,7 +558,8 @@ func TestSurveyGetByShortNameInternalServerError(t *testing.T) {
 		So(w.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 }
-///////
+
+// /////
 func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 	Convey("Survey GET by reference returns a survey resource", t, func() {
 		db, mock, err := sqlmock.New()
@@ -2250,6 +2251,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("UPDATE survey.survey SET short_name = .*, long_name = .* WHERE LOWER\\(survey_ref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
+	m.ExpectPrepare("DELETE FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk .*")
 	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\)")

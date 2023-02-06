@@ -65,7 +65,15 @@ An `HTTP 204 No Content` status code is returned if there are no known surveys.
 }
 ```
 
-An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.
+An `HTTP 404 Not Found` status code is returned if the survey with the specified ID could not be found.\
+
+## Delete Survey
+* `DELETE /surveys/<survey-id>` will delete the survey with the matching id, and also all the classifiers
+
+- Returns 204 on success
+- Returns 400 if the id isn't in the correct format
+- Returns 403 if the http authentication isn't correct
+- Returns 404 if the id of the survey isn't found
 
 ## Get Survey by Short Name
 * `GET /surveys/shortname/bres` will return the details of the survey with the short name `bres` (or `BRES`).
