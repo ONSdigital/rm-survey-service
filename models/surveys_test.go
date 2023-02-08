@@ -460,6 +460,111 @@ func TestSurveyGetInternalServerError(t *testing.T) {
 	})
 }
 
+func TestSurveyDeleteByIDSuccess(t *testing.T) {
+	Convey("Survey Delete by id returns an 204 on success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		mock.ExpectBegin()
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("DELETE FROM survey.survey WHERE id = ?").ExpectExec().WithArgs(sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/" + surveyID
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("DELETE", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+		So(resp.StatusCode, ShouldEqual, http.StatusNoContent)
+	})
+}
+
+func TestSurveyDeleteByIdInvalidUUID(t *testing.T) {
+	Convey("Survey Delete by id returns an 400 on invalid survey id", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/not-a-valid-uuid"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("DELETE", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
+		body, err := io.ReadAll(resp.Body)
+		So(string(body), ShouldStartWith, "The value [not-a-valid-uuid] is not a valid UUID")
+	})
+}
+
+// TODO
+//func TestSurveyDeleteByIdNotFound(t *testing.T) {
+//	Convey("Survey delete by id returns an 404 not found", t, func() {
+//		db, mock, err := sqlmock.New()
+//		So(err, ShouldBeNil)
+//		mock.ExpectBegin()
+//		prepareMockStmts(mock)
+//		mock.ExpectPrepare("DELETE FROM survey.survey WHERE id = ?").ExpectExec().WithArgs(sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 0))
+//		mock.ExpectRollback()
+//		db.Begin()
+//		defer db.Close()
+//
+//		// When
+//		api, err := models.NewAPI(db)
+//		So(err, ShouldBeNil)
+//		defer api.Close()
+//
+//		// Create a new router and plug in the defined routes
+//		router := mux.NewRouter()
+//		models.SetUpRoutes(router, api)
+//
+//		ts := httptest.NewServer(router)
+//		defer ts.Close()
+//		url := ts.URL + "/surveys/" + surveyID
+//		// User and password not set so base64encode the dividing character
+//		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+//		r, err := http.NewRequest("DELETE", url, nil)
+//		r.Header.Set("Authorization", "Basic: "+basicAuth)
+//		r.Header.Set("Content-Type", "application/json")
+//
+//		resp, err := httpClient.Do(r)
+//
+//		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
+//		body, err := io.ReadAll(resp.Body)
+//		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found",`)
+//	})
+//}
+
 func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 	Convey("Survey GET by shortname returns a survey resource", t, func() {
 		db, mock, err := sqlmock.New()

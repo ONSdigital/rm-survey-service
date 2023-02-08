@@ -797,6 +797,10 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Deleting survey", zap.String("surveyID", surveyID))
 
 	// Verify uuid is correct - return 400 if incorrect
+	if _, err := uuid.FromString(surveyID); err != nil {
+		http.Error(w, "The value ["+surveyID+"] is not a valid UUID", http.StatusBadRequest)
+		return
+	}
 	// Verify survey exists - return 404 if missing
 
 	// Start database transaction
@@ -823,7 +827,6 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Info("Finished deleting survey", zap.String("surveyID", surveyID))
 	w.WriteHeader(http.StatusNoContent)
-	// Do we have to explicitly commit or does that just happen when the function ends?
 }
 
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.
