@@ -795,7 +795,8 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 	surveyID := vars["surveyId"]
 	logger.Info("Deleting survey", zap.String("surveyID", surveyID))
 
-	// Verify uuid is correct - return 400 if incorret
+	// Verify uuid is correct - return 400 if incorrect
+	// Verify survey exists - return 404 if missing
 
 	// Start database transaction
 	tx, err := api.DB.Begin()

@@ -72,7 +72,7 @@ An `HTTP 404 Not Found` status code is returned if the survey with the specified
 
 - Returns 204 on success
 - Returns 400 if the id isn't in the correct format
-- Returns 403 if the http authentication isn't correct
+- Returns 401 if the http authentication isn't correct
 - Returns 404 if the id of the survey isn't found
 
 ## Get Survey by Short Name
