@@ -196,7 +196,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3 WHERE LOWER(survey_ref) = LOWER($1)", db)
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3, survey_mode = $4 WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -588,6 +588,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	shortName := putData.ShortName
 	longName := putData.LongName
+	surveyMode := putData.SurveyMode
 
 	err = api.getSurveyRef(surveyRef)
 
@@ -611,7 +612,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
+	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName, surveyMode)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Update survey details query failed - %v", err), http.StatusInternalServerError)
