@@ -13,9 +13,9 @@ description: A Helm chart for Kubernetes
 type: application
 
 
-version: 11.0.44
+version: 11.0.45
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application.
-appVersion: 11.0.44
+appVersion: 11.0.45
 
