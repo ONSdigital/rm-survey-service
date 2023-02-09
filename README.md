@@ -32,14 +32,24 @@ First compile the code using `make` then execute the binary in the background us
 
 The following environment variables may be overridden:
 
-| Environment Variable   | Purpose                                      | Default Value                                                   |
-| :--------------------- | :------------------------------------------- | :-------------------------------------------------------------- |
-| DATABASE_URL           | PostgreSQL *postgres* user connection string | postgres://postgres:password@localhost/postgres?sslmode=disable |
-| PORT                   | HTTP listener port                           | :8080                                                           |
-| security_user_name     | HTTP basic authentication user name          | N/A                                                             |
-| security_user_password | HTTP basic authentication password           | N/A                                                             |
-| CONN_MAX_LIFETIME      | Max lifetime of connection in pool in seconds| 0, so there is no time limit                                    |
-| MAX_IDLE_CONN          | Max idle connections to have in pool         | 2                                                               |
+| Environment Variable   | Purpose                                       | Default Value                                                   |
+|:-----------------------|:----------------------------------------------|:----------------------------------------------------------------|
+| DATABASE_URL           | PostgreSQL *postgres* user connection string  | postgres://postgres:password@localhost/postgres?sslmode=disable |
+| PORT                   | HTTP listener port                            | :8080                                                           |
+| security_user_name     | HTTP basic authentication user name           | N/A                                                             |
+| security_user_password | HTTP basic authentication password            | N/A                                                             |
+| CONN_MAX_LIFETIME      | Max lifetime of connection in pool in seconds | 0, so there is no time limit                                    |
+| MAX_IDLE_CONN          | Max idle connections to have in pool          | 2                                                               |
+
+
+### Running locally with `go run`
+
+It's possible to run the application locally using just `go run main.go` but in order to do so there are a few things to change:
+- Update the `dataSource` database url in `main.go` to a valid postgres instance
+- Update the `migrationSource` variable in `main.go` to `file://./db-migrations`
+
+Once the app is running you should call the app with blank auth values. This is because it's looking for the `security_user_name") 
+ and "security_user_password") environment variables.  If they're not set, they just default to nothing.
 
 ### Docker Image and PostgreSQL
 To start Docker containers for both PostgreSQL and the Survey service, run:

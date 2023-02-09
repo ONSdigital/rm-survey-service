@@ -127,7 +127,6 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SetUpRoutes
 func SetUpRoutes(r *mux.Router, api *API) {
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
@@ -801,7 +800,6 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "The value ["+surveyID+"] is not a valid UUID", http.StatusBadRequest)
 		return
 	}
-	// Verify survey exists - return 404 if missing
 
 	// Start database transaction
 	tx, err := api.DB.Begin()
@@ -813,16 +811,37 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 	// Delete survey from survey table.  Cascading foreign keys take care of the deletion of the associated
 	// classifiertype and classifiertypeselector records
 	txDeleteSurveyByIDStmt := tx.Stmt(api.DeleteSurveyByIDStmt)
-	_, err = txDeleteSurveyByIDStmt.Exec(surveyID)
+	result, err := txDeleteSurveyByIDStmt.Exec(surveyID)
 	if err != nil {
-		tx.Rollback()
+		http.Error(w, "Error executing delete statement", http.StatusInternalServerError)
+		return
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		rollBack(tx)
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	if err != nil {
+		rollBack(tx)
 		http.Error(w, "Error deleting record", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
-		http.Error(w, "Error comitting transaction", http.StatusInternalServerError)
+		rollBack(tx)
+		http.Error(w, "Error committing transaction", http.StatusInternalServerError)
 		return
 	}
 	logger.Info("Finished deleting survey", zap.String("surveyID", surveyID))
