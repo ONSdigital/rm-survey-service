@@ -833,18 +833,12 @@ func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		rollBack(tx)
-		http.Error(w, "Error deleting record", http.StatusInternalServerError)
-		return
-	}
-
 	if err := tx.Commit(); err != nil {
 		rollBack(tx)
 		http.Error(w, "Error committing transaction", http.StatusInternalServerError)
 		return
 	}
-	logger.Info("Finished deleting survey", zap.String("surveyID", surveyID))
+	logger.Info("Successfully deleted survey", zap.String("surveyID", surveyID))
 	w.WriteHeader(http.StatusNoContent)
 }
 

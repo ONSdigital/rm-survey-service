@@ -44,12 +44,13 @@ The following environment variables may be overridden:
 
 ### Running locally with `go run`
 
-It's possible to run the application locally using just `go run main.go` but in order to do so there are a few things to change:
+It's possible to run the application locally using just `go run main.go` but in order to do so there are a few things
+to change:
 - Update the `dataSource` database url in `main.go` to a valid postgres instance
 - Update the `migrationSource` variable in `main.go` to `file://./db-migrations`
 
-Once the app is running you should call the app with blank auth values. This is because it's looking for the `security_user_name") 
- and "security_user_password") environment variables.  If they're not set, they just default to nothing.
+Once the app is running you should call the app with blank http auth values. This is because it's looking for the
+`security_user_name` and `security_user_password` environment variables.  If they're not set, they just default to nothing.
 
 ### Docker Image and PostgreSQL
 To start Docker containers for both PostgreSQL and the Survey service, run:
