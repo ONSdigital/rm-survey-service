@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -81,7 +81,7 @@ func TestSurveyListReturnsJson(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{ID: surveyID, ShortName: shortName}}
 		res := []models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].ID, ShouldEqual, expected[0].ID)
 		So(res[0].ShortName, ShouldEqual, expected[0].ShortName)
@@ -118,7 +118,7 @@ func TestSurveyListInternalServerError(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Failed to retrieve surveys")
 	})
 }
@@ -188,7 +188,7 @@ func TestSurveyListBySurveyTypeReturnsJson(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{ID: "testid", SurveyType: "Business"}}
 		res := []models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].ID, ShouldEqual, expected[0].ID)
 		So(res[0].SurveyType, ShouldEqual, expected[0].SurveyType)
@@ -226,7 +226,7 @@ func TestSurveyListBySurveyTypeIncorrectCaseReturnsJson(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{ID: surveyID, SurveyType: surveyType}}
 		res := []models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].ID, ShouldEqual, expected[0].ID)
 		So(res[0].SurveyType, ShouldEqual, expected[0].SurveyType)
@@ -264,7 +264,7 @@ func TestSurveyListBySurveyModeEQ(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{SurveyMode: "eQ"}}
 		res := []models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].SurveyMode, ShouldEqual, expected[0].SurveyMode)
 	})
@@ -303,7 +303,7 @@ func TestSurveyListBySurveyModeSEFT(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := []models.Survey{{SurveyMode: "SEFT"}}
 		res := []models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].SurveyMode, ShouldEqual, expected[0].SurveyMode)
 	})
@@ -340,7 +340,7 @@ func TestSurveyListBySurveyTypeReturnsErrorForUnknownType(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		So(string(body), ShouldEqual, "Failed to retrieve surveys\n")
 	})
 }
@@ -378,7 +378,7 @@ func TestSurveyGetReturnsJson(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType, SurveyMode: surveyMode}
 		res := models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res.ID, ShouldEqual, expected.ID)
 		So(res.ShortName, ShouldEqual, expected.ShortName)
@@ -420,7 +420,7 @@ func TestSurveyGetNotFound(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found",`)
 	})
 }
@@ -455,8 +455,112 @@ func TestSurveyGetInternalServerError(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "get survey query failed")
+	})
+}
+
+func TestSurveyDeleteByIDSuccess(t *testing.T) {
+	Convey("Survey Delete by id returns an 204 on success", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		mock.ExpectBegin()
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("DELETE FROM survey.survey WHERE id = ?").ExpectExec().WithArgs(sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/" + surveyID
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("DELETE", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+		So(resp.StatusCode, ShouldEqual, http.StatusNoContent)
+	})
+}
+
+func TestSurveyDeleteByIdInvalidUUID(t *testing.T) {
+	Convey("Survey Delete by id returns an 400 on invalid survey id", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		prepareMockStmts(mock)
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/not-a-valid-uuid"
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("DELETE", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
+		body, err := io.ReadAll(resp.Body)
+		So(string(body), ShouldStartWith, "The value [not-a-valid-uuid] is not a valid UUID")
+	})
+}
+
+func TestSurveyDeleteByIdNotFound(t *testing.T) {
+	Convey("Survey delete by id returns an 404 not found", t, func() {
+		db, mock, err := sqlmock.New()
+		So(err, ShouldBeNil)
+		mock.ExpectBegin()
+		prepareMockStmts(mock)
+		mock.ExpectPrepare("DELETE FROM survey.survey WHERE id = ?").ExpectExec().WithArgs(sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectRollback()
+		db.Begin()
+		defer db.Close()
+
+		// When
+		api, err := models.NewAPI(db)
+		So(err, ShouldBeNil)
+		defer api.Close()
+
+		// Create a new router and plug in the defined routes
+		router := mux.NewRouter()
+		models.SetUpRoutes(router, api)
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+		url := ts.URL + "/surveys/" + surveyID
+		// User and password not set so base64encode the dividing character
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
+		r, err := http.NewRequest("DELETE", url, nil)
+		r.Header.Set("Authorization", "Basic: "+basicAuth)
+		r.Header.Set("Content-Type", "application/json")
+
+		resp, err := httpClient.Do(r)
+
+		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
+		body, err := io.ReadAll(resp.Body)
+		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found",`)
 	})
 }
 
@@ -465,7 +569,7 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode","eq_version", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, eQVersion, legalBasisLongName)
+		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "eq_version", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, eQVersion, legalBasisLongName)
 		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, s.eq_version, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
@@ -493,7 +597,7 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: "test-surveytype", SurveyMode: surveyMode}
 		res := models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res.ID, ShouldEqual, expected.ID)
 		So(res.ShortName, ShouldEqual, expected.ShortName)
@@ -535,7 +639,7 @@ func TestSurveyGetByShortNameNotFound(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "404 page not found")
 	})
 }
@@ -558,7 +662,8 @@ func TestSurveyGetByShortNameInternalServerError(t *testing.T) {
 		So(w.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 }
-///////
+
+// /////
 func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 	Convey("Survey GET by reference returns a survey resource", t, func() {
 		db, mock, err := sqlmock.New()
@@ -593,7 +698,7 @@ func TestGetSurveyByReferenceReturnsJSON(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := models.Survey{ID: surveyID, ShortName: shortName, LongName: longName, Reference: reference, SurveyType: surveyType, SurveyMode: surveyMode}
 		res := models.Survey{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res.ID, ShouldEqual, expected.ID)
 		So(res.ShortName, ShouldEqual, expected.ShortName)
@@ -633,7 +738,7 @@ func TestSurveyGetByReferenceNotFound(t *testing.T) {
 
 		resp, err := httpClient.Do(r)
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found",`)
 	})
 }
@@ -692,7 +797,7 @@ func TestAllClassifierTypeSelectorsReturnsJSON(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		expected := models.ClassifierTypeSelectorSummary{ID: surveyID, Name: "test-name"}
 		res := []models.ClassifierTypeSelectorSummary{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res[0].ID, ShouldEqual, expected.ID)
 		So(res[0].Name, ShouldEqual, expected.Name)
@@ -733,7 +838,7 @@ func TestAllClassifierTypeSelectorsSurveyNotFound(t *testing.T) {
 		resp, err := c.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found",`)
 	})
 }
@@ -806,7 +911,7 @@ func TestAllClassifierTypeSelectorsSurveyReturnsInternalServerError(t *testing.T
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Error getting list of classifier type selectors for survey '"+surveyID+"' - Testing internal server error")
 	})
 }
@@ -841,7 +946,7 @@ func TestAllClassifierTypeSelectorsReturnsInternalServerError(t *testing.T) {
 
 		resp, err := httpClient.Do(r)
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 
 		So(string(body), ShouldStartWith, "Error getting list of classifier type selectors for survey '"+surveyID+"' - Testing internal server error")
 	})
@@ -883,7 +988,7 @@ func TestClassifierTypeSelectorByIdReturnsJSON(t *testing.T) {
 		var a = []string{"test"}
 		expected := models.ClassifierTypeSelector{ID: surveyID, Name: "test-name", ClassifierTypes: a}
 		res := models.ClassifierTypeSelector{}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &res)
 		So(res.ID, ShouldEqual, expected.ID)
 		So(res.Name, ShouldEqual, expected.Name)
@@ -923,7 +1028,7 @@ func TestClassifierTypeSelectorByIdSurveyIdIsInvalidUuid(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for surveyId is not a valid UUID")
 	})
 }
@@ -961,7 +1066,7 @@ func TestClassifierTypeSelectorByIdClassifierIdIsInvalidUuid(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for classifierTypeSelectorId is not a valid UUID")
 	})
 }
@@ -1000,7 +1105,7 @@ func TestClassifierTypeSelectorByIdReturns404(t *testing.T) {
 
 		So(err, ShouldBeNil)
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Classifier Type Selector not found",`)
 	})
 }
@@ -1038,7 +1143,7 @@ func TestClassifierTypeSelectorByIdNoClassifierTypesReturns404(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Classifier Type Selector not found",`)
 	})
 }
@@ -1075,7 +1180,7 @@ func TestClassifierTypeSelectorByIdInternalServerError(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Error getting classifier type selector '"+classifierID+"' for survey '"+surveyID+"' - Testing internal server error")
 	})
 }
@@ -1087,7 +1192,7 @@ func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
 		refRow := sqlmock.NewRows([]string{"survey_ref"}).AddRow("456")
 		prepareMockStmts(mock)
 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs(sqlmock.AnyArg()).WillReturnRows(refRow)
-		mock.ExpectPrepare("UPDATE survey.survey SET short_name = .+, long_name = .+ WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectPrepare("UPDATE survey.survey SET short_name = .+, long_name = .+, survey_mode = .+ WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectExec().WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
 		db.Begin()
 		defer db.Close()
 
@@ -1105,7 +1210,7 @@ func TestPutSurveyDetailsBySurveyRefSuccess(t *testing.T) {
 		url := ts.URL + "/surveys/ref/456"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name", "surveyMode":"SEFT"}`)
 		r, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
 		r.Header.Set("Content-Type", "application/json")
@@ -1146,7 +1251,7 @@ func TestPutSurveyDetailsBySurveyRefInternalServerError(t *testing.T) {
 
 		resp, err := httpClient.Do(r)
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Failed to get survey ref - Testing internal server error")
 	})
 }
@@ -1247,7 +1352,7 @@ func TestCreateNewSurveyInvalidSurveyType(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldEqual, "Survey type must be one of [Census, Business, Social]\n")
 	})
 }
@@ -1288,7 +1393,7 @@ func TestCreateNewSurveySurveyTypeDoesNotExist(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldEqual, "Survey type must be one of [Census, Business, Social]\n")
 	})
 }
@@ -1327,7 +1432,7 @@ func TestCreateNewSurveyNonExistentLegalBasisRef(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Legal basis with reference Statistics of Trade Act 1947 does not exist")
 	})
 }
@@ -1368,7 +1473,7 @@ func TestCreateNewSurveyNonExistentLegalBasisLongName(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
 	})
 }
@@ -1409,7 +1514,7 @@ func TestCreateNewSurveyNonExistentSurveyModeName(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Legal basis Statistics of Trade Act 1947 does not exist")
 	})
 }
@@ -1449,7 +1554,7 @@ func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Legal basis with reference STA1947 does not exist")
 	})
 }
@@ -1495,7 +1600,7 @@ func TestCreateNewSurveyNonExistentLegalBasis(t *testing.T) {
 // 		// Since fixing the mock sql statements, it's now giving a 201 as there isn't actually any validation in the Survey struct to stop the
 // 		// Reference field having numbers in it.  The validation on this would need to be fixed and then this test amended.
 // 		//So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-// 		body, err := ioutil.ReadAll(resp.Body)
+// 		body, err := io.ReadAll(resp.Body)
 // 		So(string(body), ShouldEndWith, `,"shortName":"test-short-name","longName":"test-long-name","surveyRef":"99A","legalBasis":"Statistics of Trade Act 1947","surveyType":"Business","legalBasisRef":"STA1947"}`)
 // 		So(resp.StatusCode, ShouldEqual, http.StatusCreated)
 // 	})
@@ -1537,7 +1642,7 @@ func TestCreateNewSurveyRefTooLong(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Survey failed to validate - Key: 'Survey.Reference'")
 	})
 }
@@ -1578,7 +1683,7 @@ func TestCreateNewSurveyShortNameWithSpace(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Survey failed to validate - Key: 'Survey.ShortName' Error:Field validation for 'ShortName' failed on the 'no-spaces' tag")
 	})
 }
@@ -1618,7 +1723,7 @@ func TestCreateNewSurveyShortNameTooLong(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Survey failed to validate - Key: 'Survey.ShortName' Error:Field validation for 'ShortName' failed on the 'max' tag")
 	})
 }
@@ -1658,7 +1763,7 @@ func TestCreateNewSurveyLongNameTooLong(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Survey failed to validate - Key: 'Survey.LongName' Error:Field validation for 'LongName' failed on the 'max' tag")
 	})
 }
@@ -1700,7 +1805,7 @@ func TestCreateNewSurveyDupilcateSurveyRef(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusConflict)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Survey with reference 0123 already exists")
 	})
 }
@@ -1742,7 +1847,7 @@ func TestCreateNewSurveyDupilcateShortName(t *testing.T) {
 		resp, err := httpClient.Do(r)
 
 		So(resp.StatusCode, ShouldEqual, http.StatusConflict)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "The survey with Abbreviation test-short-name already exists")
 	})
 }
@@ -1832,7 +1937,7 @@ func TestCreateNewSurveyClassifiersInvalidUuid(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "The value (not-a-uuid) used for surveyId is not a valid UUID")
 	})
 }
@@ -1871,7 +1976,7 @@ func TestCreateNewSurveyClassifiersSurveyNotFound(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusNotFound)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, `{"code":"404","message":"Survey not found for ID '67602ba2-8af6-4298-af66-4e46a62f32c8'",`)
 	})
 }
@@ -1914,7 +2019,7 @@ func TestCreateNewSurveyClassifiersAlreadyExistsConflict(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Internal Server Error")
 	})
 }
@@ -1953,7 +2058,7 @@ func TestCreateNewSurveyClassifiersNoName(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -1992,7 +2097,7 @@ func TestCreateNewSurveyClassifiersEmptyName(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2031,7 +2136,7 @@ func TestCreateNewSurveyClassifiersWhitespaceName(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2070,7 +2175,7 @@ func TestCreateNewSurveyClassifiersNoClassifierTypes(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2111,7 +2216,7 @@ func TestCreateNewSurveyClassifiersEmptyClassifierTypes(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2150,7 +2255,7 @@ func TestCreateNewSurveyClassifiersWhitespaceClassifierTypes(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2189,7 +2294,7 @@ func TestCreateNewSurveyClassifiersEmptyStringClassifierTypes(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusBadRequest)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Invalid request body")
 	})
 }
@@ -2229,7 +2334,7 @@ func TestCreateNewSurveyClassifiers500Error(t *testing.T) {
 
 		// Then
 		So(resp.StatusCode, ShouldEqual, http.StatusInternalServerError)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		So(string(body), ShouldStartWith, "Internal Server Error")
 	})
 }
@@ -2250,6 +2355,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("UPDATE survey.survey SET short_name = .*, long_name = .* WHERE LOWER\\(survey_ref\\) = LOWER\\(.*\\)")
 	m.ExpectPrepare("SELECT id FROM survey.survey WHERE id = .*")
+	m.ExpectPrepare("DELETE FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk .*")
 	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\)")

@@ -7,14 +7,13 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"os"
-	"time"
-
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/blendle/zapdriver"
@@ -58,11 +57,12 @@ type LegalBasis struct {
 	LongName  string `json:"longName"`
 }
 
-//API contains all the pre-prepared sql statements
+// API contains all the pre-prepared sql statements
 type API struct {
 	AllSurveysStmt                         *sql.Stmt
 	GetSurveysBySurveyTypeStmt             *sql.Stmt
 	GetSurveyStmt                          *sql.Stmt
+	DeleteSurveyByIDStmt                   *sql.Stmt
 	GetSurveyByShortNameStmt               *sql.Stmt
 	GetSurveyByReferenceStmt               *sql.Stmt
 	GetSurveyIDStmt                        *sql.Stmt
@@ -127,13 +127,13 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SetUpRoutes balh
 func SetUpRoutes(r *mux.Router, api *API) {
 	r.HandleFunc("/info", api.Info).Methods("GET")
 	r.HandleFunc("/surveys", use(api.AllSurveys, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/surveytype/{surveyType}", use(api.SurveysByType, basicAuth)).Methods("GET")
 	r.HandleFunc("/legal-bases", use(api.AllLegalBases, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/{surveyId}", use(api.GetSurvey, basicAuth)).Methods("GET")
+	r.HandleFunc("/surveys/{surveyId}", use(api.DeleteSurvey, basicAuth)).Methods("DELETE")
 	r.HandleFunc("/surveys/shortname/{shortName}", use(api.GetSurveyByShortName, basicAuth)).Methods("GET")
 	r.HandleFunc("/surveys/ref/{ref}", use(api.PutSurveyDetails, basicAuth)).Methods("PUT")
 	r.HandleFunc("/surveys", use(api.PostSurveyDetails, basicAuth)).Methods("POST")
@@ -143,7 +143,7 @@ func SetUpRoutes(r *mux.Router, api *API) {
 	r.HandleFunc("/surveys/{surveyId}/classifiers", use(api.PostSurveyClassifiers, basicAuth)).Methods("POST")
 }
 
-//NewAPI returns an API struct populated with all the created SQL statements
+// NewAPI returns an API struct populated with all the created SQL statements
 func NewAPI(db *sql.DB) (*API, error) {
 	allSurveyStmt, err := createStmt("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref ORDER BY short_name ASC", db)
 	if err != nil {
@@ -175,6 +175,11 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
+	deleteSurveyByIDStmt, err := createStmt("DELETE FROM survey.survey WHERE id = $1", db)
+	if err != nil {
+		return nil, err
+	}
+
 	getClassifierTypeSelectorStmt, err := createStmt("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id = $1 ORDER BY classifier_type_selector ASC", db)
 	if err != nil {
 		return nil, err
@@ -190,7 +195,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 		return nil, err
 	}
 
-	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3 WHERE LOWER(survey_ref) = LOWER($1)", db)
+	putSurveyDetailsBySurveyRefStmt, err := createStmt("UPDATE survey.survey SET short_name = $2, long_name = $3, survey_mode = $4 WHERE LOWER(survey_ref) = LOWER($1)", db)
 	if err != nil {
 		return nil, err
 	}
@@ -249,6 +254,7 @@ func NewAPI(db *sql.DB) (*API, error) {
 			GetSurveyByShortNameStmt:               getSurveyByShortNameStmt,
 			GetSurveyByReferenceStmt:               getSurveyByReferenceStmt,
 			GetSurveyIDStmt:                        getSurveyIDStmt,
+			DeleteSurveyByIDStmt:                   deleteSurveyByIDStmt,
 			GetClassifierTypeSelectorStmt:          getClassifierTypeSelectorStmt,
 			GetClassifierTypeSelectorByIDStmt:      getClassifierTypeSelectorByIDStmt,
 			GetSurveyRefStmt:                       getSurveyRefStmt,
@@ -298,7 +304,7 @@ func createValidator() *validator2.Validate {
 
 // PostSurveyDetails endpoint handler - creates a new survey based on JSON in request
 func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	var survey Survey
 	err = json.Unmarshal(body, &survey)
@@ -336,7 +342,6 @@ func (api *API) PostSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate a UUID to uniquely identify the new survey
-	// TODO replace with Google uuid generator?
 	surveyID, err := uuid.NewV4()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error generating random uuid"), http.StatusInternalServerError)
@@ -494,7 +499,7 @@ func (api *API) PostSurveyClassifiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read and unmarshal request body
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		logErrorAndRespond(w, "Error creating classifier type selector for survey", http.StatusInternalServerError, err)
 		return
@@ -572,7 +577,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	surveyRef := vars["ref"]
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	var putData Survey
 	err = json.Unmarshal(body, &putData)
@@ -582,6 +587,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 
 	shortName := putData.ShortName
 	longName := putData.LongName
+	surveyMode := putData.SurveyMode
 
 	err = api.getSurveyRef(surveyRef)
 
@@ -605,7 +611,7 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName)
+	_, err = api.PutSurveyDetailsBySurveyRefStmt.Exec(surveyRef, shortName, longName, surveyMode)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Update survey details query failed - %v", err), http.StatusInternalServerError)
@@ -615,8 +621,8 @@ func (api *API) PutSurveyDetails(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-//Info endpoint handler returns info like name, version, origin, commit, branch
-//and built
+// Info endpoint handler returns info like name, version, origin, commit, branch
+// and built
 func (api *API) Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -782,6 +788,58 @@ func (api *API) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
+}
+
+func (api *API) DeleteSurvey(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	surveyID := vars["surveyId"]
+	logger.Info("Deleting survey", zap.String("surveyID", surveyID))
+
+	// Verify uuid is correct - return 400 if incorrect
+	if _, err := uuid.FromString(surveyID); err != nil {
+		http.Error(w, "The value ["+surveyID+"] is not a valid UUID", http.StatusBadRequest)
+		return
+	}
+
+	// Start database transaction
+	tx, err := api.DB.Begin()
+	if err != nil {
+		http.Error(w, "Error creating transaction", http.StatusInternalServerError)
+		return
+	}
+
+	// Delete survey from survey table.  Cascading foreign keys take care of the deletion of the associated
+	// classifiertype and classifiertypeselector records
+	txDeleteSurveyByIDStmt := tx.Stmt(api.DeleteSurveyByIDStmt)
+	result, err := txDeleteSurveyByIDStmt.Exec(surveyID)
+	if err != nil {
+		http.Error(w, "Error executing delete statement", http.StatusInternalServerError)
+		return
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		rollBack(tx)
+		re := NewRESTError("404", "Survey not found")
+		data, err := json.Marshal(re)
+		if err != nil {
+			http.Error(w, "Error marshaling NewRestError JSON", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(data)
+
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		rollBack(tx)
+		http.Error(w, "Error committing transaction", http.StatusInternalServerError)
+		return
+	}
+	logger.Info("Successfully deleted survey", zap.String("surveyID", surveyID))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GetSurveyByShortName returns the details of the survey identified by the string shortName.
@@ -1086,7 +1144,7 @@ func createStmt(sqlStatement string, db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare(sqlStatement)
 }
 
-//Close closes all db connections on the api struct
+// Close closes all db connections on the api struct
 func (api *API) Close() {
 	api.AllSurveysStmt.Close()
 }

@@ -38,7 +38,9 @@ spec:
           command: ["/cloud_sql_proxy",
                     "-instances=$(SQL_INSTANCE_NAME)=tcp:$(DB_PORT)",
                     "-ip_address_types=PRIVATE",
-                    "-credential_file=/secrets/cloudsql/credentials.json"]
+                    "-credential_file=/secrets/cloudsql/credentials.json",
+                    "-term_timeout=30s",
+                    "-verbose=false"]
           securityContext:
             runAsUser: 2  # non-root user
             allowPrivilegeEscalation: false

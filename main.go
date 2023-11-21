@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	realm       = "sdc"
 	serviceName = "surveysvc"
 	timeFormat  = "2006-01-02T15:04:05Z0700"
 )
@@ -123,7 +122,7 @@ func handleShutdownSignals(server *http.Server, timeout time.Duration) {
 	}
 }
 
-//LogError log out error messages
+// LogError log out error messages
 func LogError(message string, err error) {
 	logger.Error(message,
 		zap.String("service", serviceName),
@@ -132,7 +131,7 @@ func LogError(message string, err error) {
 		zap.String("created", time.Now().UTC().Format(timeFormat)))
 }
 
-//LogInfo log out info log messages
+// LogInfo log out info log messages
 func LogInfo(message string) {
 	logger.Info(message,
 		zap.String("service", serviceName),
