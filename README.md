@@ -98,4 +98,3 @@ a database migration is successful on a Kubernetes environment.
 
 ## Copyright
 Copyright (C) 2017 - 2020 Crown Copyright (Office for National Statistics)
-build please
