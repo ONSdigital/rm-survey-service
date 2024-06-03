@@ -2357,7 +2357,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("DELETE FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk .*")
-	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\)*")
+	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\) VALUES \\( .+\\)")
 	m.ExpectPrepare("SELECT ref, long_name FROM survey.legalbasis")
 	m.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE short_name = .+")
 	m.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifier_type_selector_pk, id, survey_fk, classifier_type_selector \\) VALUES \\( .+\\) RETURNING classifier_type_selector_pk as id")
