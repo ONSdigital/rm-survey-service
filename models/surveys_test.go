@@ -25,7 +25,6 @@ const surveyType = "Business"
 const surveyID = "67602ba2-8af6-4298-af66-4e46a62f32c8"
 const classifierID = "c0482274-9e96-4001-8797-4b487454c187"
 const surveyMode = "SEFT"
-const eQVersion = "v2"
 
 var httpClient = &http.Client{}
 
@@ -569,8 +568,8 @@ func TestGetSurveyByShortnameReturnsJSON(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 		prepareMockStmts(mock)
-		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "eq_version", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, eQVersion, legalBasisLongName)
-		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, s.eq_version, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref").ExpectQuery().WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "short_name", "long_name", "survey_ref", "legal_basis", "survey_type", "survey_mode", "long_name"}).AddRow(surveyID, shortName, longName, reference, "test-legalbasis-ref", "test-surveytype", surveyMode, legalBasisLongName)
+		mock.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref").ExpectQuery().WillReturnRows(rows)
 		db.Begin()
 		defer db.Close()
 
@@ -1268,7 +1267,7 @@ func TestCreateNewSurvey(t *testing.T) {
 
 		mock.ExpectRollback()
 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)").ExpectQuery().WithArgs("99").WillReturnRows(rows)
-		mock.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\) RETURNING survey_pk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "SEFT", "v2").WillReturnRows(newSurveyPK)
+		mock.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\) VALUES \\( .+\\) RETURNING survey_pk").ExpectQuery().WithArgs(sqlmock.AnyArg(), "99", "test-short-name", "test-long-name", "STA1947", "Social", "SEFT").WillReturnRows(newSurveyPK)
 		mock.ExpectPrepare("SELECT ref, long_name FROM survey.legalbasis WHERE long_name = .+").ExpectQuery().WithArgs("Statistics of Trade Act 1947").WillReturnRows(legalBasis)
 		mock.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE short_name = .+").ExpectQuery().WithArgs("test-short-name").WillReturnRows(rows)
 
@@ -1304,7 +1303,7 @@ func TestCreateNewSurvey(t *testing.T) {
 		url := ts.URL + "/surveys"
 		// User and password not set so base64encode the dividing character
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(":"))
-		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social", "SurveyMode":"SEFT", "EQVersion": "v2"}`)
+		var jsonStr = []byte(`{"ShortName": "test-short-name", "LongName":"test-long-name","SurveyRef":"99","LegalBasis":"Statistics of Trade Act 1947","SurveyType":"Social", "SurveyMode":"SEFT"}`)
 
 		r, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		r.Header.Set("Authorization", "Basic: "+basicAuth)
@@ -2344,7 +2343,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.MatchExpectationsInOrder(false)
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref ORDER BY short_name ASC")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref WHERE id = ?")
-	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, s.eq_version, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(short_name\\) = LOWER\\(.+\\)")
+	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(short_name\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref  WHERE LOWER\\(survey_ref\\) = LOWER\\(.+\\)")
 	m.ExpectPrepare("SELECT id, s.short_name, s.long_name, s.survey_ref, s.legal_basis, s.survey_type, s.survey_mode, lb.long_name FROM survey.survey s INNER JOIN survey.legalbasis lb on s.legal_basis = lb.ref")
 
@@ -2358,7 +2357,7 @@ func prepareMockStmts(m sqlmock.Sqlmock) {
 	m.ExpectPrepare("DELETE FROM survey.survey WHERE id = .*")
 	m.ExpectPrepare("SELECT classifiertypeselector.id, classifier_type_selector FROM survey.classifiertypeselector INNER JOIN survey.survey ON classifiertypeselector.survey_fk = survey.survey_pk WHERE survey.id .*")
 	m.ExpectPrepare("SELECT id, classifier_type_selector, classifier_type FROM survey.classifiertype INNER JOIN survey.classifiertypeselector ON classifiertype.classifier_type_selector_fk = classifiertypeselector.classifier_type_selector_pk .*")
-	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode, eq_version \\) VALUES \\( .+\\)")
+	m.ExpectPrepare("INSERT INTO survey.survey \\( survey_pk, id, survey_ref, short_name, long_name, legal_basis, survey_type, survey_mode \\) VALUES \\( .+\\)")
 	m.ExpectPrepare("SELECT ref, long_name FROM survey.legalbasis")
 	m.ExpectPrepare("SELECT survey_ref FROM survey.survey WHERE short_name = .+")
 	m.ExpectPrepare("INSERT INTO survey.classifiertypeselector \\( classifier_type_selector_pk, id, survey_fk, classifier_type_selector \\) VALUES \\( .+\\) RETURNING classifier_type_selector_pk as id")
