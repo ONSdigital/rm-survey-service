@@ -56,13 +56,13 @@ Once the app is running you should call the app with blank http auth values. Thi
 To start Docker containers for both PostgreSQL and the Survey service, run:
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 To stop and remove the two Docker containers, run:
 
 ```
-docker-compose down
+docker compose down
 ```
 
 ## Testing

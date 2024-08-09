@@ -1,21 +1,22 @@
-database:
-  container_name: postgres-survey-it
-  image: postgres:9.6-alpine
-  ports:
-   - "15432:5432"
-  environment:
-  - POSTGRES_DB=postgres
-  - POSTGRES_USER=postgres
-  - POSTGRES_PASSWORD=password
+services:
+  database:
+    container_name: postgres-survey-it
+    image: postgres:9.6-alpine
+    ports:
+     - "15432:5432"
+    environment:
+    - POSTGRES_DB=postgres
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=password
 
-survey:
-  container_name: surveysvc-it
-  image: sdcplatform/surveysvc
-  ports:
-   - "9090:8080"
-  links:
-   - database
-  environment:
-  - DATABASE_URL=postgres://postgres:password@postgres-survey-it:5432/postgres?sslmode=disable
-  - security_user_name=admin
-  - security_user_password=secret
+  survey:
+    container_name: surveysvc-it
+    image: sdcplatform/surveysvc
+    ports:
+     - "9090:8080"
+    links:
+     - database
+    environment:
+    - DATABASE_URL=postgres://postgres:password@postgres-survey-it:5432/postgres?sslmode=disable
+    - security_user_name=admin
+    - security_user_password=secret
