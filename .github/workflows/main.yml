@@ -92,6 +92,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+          BOT_GPG_KEY_PASSPHRASE: ${{ secrets.BOT_GPG_KEY_PASSPHRASE }}
           COMMIT_MSG: |
             auto patch increment
         shell: bash
