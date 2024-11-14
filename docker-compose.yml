@@ -11,7 +11,7 @@ services:
 
   survey:
     container_name: surveysvc
-    image: eu.gcr.io/ons-rasrmbs-management/survey
+    image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
     ports:
      - "8080:8080"
     links:

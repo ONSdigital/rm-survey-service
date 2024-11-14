@@ -63,5 +63,5 @@ clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 docker: build
-	docker build . -t eu.gcr.io/ons-rasrmbs-management
+	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
 
