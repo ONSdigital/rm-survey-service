@@ -58,7 +58,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         run: |
           make build
-          docker build -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} -f _infra/docker/Dockerfile .
+          docker build -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} .
       - name: Push dev image
         if: github.ref != 'refs/heads/main'
         run: |
