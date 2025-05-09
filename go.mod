@@ -2,8 +2,6 @@ module github.com/ONSdigital/rm-survey-service
 
 go 1.24
 
-toolchain go1.24.3
-
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/blendle/zapdriver v1.3.1
