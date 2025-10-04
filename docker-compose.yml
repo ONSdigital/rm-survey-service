@@ -1,7 +1,7 @@
 services:
   database:
     container_name: postgres
-    image: postgres:9.6-alpine
+    image: postgres:14
     ports:
      - "5432:5432"
     environment:
@@ -11,12 +11,13 @@ services:
 
   survey:
     container_name: surveysvc
-    image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
+    #image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:pr-169
+    image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:corpmac
     ports:
      - "8080:8080"
-    links:
-     - database
+#    links:
+#     - database
     environment:
-    - DATABASE_URL=postgres://postgres:password@database/postgres?sslmode=disable
+    - DATABASE_URL=postgres://postgres:password@database:5432/postgres?sslmode=disable
     - security_user_name=admin
     - security_user_password=secret

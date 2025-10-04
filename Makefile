@@ -2,7 +2,7 @@
 VERSION = 10.51.0
 
 # Cross-compilation values.
-ARCH=amd64
+ARCH=armd64
 OS_LINUX=linux
 OS_MAC=darwin
 
@@ -63,5 +63,4 @@ clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 docker: build
-	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
-
+	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
