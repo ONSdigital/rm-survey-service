@@ -107,7 +107,7 @@ func handleShutdownSignals(server *http.Server, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	logger.Info(fmt.Sprintf("Recieved signal: '%s'", stopSignal.String()),
+	logger.Info(fmt.Sprintf("Received signal: '%s'", stopSignal.String()),
 		zap.String("service", serviceName),
 		zap.String("event", "Handling OS shutdown signal"),
 		zap.String("created", time.Now().UTC().Format(timeFormat)))
