@@ -1,0 +1,1 @@
+This is a core microservice which processes and provides information about a given survey within ras-rm.
