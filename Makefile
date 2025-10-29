@@ -2,14 +2,14 @@
 VERSION = 10.51.0
 
 # Cross-compilation values.
-ARCH=amd64
+ARCH=armd64
 OS_LINUX=linux
 OS_MAC=darwin
 
 # Output directory structures.
 BUILD=build
-LINUX_BUILD_ARCH=$(BUILD)/$(OS_LINUX)-$(ARCH)
-MAC_BUILD_ARCH=$(BUILD)/$(OS_MAC)-$(ARCH)
+LINUX_BUILD_ARCH=$(BUILD)/$(OS_LINUX)-amd64
+MAC_BUILD_ARCH=$(BUILD)/$(OS_MAC)-arm64
 
 # Flags to pass to the Go linker using the -ldflags="-X ..." option.
 PACKAGE_PATH=github.com/ONSdigital/rm-survey-service
@@ -33,8 +33,8 @@ export ORIGIN?=$(shell git config --get remote.origin.url)
 
 # Cross-compile the binary for Linux and macOS, setting linker flags for information returned by the GET /info endpoint.
 build: clean
-	GOOS=$(OS_LINUX) GOARCH=$(ARCH) go build -o $(LINUX_BUILD_ARCH)/bin/main -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" main.go
-	GOOS=$(OS_MAC) GOARCH=$(ARCH) go build -o $(MAC_BUILD_ARCH)/bin/main -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" main.go
+	GOOS=$(OS_LINUX) GOARCH=amd64 go build -o $(LINUX_BUILD_ARCH)/bin/main -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" main.go
+	GOOS=$(OS_MAC) GOARCH=arm64 go build -o $(MAC_BUILD_ARCH)/bin/main -ldflags="-X $(BRANCH_FLAG) -X $(BUILT_FLAG) -X $(COMMIT_FLAG) -X $(ORIGIN_FLAG) -X $(VERSION_FLAG)" main.go
 
 # Run the tests.
 
@@ -63,5 +63,4 @@ clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 docker: build
-	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
-
+	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
