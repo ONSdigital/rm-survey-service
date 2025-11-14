@@ -163,7 +163,7 @@ jobs:
           helm package $CHART_DIRECTORY
 
       - name: Publish dev Chart
-        if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]
+        if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]'
         run: |
           mv $IMAGE-${{ env.HELM_VERSION }}.tgz $IMAGE-${{ env.pr_number }}.tgz
           gsutil cp $IMAGE-*.tgz gs://$ARTIFACT_BUCKET/$IMAGE/
