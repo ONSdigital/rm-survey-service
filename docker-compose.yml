@@ -11,8 +11,7 @@ services:
 
   survey:
     container_name: surveysvc
-    #image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:pr-169
-    image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:corpmac
+    image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:latest
     ports:
      - "8080:8080"
 #    links:
