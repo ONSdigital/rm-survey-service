@@ -63,6 +63,7 @@ jobs:
       - name: Build and Push Docker Image
         if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]'
         run: |
+          make build
           docker buildx build --platform linux/amd64,linux/arm64 \
           -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} \
           --push .
