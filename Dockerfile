@@ -24,4 +24,3 @@ RUN chown survey-user:survey-group /opt/survey/main
 USER survey-user
 
 CMD "./main"
-dock
