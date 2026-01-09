@@ -16,7 +16,7 @@ RUN chown survey-user:survey-group /opt/survey
 
 WORKDIR "/opt/survey"
 COPY --from=build-stage /src/main .
-COPY --from=build-stage /src/db-migrations /db-migrations
+COPY --from=build-stage /src/db-migrations /opt/survey
 
 RUN chmod 550 /opt/survey/main
 RUN chown survey-user:survey-group /opt/survey/main
