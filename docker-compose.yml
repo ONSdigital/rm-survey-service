@@ -14,8 +14,6 @@ services:
     image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:${TAG:-latest}
     ports:
      - "8080:8080"
-#    links:
-#     - database
     environment:
     - DATABASE_URL=postgres://postgres:password@database:5432/postgres?sslmode=disable
     - security_user_name=admin
