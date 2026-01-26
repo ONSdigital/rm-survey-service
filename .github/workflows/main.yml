@@ -57,16 +57,15 @@ jobs:
           PR=$(echo "$GITHUB_REF" | awk -F / '{print $3}')
           echo "$PR"
           echo "pr_number=pr-$PR" >> $GITHUB_ENV
-      # Build the Docker image
-      - name: Build Docker Image
+      - name: Set up Docker Buildx
+        if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Build and Push Docker Image
         if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]'
         run: |
-          make build
-          docker build -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} .
-      - name: Push dev image
-        if: github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]'
-        run: |
-          docker push "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }}
+          docker buildx build --platform linux/amd64,linux/arm64 \
+          -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} \
+          --push .
       - name: template helm
         if: github.actor != 'dependabot[bot]'
         run: |
@@ -168,15 +167,16 @@ jobs:
           mv $IMAGE-${{ env.HELM_VERSION }}.tgz $IMAGE-${{ env.pr_number }}.tgz
           gsutil cp $IMAGE-*.tgz gs://$ARTIFACT_BUCKET/$IMAGE/
 
-      - name: Build Release Image
+      - name: Set up Docker Buildx
+        if: github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Build and Push Docker Image
         if: github.ref == 'refs/heads/main'
         run: |
-          docker build -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":latest -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.version }} .
-      - name: Push Release image
-        if: github.ref == 'refs/heads/main'
-        run: |
-          docker push "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.version }}
-          docker push "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":latest
+          docker buildx build --platform linux/amd64,linux/arm64 \
+          -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":latest \
+          -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.version }} \
+          --push .
 
       - name: Publish Charts
         if: github.ref == 'refs/heads/main'

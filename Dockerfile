@@ -1,17 +1,27 @@
-FROM golang:1.19.3-alpine3.16
-
-EXPOSE 8080
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build-stage
 
 RUN mkdir "/src"
 WORKDIR "/src"
 
 COPY . .
 
-COPY build/linux-amd64/bin/main /usr/local/bin/
+RUN go build -v -o main
+RUN chmod 755 main
 
-COPY db-migrations /db-migrations
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS final-stage
 
-RUN go build
-RUN ls
+RUN addgroup -S survey-group && adduser -S survey-user -G survey-group
+RUN mkdir -p "/opt/survey"
+RUN chown survey-user:survey-group /opt/survey
 
-CMD "./rm-survey-service"
+WORKDIR "/opt/survey"
+COPY --from=build-stage /src/main .
+COPY --from=build-stage /src/db-migrations /db-migrations
+
+RUN chmod 550 /opt/survey/main
+RUN chown survey-user:survey-group /opt/survey/main
+RUN chown survey-user:survey-group /db-migrations
+
+USER survey-user
+
+CMD "./main"
