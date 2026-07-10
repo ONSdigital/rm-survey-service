@@ -1,6 +1,6 @@
 module github.com/ONSdigital/rm-survey-service
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -30,7 +30,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/oauth2 v0.31.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )
