@@ -21,16 +21,11 @@ spec:
         helmVersion: {{ .Chart.Version }}
         env: {{ .Values.env }}
     spec:
-      {{- if .Values.database.sqlProxyEnabled }}
-      volumes:
-        - name: cloudsql-instance-credentials
-          secret:
-            secretName: cloudsql-proxy-credentials
-            defaultMode: 0444
-            items:
-            - key: "credentials.json"
-              path: "credentials.json"
-      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      imagePullSecrets:
+          {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
       containers:
         {{- if .Values.database.sqlProxyEnabled }}
         - name: cloudsql-proxy
@@ -38,16 +33,11 @@ spec:
           command: ["/cloud_sql_proxy",
                     "-instances=$(SQL_INSTANCE_NAME)=tcp:$(DB_PORT)",
                     "-ip_address_types=PRIVATE",
-                    "-credential_file=/secrets/cloudsql/credentials.json",
                     "-term_timeout=30s",
                     "-verbose=false"]
           securityContext:
             runAsUser: 2  # non-root user
             allowPrivilegeEscalation: false
-          volumeMounts:
-            - name: cloudsql-instance-credentials
-              mountPath: /secrets/cloudsql
-              readOnly: true
           env:
           - name: SQL_INSTANCE_NAME
             valueFrom:
