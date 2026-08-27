@@ -1,5 +1,12 @@
 env: minikube
 namespace: minikube
+
+serviceAccount:
+  name: ras-rm-k8s-services
+
+imagePullSecrets:
+  - name: gar-secret
+
 image:
   devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
   name: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
