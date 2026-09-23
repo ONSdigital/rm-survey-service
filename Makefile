@@ -50,7 +50,7 @@ test:
 # Builds a docker image, starts it up with a postgres container, waits for a successful response from the survey service
 # /info endpoint, then runs unit tests and integration tests against the services in docker.
 integration-test: build
-	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:integration-test
+	docker build -f _infra/docker/Dockerfile . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey:integration-test
 	docker compose -f docker-compose.yml down
 	TAG=integration-test docker compose -f docker-compose.yml up -d
 	./wait_for_startup_integration_tests.sh ||\
@@ -64,4 +64,4 @@ clean:
 	if [ -d $(BUILD) ]; then rm -r $(BUILD); fi;
 
 docker: build
-	docker build . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
+	docker build -f _infra/docker/Dockerfile . -t europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/survey
