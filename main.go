@@ -37,7 +37,7 @@ func main() {
 	db, err := models.InitDB(dataSource, migrationSource, maxIdleConn, connMaxLifetime)
 
 	if err != nil {
-		logger.Fatal(fmt.Sprintf(`event="Failed to start" error="unable to initialise database" error_message=%s`, err.Error()))
+		logger.Fatal(fmt.Sprintf(`event="Failed to start service" error="unable to initialise database" error_message=%s`, err.Error()))
 	}
 
 	api, err := models.NewAPI(db)
