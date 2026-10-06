@@ -7,9 +7,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func createBasicAuth(username, password string) string {
@@ -17,12 +18,12 @@ func createBasicAuth(username, password string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-// Assumes the service is running on localhost, port 8080
+// Assumes the service is running on localhost, port 8081
 func TestAPI_Info(t *testing.T) {
 	Convey("Can post new survey classifiers", t, func() {
 
 		// Given
-		request, err := http.NewRequest("GET", "http://localhost:8080/info", nil)
+		request, err := http.NewRequest("GET", "http://localhost:8081/info", nil)
 		So(err, ShouldBeNil)
 		client := http.Client{}
 
@@ -35,7 +36,7 @@ func TestAPI_Info(t *testing.T) {
 	})
 }
 
-// Assumes the service is running on localhost, port 8080
+// Assumes the service is running on localhost, port 8081
 func TestAPI_PostSurveyClassifiers(t *testing.T) {
 	Convey("Can post new survey classifiers", t, func() {
 
@@ -48,7 +49,7 @@ func TestAPI_PostSurveyClassifiers(t *testing.T) {
 		// Create HTTP request to post the classifier as JSON
 		postData, err := json.Marshal(classifier)
 		So(err, ShouldBeNil)
-		request, err := http.NewRequest("POST", "http://localhost:8080/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiers", bytes.NewReader(postData))
+		request, err := http.NewRequest("POST", "http://localhost:8081/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiers", bytes.NewReader(postData))
 		So(err, ShouldBeNil)
 		apiAuth := createBasicAuth("admin", "secret")
 		request.Header.Add("Authorization", apiAuth)
@@ -66,7 +67,7 @@ func TestAPI_PostSurveyClassifiers(t *testing.T) {
 		json.NewDecoder(response.Body).Decode(&setupResponseClassifier)
 
 		// Use the ID to get the classifier we posted by a GET request
-		getClassifier, err := http.NewRequest("GET", "http://localhost:8080/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors/"+setupResponseClassifier.ID, nil)
+		getClassifier, err := http.NewRequest("GET", "http://localhost:8081/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87/classifiertypeselectors/"+setupResponseClassifier.ID, nil)
 		So(err, ShouldBeNil)
 		getClassifier.Header.Add("Authorization", apiAuth)
 		getResponseClassifiers, err := client.Do(getClassifier)
